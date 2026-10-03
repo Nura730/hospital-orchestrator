@@ -33,14 +33,14 @@ export function DoctorActions({ patient, onChanged }) {
 
   return (
     <div className="inline-flex gap-1">
-      <button type="button" className="flow-btn-secondary !py-1 !px-2" onClick={() => setModal('ot')} title="Request OT">
-        <Scissors className="w-3 h-3" aria-hidden="true" /> <span className="hidden xl:inline">Request OT</span>
+      <button type="button" className="flow-btn-secondary !py-1 !px-2" onClick={() => setModal('ot')} title="Request OT" aria-label="Request OT">
+        <Scissors className="w-3 h-3" aria-hidden="true" /> <span className="hidden 2xl:inline">Request OT</span>
       </button>
-      <button type="button" className="flow-btn-secondary !py-1 !px-2" onClick={() => setModal('status')} title="Update status">
-        <Activity className="w-3 h-3" aria-hidden="true" /> <span className="hidden xl:inline">Update status</span>
+      <button type="button" className="flow-btn-secondary !py-1 !px-2" onClick={() => setModal('status')} title="Update status" aria-label="Update status">
+        <Activity className="w-3 h-3" aria-hidden="true" /> <span className="hidden 2xl:inline">Update status</span>
       </button>
-      <button type="button" className="flow-btn-primary !py-1 !px-2" disabled={!patient.bedId} onClick={() => setModal('discharge')} title="Sign discharge">
-        <LogOut className="w-3 h-3" aria-hidden="true" /> <span className="hidden xl:inline">Sign discharge</span>
+      <button type="button" className="flow-btn-primary !py-1 !px-2" disabled={!patient.bedId} onClick={() => setModal('discharge')} title="Sign discharge" aria-label="Sign discharge">
+        <LogOut className="w-3 h-3" aria-hidden="true" /> <span className="hidden 2xl:inline">Sign discharge</span>
       </button>
 
       <FlowModal
@@ -156,7 +156,7 @@ export function DoctorActions({ patient, onChanged }) {
             <button type="button" className="flow-btn-ghost" onClick={() => setModal(null)}>
               Cancel
             </button>
-            <button type="button" className="flow-btn-primary" disabled={busy} onClick={() => run(() => flowApi.postEvent('DISCHARGE_SIGNED', { patientId: patient.patientId }), (r) => `Discharged · ${r?.result?.bedId} → cleaning (${r?.tookMs ?? '<1'} ms)`)}>
+            <button type="button" className="flow-btn-primary" disabled={busy} onClick={() => run(() => flowApi.postEvent('DISCHARGE_SIGNED', { patientId: patient.patientId }), (r) => `Discharged · ${r?.result?.bedId} to cleaning (${r?.tookMs ?? '<1'} ms)`)}>
               {busy ? 'Signing…' : 'Sign discharge'}
             </button>
           </>

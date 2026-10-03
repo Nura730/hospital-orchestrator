@@ -1,139 +1,93 @@
 /**
  * @file BottleneckCascadeMap.jsx
- * Dependency chain Emergency → Radiology → General Ward → HDU → ICU → OT.
- * Each box: big current %, predicted 2h % with arrow, colored by utilization.
- * ROOT CAUSE = pulsing red border; CASCADE = orange border. Below: selectable actions + "Apply All Actions".
+ * The department chain as 140 x 90 nodes: name, utilization (large), predicted gap. Border color is the
+ * severity (green < 70%, amber 70-90%, red > 90% with a red tint). Root cause gets a "ROOT CAUSE" badge,
+ * downstream departments an "AFFECTED" badge. Arrows turn red with an X where flow is blocked.
+ * Horizontal on desktop, vertical on mobile.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import clsx from 'clsx';
-import toast from 'react-hot-toast';
-import { ArrowDown, ArrowUpRight, ArrowDownRight, ArrowRight, Zap, CheckCircle2 } from 'lucide-react';
-import StatusPill from './StatusPill.jsx';
-import { FlowSkeleton, FlowEmpty, SectionHeader } from './FlowUi.jsx';
-import flowApi from '../../api/flowApi.js';
-import { errorText } from '../../hooks/useFlowPolling.js';
-import { utilBand, BAND_STYLES } from '../../utils/flowFormat.js';
+import { ArrowRight, ArrowDown, X } from 'lucide-react';
 
-function ChainBox({ b }) {
-  const cur = Math.round(b.utilization * 100);
-  const pred = Math.round((b.predicted?.[2] ?? b.utilization) * 100);
-  const band = BAND_STYLES[utilBand(b.utilization)];
-  const Trend = pred > cur ? ArrowUpRight : pred < cur ? ArrowDownRight : ArrowRight;
+export function severityOf(util) {
+  const pct = util <= 1.5 ? util * 100 : util;
+  if (pct > 90) return 'critical';
+  if (pct >= 70) return 'warning';
+  return 'normal';
+}
+
+export const SEVERITY_STYLE = {
+  normal: { color: '#10B981', label: 'Normal' },
+  warning: { color: '#F59E0B', label: 'Warning' },
+  critical: { color: '#EF4444', label: 'Critical' },
+};
+
+function gapText(gap) {
+  if (gap == null) return 'No forecast';
+  const g = Math.round(gap);
+  if (g > 0) return `+${g} short in 2h`;
+  if (g < 0) return `${Math.abs(g)} spare in 2h`;
+  return 'At capacity in 2h';
+}
+
+function Node({ d, selected, onSelect }) {
+  const sev = severityOf(d.utilization);
+  const { color } = SEVERITY_STYLE[sev];
+  const badge = d.rootCause ? ['ROOT CAUSE', '#DC2626'] : d.isCascade ? ['AFFECTED', '#B45309'] : null;
   return (
-    <div
-      className={clsx(
-        'relative rounded-xl border-2 bg-cream-50 px-3 py-2.5 flex items-center justify-between gap-3',
-        b.rootCause ? 'border-[#D64545] animate-pulse-root' : b.isCascade ? 'border-[#F28C28]' : 'border-cream-200'
-      )}
+    <button
+      type="button"
+      onClick={() => onSelect(d)}
+      aria-pressed={selected}
+      aria-label={`${d.department}, ${Math.round(d.utilization * 100)} percent${badge ? `, ${badge[0].toLowerCase()}` : ''}`}
+      className={clsx('relative w-full lg:w-[140px] h-[90px] shrink-0 rounded-xl border-2 bg-cream-50 px-3 py-2 text-left transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500', selected && 'ring-2 ring-royal-500 ring-offset-2 ring-offset-cream-100')}
+      style={{ borderColor: badge?.[1] === '#B45309' && sev === 'normal' ? '#F59E0B' : color, backgroundColor: sev === 'critical' ? 'rgba(239,68,68,0.08)' : undefined }}
     >
-      <div className="min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-royal-900 truncate">{b.department}</span>
-          {b.rootCause && <StatusPill status="root" size="xs" dot={false} />}
-          {b.isCascade && <StatusPill status="cascade" size="xs" dot={false} />}
-        </div>
-        <span className="text-[10px] text-ink-500 tabular-nums">
-          {b.occupied}/{b.capacity} {b.department === 'OT' ? 'theatres' : 'beds'}
+      {badge && (
+        <span className="absolute -top-2 right-2 rounded px-1.5 py-0.5 text-[8px] font-bold tracking-wide text-white" style={{ backgroundColor: badge[1] }}>
+          {badge[0]}
         </span>
-      </div>
-      <div className="text-right shrink-0">
-        <div className={clsx('text-2xl font-extrabold tabular-nums leading-none', band.text)}>{cur}%</div>
-        <div className={clsx('text-[11px] font-semibold tabular-nums inline-flex items-center gap-0.5', BAND_STYLES[utilBand(pred / 100)].text)}>
-          <Trend className="w-3 h-3" aria-hidden="true" /> {pred}% in 2h
-        </div>
-      </div>
-    </div>
+      )}
+      <span className="block text-[11px] font-semibold text-ink-500 truncate">{d.department}</span>
+      <span className="block text-2xl font-bold tabular-nums text-ink-900 leading-tight">{Math.round(d.utilization * 100)}%</span>
+      <span className="block text-[10px] text-ink-500 truncate">{gapText(d.predictedGap)}</span>
+    </button>
   );
 }
 
-export function BottleneckCascadeMap({ bottlenecks = [], loading = false, onApplied, title = 'Bottleneck cascade' }) {
-  const actions = useMemo(() => {
-    const root = bottlenecks.find((b) => b.rootCause);
-    const ordered = root ? [root, ...bottlenecks.filter((b) => b !== root)] : bottlenecks;
-    return ordered.flatMap((b) => b.recommendedActions || []);
-  }, [bottlenecks]);
-  const [checked, setChecked] = useState({});
-  const [busy, setBusy] = useState(false);
-  const [applied, setApplied] = useState(null);
-
-  useEffect(() => {
-    setChecked((prev) => Object.fromEntries(actions.map((a) => [a.id, prev[a.id] ?? true])));
-  }, [actions]);
-
-  const selected = actions.filter((a) => checked[a.id]);
-
-  const apply = async () => {
-    if (!selected.length) return;
-    setBusy(true);
-    try {
-      const res = await flowApi.createRecommendationBatch(selected, { autoApprove: true, source: 'command_center' });
-      setApplied(res);
-      toast.success(`${res.created} actions applied · ${res.notificationsSent} notifications sent${res.nudges ? ` · ${res.nudges} discharge nudges` : ''}`);
-      onApplied?.(res);
-    } catch (e) {
-      toast.error(errorText(e, 'Could not apply actions'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
+function Arrow({ blocked }) {
+  const color = blocked ? '#EF4444' : 'rgb(var(--cream-200))';
   return (
-    <div className="flow-card-pad h-full flex flex-col">
-      <SectionHeader title={title} subtitle="Root cause → cascade (2h prediction)" icon={Zap} />
-      {loading && !bottlenecks.length ? (
-        <FlowSkeleton lines={6} height="h-12" />
-      ) : (
-        <ol className="flex flex-col gap-1" aria-label="Department dependency chain">
-          {bottlenecks.map((b, i) => (
-            <li key={b.department}>
-              <ChainBox b={b} />
-              {i < bottlenecks.length - 1 && (
-                <div className="flex justify-center py-0.5" aria-hidden="true">
-                  <ArrowDown className={clsx('w-4 h-4', bottlenecks[i + 1].isCascade ? 'text-[#F28C28]' : 'text-cream-200')} />
-                </div>
-              )}
-            </li>
-          ))}
-        </ol>
+    <span className="relative flex items-center justify-center shrink-0 lg:w-7 h-6 lg:h-auto" role={blocked ? 'img' : undefined} aria-label={blocked ? 'Flow blocked' : undefined}>
+      <ArrowRight className="hidden lg:block w-5 h-5" style={{ color }} aria-hidden="true" />
+      <ArrowDown className="lg:hidden w-5 h-5" style={{ color }} aria-hidden="true" />
+      {blocked && (
+        <span className="absolute -top-1.5 lg:-top-3 right-0 lg:right-auto w-3.5 h-3.5 rounded-full bg-[#EF4444] text-white flex items-center justify-center">
+          <X className="w-2.5 h-2.5" aria-hidden="true" />
+        </span>
       )}
+    </span>
+  );
+}
 
-      <div className="mt-4 pt-3 border-t border-cream-200 flex-1 flex flex-col">
-        <h4 className="text-[11px] font-bold uppercase tracking-wide text-ink-500 mb-2">Recommended actions</h4>
-        {actions.length === 0 && !loading ? (
-          <FlowEmpty icon={CheckCircle2} title="No actions needed" message="Every department is within its thresholds." />
-        ) : (
-          <ul className="space-y-1.5 flex-1">
-            {actions.map((a) => (
-              <li key={a.id}>
-                <label className="flex items-start gap-2 rounded-lg px-2 py-1.5 hover:bg-royal-100 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="mt-0.5 accent-[#014BAA] w-3.5 h-3.5"
-                    checked={!!checked[a.id]}
-                    onChange={(e) => setChecked((c) => ({ ...c, [a.id]: e.target.checked }))}
-                  />
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-xs font-medium text-ink-900">{a.text}</span>
-                    <span className="block text-[10px] text-[#13784F] font-semibold">{a.impact}</span>
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        )}
-        {actions.length > 0 && (
-          <button type="button" className="flow-btn-primary w-full mt-3" onClick={apply} disabled={busy || !selected.length}>
-            <Zap className="w-3.5 h-3.5" aria-hidden="true" />
-            {busy ? 'Applying…' : `Apply All Actions (${selected.length})`}
-          </button>
-        )}
-        {applied && (
-          <p className="text-[11px] text-[#13784F] mt-2 text-center" role="status">
-            {applied.created} recommendations approved, {applied.notificationsSent} people notified.
-          </p>
-        )}
-      </div>
+/**
+ * @param {{ departments: object[], selected?: string, onSelect: Function }} props
+ */
+export function BottleneckCascadeMap({ departments = [], selected, onSelect }) {
+  return (
+    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 lg:gap-0 overflow-x-auto py-3">
+      {departments.map((d, i) => {
+        const next = departments[i + 1];
+        // Flow is blocked when the next department downstream is critical
+        const blocked = Boolean(next && severityOf(next.utilization) === 'critical');
+        return (
+          <React.Fragment key={d.department}>
+            <Node d={d} selected={selected === d.department} onSelect={onSelect} />
+            {next && <Arrow blocked={blocked} />}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 }

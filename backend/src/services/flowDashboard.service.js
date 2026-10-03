@@ -293,10 +293,9 @@ async function adminNumbers() {
 
 async function doctorNumbers(doctorId) {
   if (!doctorId) throw new AppError('doctorId required for doctor scope', 400, 'VALIDATION_ERROR');
-  const [patients, candidates, losTable, pendingOt, census] = await Promise.all([
+  const [patients, candidates, pendingOt, census] = await Promise.all([
     flowRepo.getActivePatients({ doctorId }),
     prediction.getDischargeCandidates({ doctorId }),
-    prediction.getLosTable(),
     db.query(`SELECT COUNT(*)::int AS n FROM ot_requests WHERE doctor_id = $1 AND status = 'pending'`, [doctorId]),
     db.query(
       `SELECT day::date AS ts,
@@ -308,8 +307,6 @@ async function doctorNumbers(doctorId) {
       [doctorId]
     ),
   ]);
-  const los = patients.map((p) => prediction.predictLosFromTable(p, losTable));
-  const avgLos = los.length ? round1(los.reduce((s, l) => s + l.predictedHours, 0) / los.length) : 0;
   const critical = patients.filter((p) => (p.acuity || 5) <= 2).length;
   const censusSeries = census.rows.map((r) => ({ ts: r.ts, value: r.value }));
 
@@ -319,7 +316,6 @@ async function doctorNumbers(doctorId) {
       { key: 'myPatients', label: 'My patients', value: patients.length, unit: '', sub: 'active in care', delta: censusSeries.length > 1 ? censusSeries[censusSeries.length - 1].value - censusSeries[censusSeries.length - 2].value : null, deltaUnit: 'vs yesterday', status: 'neutral', seriesKey: 'myCensus', chartType: 'bar' },
       { key: 'critical', label: 'Critical (acuity 1-2)', value: critical, unit: '', sub: 'needs close watch', delta: null, status: critical > 0 ? 'danger' : 'success', seriesKey: null },
       { key: 'dischargeReady', label: 'Discharge-ready', value: candidates.readyCount, unit: '', sub: 'sign to free beds', delta: null, status: candidates.readyCount > 0 ? 'warning' : 'neutral', seriesKey: 'myReadiness', chartType: 'bar' },
-      { key: 'avgLos', label: 'Avg predicted LOS', value: avgLos, unit: ' h', sub: 'historical model', delta: null, status: 'neutral', seriesKey: null },
       { key: 'pendingOt', label: 'Pending OT requests', value: pendingOt.rows[0].n, unit: '', sub: 'awaiting approval', delta: null, status: 'neutral', seriesKey: null },
     ],
     series: {
@@ -533,14 +529,13 @@ async function getDoctorPatients(doctorId) {
 const PRESENCE = { available: 'online', in_consultation: 'online', in_surgery: 'away', on_break: 'away', emergency: 'away', off_duty: 'offline' };
 
 async function getStaffRoster() {
-  const [docs, staff, floatPool] = await Promise.all([
+  const [docs, staff] = await Promise.all([
     db.query(`
       SELECT d.id, u.full_name, d.specialization, d.status, d.current_location, d.surgeries_today, d.is_on_call,
              dep.name AS department
       FROM doctors d JOIN users u ON u.id = d.id LEFT JOIN departments dep ON dep.id = d.department_id
       ORDER BY dep.name, u.full_name`),
     flowRepo.getNurseStaffing(),
-    flowRepo.getFloatPool(),
   ]);
   const doctors = docs.rows.map((d) => ({
     id: d.id,
@@ -559,19 +554,16 @@ async function getStaffRoster() {
       department: s.department_name,
       doctors: doctors.filter((d) => d.department === s.department_name && d.presence !== 'offline').length,
       nurses: s.nurses_on_shift,
-      floats: s.float_on_shift,
       staff: s.housekeeping_on_shift,
     }))
-    .filter((d) => d.doctors + d.nurses + d.floats + d.staff > 0);
+    .filter((d) => d.doctors + d.nurses + d.staff > 0);
   return {
     doctors,
     departments,
-    floatPool: floatPool.map((f) => ({ id: f.id, name: f.full_name, department: f.department_name, onShift: f.on_shift })),
     totals: {
       doctorsOnline: doctors.filter((d) => d.presence === 'online').length,
       doctorsAway: doctors.filter((d) => d.presence === 'away').length,
       nursesOnShift: departments.reduce((s, d) => s + d.nurses, 0),
-      floatsOnShift: floatPool.filter((f) => f.on_shift).length,
     },
   };
 }

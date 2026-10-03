@@ -40,7 +40,7 @@ export const staffStatusColor = {
   [STAFF_STATUS.IN_SURGERY]: { bg: 'bg-purple-100 dark:bg-purple-900/30',   text: 'text-purple-700 dark:text-purple-400',   hex: '#8b5cf6' },
   [STAFF_STATUS.ON_BREAK]:   { bg: 'bg-warning-100 dark:bg-warning-900/30', text: 'text-warning-700 dark:text-warning-400', hex: '#f59e0b' },
   [STAFF_STATUS.OFF_DUTY]:   { bg: 'bg-gray-100 dark:bg-gray-800/30',       text: 'text-gray-600 dark:text-gray-400',       hex: '#9ca3af' },
-  [STAFF_STATUS.ON_CALL]:    { bg: 'bg-teal-100 dark:bg-teal-900/30',       text: 'text-teal-700 dark:text-teal-400',       hex: '#14b8a6' },
+  [STAFF_STATUS.ON_CALL]:    { bg: 'bg-teal-100 dark:bg-teal-900/30',       text: 'text-teal-700 dark:text-teal-400',       hex: '#014BAA' },
 };
 
 /* ── Alert Severity Colors ──────────────────────────────────────── */
@@ -64,7 +64,7 @@ export const patientStatusColor = {
   [PATIENT_STATUS.WAITING]:     { bg: 'bg-warning-100 dark:bg-warning-900/30', text: 'text-warning-700 dark:text-warning-400', hex: '#f59e0b' },
   [PATIENT_STATUS.ADMITTED]:    { bg: 'bg-info-100 dark:bg-info-900/30',       text: 'text-info-700 dark:text-info-400',       hex: '#0ea5e9' },
   [PATIENT_STATUS.IN_SURGERY]:  { bg: 'bg-purple-100 dark:bg-purple-900/30',   text: 'text-purple-700 dark:text-purple-400',   hex: '#8b5cf6' },
-  [PATIENT_STATUS.RECOVERY]:    { bg: 'bg-teal-100 dark:bg-teal-900/30',       text: 'text-teal-700 dark:text-teal-400',       hex: '#14b8a6' },
+  [PATIENT_STATUS.RECOVERY]:    { bg: 'bg-teal-100 dark:bg-teal-900/30',       text: 'text-teal-700 dark:text-teal-400',       hex: '#014BAA' },
   [PATIENT_STATUS.DISCHARGED]:  { bg: 'bg-success-100 dark:bg-success-900/30', text: 'text-success-700 dark:text-success-400', hex: '#22c55e' },
   [PATIENT_STATUS.TRANSFERRED]: { bg: 'bg-gray-100 dark:bg-gray-800/30',       text: 'text-gray-600 dark:text-gray-400',       hex: '#9ca3af' },
 };
@@ -140,7 +140,7 @@ export function getChartPalette(count = 8) {
 
 /** Fallback chart colors if CSS vars aren't available. */
 const FALLBACK_CHART_COLORS = [
-  '#0d9488', '#0ea5e9', '#8b5cf6', '#f59e0b',
+  '#014BAA', '#0ea5e9', '#8b5cf6', '#f59e0b',
   '#ec4899', '#22c55e', '#ef4444', '#6366f1',
 ];
 
@@ -186,12 +186,12 @@ export function getEquipmentStatusChartColors() {
 export function getOccupancyBarColor(pct) {
   if (pct >= THRESHOLDS.OCCUPANCY_DANGER) return '#ef4444';
   if (pct >= THRESHOLDS.OCCUPANCY_WARN)   return '#f59e0b';
-  return '#0d9488';
+  return '#014BAA';
 }
 
 /**
  * Creates an rgba string from hex + alpha.
- * @param {string} hex - e.g. "#0d9488"
+ * @param {string} hex - e.g. "#014BAA"
  * @param {number} alpha - 0-1
  * @returns {string}
  */

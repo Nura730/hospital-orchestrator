@@ -81,6 +81,26 @@ npm run build
 | **Hospital Admin** | `admin@hospital.com` | `Admin@1234` | Master hospital dashboard, resource allocation, and approvals |
 | **Doctor (Cardiology)** | `arjun.menon@hospital.com` | `Doctor@1234` | Doctor Dashboard, assigned patients, clinical schedules |
 | **OT Manager** | `otmanager1@hospital.com` | `OTManager@1234` | OT suites management, surgeon matching, surgery timeline |
+| **Nurse** | `nurse@hospital.com` | `Nurse@1234` | Shift allocation, assigned patients, task list, bed board |
+| **Patient** | `patient@hospital.com` | `Patient@1234` | Own status, treatment journey, shared reports, requests |
+
+> Nurse and Patient are frontend demo accounts: the backend has no `nurse` / `patient` user types yet, so
+> these logins are checked in the browser and their screens (plus the patient popup, journey, requests,
+> reports, doctor calendar and OT room board) run on the in-browser care model in
+> `frontend/src/api/mock/careMock.js`. Swap the calls in `frontend/src/api/careApi.js` for API requests once
+> the matching backend routes exist.
+
+### Screens by role
+
+- **Admin**: Dashboard, Command Center, Bottleneck Map, What-If Simulator, Discharge Planner, Live Bed Map,
+  Patients (inline staff requests), Staff and Doctors, Nurse Management, Patient Journey, Housekeeping, Audit Log
+- **Doctor**: Dashboard (Today's Board, schedule, patients, OT cases, month/week calendar, notifications), Predictions
+- **OT Manager**: OT Command Center (room cards, doctor availability, mini Gantt), OT Flow Impact
+- **Nurse**: My Shift, My Patients, Tasks, Bed Board, Notifications
+- **Patient**: My Status, My Treatment, Reports, Requests, Help
+
+Clicking a patient anywhere opens the shared Patient Detail popup (Overview, Treatment Journey, Generate Report).
+Light and dark themes are toggled from the top bar.
 
 ---
 

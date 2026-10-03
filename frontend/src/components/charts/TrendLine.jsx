@@ -12,7 +12,7 @@ export function TrendLine({
   labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   data = [78, 81, 85, 84, 89, 91, 94],
   label = 'Acceptance Rate %',
-  color = '#0d9488',
+  color = '#014BAA',
 }) {
   const { isDark } = useTheme();
 

@@ -51,7 +51,7 @@ export function FlowKpiCard({ kpi, series, endpoint, icon: Icon, loading = false
       <div className="flex items-center justify-between gap-2 text-[11px]">
         <span className="text-ink-500 truncate">{kpi.sub}</span>
         {hasDelta && (
-          <span className={clsx('inline-flex items-center gap-0.5 font-semibold tabular-nums shrink-0', good === null || kpi.delta === 0 ? 'text-ink-500' : good ? 'text-[#13784F]' : 'text-[#B02E2E]')}>
+          <span className={clsx('inline-flex items-center gap-0.5 font-semibold tabular-nums shrink-0', good === null || kpi.delta === 0 ? 'text-ink-500' : good ? 'text-fg-ok' : 'text-fg-bad')}>
             <DeltaIcon className="w-3.5 h-3.5" aria-hidden="true" />
             {kpi.delta > 0 ? '+' : ''}
             {num(kpi.delta, 1)} {kpi.deltaUnit}

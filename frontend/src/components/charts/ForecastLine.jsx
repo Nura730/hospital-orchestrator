@@ -47,7 +47,7 @@ export function ForecastLine({ forecastData = null }) {
         {
           label: 'Predicted Arrivals',
           data: datasets.predicted || [],
-          borderColor: '#0d9488', // teal-600
+          borderColor: '#014BAA', // teal-600
           borderWidth: 2.5,
           borderDash: [5, 5],
           backgroundColor: 'transparent',

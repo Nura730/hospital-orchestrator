@@ -168,7 +168,7 @@ function buildState() {
   let n = 1;
   for (const [dept, nurses, floats, hk] of staffPlan) {
     for (let i = 0; i < nurses; i++) staff.push({ id: n, name: `Nurse ${pad(n++)}`, role: 'nurse', department: dept, onShift: true });
-    for (let i = 0; i < floats; i++) staff.push({ id: n, name: `Float ${pad(n++)}`, role: 'float_nurse', department: dept, onShift: dept !== 'Emergency' });
+    for (let i = 0; i < floats; i++) staff.push({ id: n, name: `Nurse ${pad(n++)}`, role: 'float_nurse', department: dept, onShift: dept !== 'Emergency' });
     for (let i = 0; i < hk; i++) staff.push({ id: n, name: `Housekeeping ${pad(n++)}`, role: 'housekeeping', department: dept, onShift: true });
   }
   const kpiSeries = { occupancy: [], icu: [], avgWait: [], otUtil: [] };
@@ -384,7 +384,7 @@ function actionsFor(b, all) {
   }
   if (b.department !== 'OT' && b.nursesOnShift > 0 && b.occupied / b.nursesOnShift > 4) {
     const donor = all.filter((x) => x.department !== b.department && x.department !== 'OT' && x.nursesOnShift > 1).sort((a, c) => a.occupied / a.nursesOnShift - c.occupied / c.nursesOnShift)[0];
-    if (donor && donor.occupied / donor.nursesOnShift < 3) out.push({ type: 'staffing', department: b.department, sourceDepartment: donor.department, count: 1, text: `Reassign float nurse from ${donor.department} to ${b.department}`, impact: `Nurse ratio 1:${(b.occupied / b.nursesOnShift).toFixed(1)} → 1:${(b.occupied / (b.nursesOnShift + 1)).toFixed(1)}`, why: `${b.department} has 1 nurse per ${(b.occupied / b.nursesOnShift).toFixed(1)} patients (safe limit 1:4)` });
+    if (donor && donor.occupied / donor.nursesOnShift < 3) out.push({ type: 'staffing', department: b.department, sourceDepartment: donor.department, count: 1, text: `Reassign a nurse from ${donor.department} to ${b.department}`, impact: `Nurse ratio 1:${(b.occupied / b.nursesOnShift).toFixed(1)} to 1:${(b.occupied / (b.nursesOnShift + 1)).toFixed(1)}`, why: `${b.department} has 1 nurse per ${(b.occupied / b.nursesOnShift).toFixed(1)} patients (safe limit 1:4)` });
   }
   return out.map((a, i) => ({ id: `${b.department}-${a.type}-${i}`.replace(/\s+/g, '_'), ...a }));
 }
@@ -524,7 +524,7 @@ function otImpact() {
       } else if (rel[type].length && rel[type][0] <= c.end) {
         rel[type].shift();
         availability = 'PREDICTED_FREE';
-        risk = `Depends on a ${type === 'icu' ? 'ICU' : 'post-op'} bed releasing before ${new Date(c.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        risk = `Depends on a ${type === 'icu' ? 'ICU' : 'post-op'} bed releasing before ${new Date(c.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}`;
       } else {
         availability = 'NO';
         risk = `No ${type === 'icu' ? 'ICU' : 'post-op'} bed expected; consider deferring${c.urgency === 'elective' ? ' (elective)' : ''}`;
@@ -571,7 +571,6 @@ function dashboardNumbers(scope = 'admin') {
         { key: 'myPatients', label: 'My patients', value: mine.length, unit: '', sub: 'active in care', delta: census[6].value - census[5].value, deltaUnit: 'vs yesterday', status: 'neutral', seriesKey: 'myCensus', chartType: 'bar' },
         { key: 'critical', label: 'Critical (acuity 1-2)', value: mine.filter((p) => p.acuity <= 2).length, unit: '', sub: 'needs close watch', status: 'danger', seriesKey: null },
         { key: 'dischargeReady', label: 'Discharge-ready', value: cands.filter((c) => c.ready).length, unit: '', sub: 'sign to free beds', status: 'warning', seriesKey: 'myReadiness', chartType: 'bar' },
-        { key: 'avgLos', label: 'Avg predicted LOS', value: mine.length ? r1(mine.reduce((a, p) => a + p.los.predictedHours, 0) / mine.length) : 0, unit: ' h', sub: 'historical model', status: 'neutral', seriesKey: null },
         { key: 'pendingOt', label: 'Pending OT requests', value: 1, unit: '', sub: 'awaiting approval', status: 'neutral', seriesKey: null },
       ],
       series: { myCensus: census, myReadiness: cands.map((c) => ({ ts: c.alias, value: c.score, label: c.alias })) },
@@ -653,7 +652,7 @@ function simulate(params) {
   const actions = [];
   if (b.dirtyBeds) actions.push({ type: 'cleaning', text: `Prioritize cleaning of ${b.dirtyBeds} dirty beds`, impact: `+${b.dirtyBeds} beds`, count: b.dirtyBeds });
   if (b.dischargeReadyCount) actions.push({ type: 'discharge', text: `Expedite discharge for ${b.dischargeReadyCount} medically ready patients`, impact: `+${b.dischargeReadyCount} beds`, count: b.dischargeReadyCount });
-  if (fl) actions.push({ type: 'staffing', text: `Deploy ${fl} float nurse${fl > 1 ? 's' : ''} to the busiest wards`, impact: `+${fl * 4} safe patient slots`, count: fl });
+  if (fl) actions.push({ type: 'staffing', text: `Deploy ${fl} reserve nurse${fl > 1 ? 's' : ''} to the busiest wards`, impact: `+${fl * 4} safe patient slots`, count: fl });
   if (C.deferredElective) actions.push({ type: 'defer_ot', text: `Defer ${C.deferredElective} elective OT cases needing post-op beds`, impact: `-${C.deferredElective} bed demand`, count: C.deferredElective });
   const pct = A.avgWaitMin > 0 ? Math.round(((A.avgWaitMin - C.avgWaitMin) / A.avgWaitMin) * 100) : 0;
   const run = { id: uid('sim'), createdAt: new Date().toISOString(), createdBy: 'Demo admin', applied: false, params: p, baseline: b, scenarioA: A, scenarioB: B, scenarioC: C, recommendedScenario: 'C', actions, expectedWaitReduction: `${A.avgWaitMin} min to ${C.avgWaitMin} min`, waitReductionPct: pct };
@@ -673,7 +672,7 @@ function processEvent(eventType, payload = {}) {
       const p = s.patients.find((x) => x.id === payload.patientId);
       if (!p) throw new Error('Patient not found');
       const bed = s.beds.find((b) => b.id === p.bedId);
-      Object.assign(p, { status: 'discharged', bedId: null, pendingTasks: [] });
+      Object.assign(p, { status: 'discharged', bedId: null, lastBedId: p.bedId, dischargedAt: new Date().toISOString(), pendingTasks: [] });
       if (bed) Object.assign(bed, { status: 'cleaning', patientId: null, expectedRelease: null, cleaningSince: new Date().toISOString() });
       notify(`Housekeeping: clean ${bed?.id}`, `Bed ${bed?.id} released after discharge of ${p.alias}.`);
       emit('bed.updated', { bedId: bed?.id, status: 'cleaning', patientId: null });
@@ -854,9 +853,9 @@ function aiReport(scope = 'admin', format = 'detailed') {
     } else {
       lines.push('## 1) Situation summary', `Hospital occupancy is ${sum.occupancy.pct}% (${sum.occupancy.occupied}/${sum.occupancy.capacity} beds) and ICU is at ${sum.icu.pct}%. ${a.rootCause ? `${a.rootCause} is the root-cause bottleneck${a.cascade.length ? `, cascading to ${a.cascade.join(', ')}` : ''}.` : 'No department is above threshold.'} ${sum.dirtyBeds} beds await cleaning and ${sum.dischargeReady} patients are ready for discharge.`, '', '## 2) Key numbers');
     }
-    lines.push(`- Occupancy: ${sum.occupancy.pct}%`, `- ICU: ${sum.icu.pct}%`, ...snapshot.departments.map((d) => `- ${d.department}: ${d.utilizationPct}% now → ${d.predicted2hPct}% in 2h (${d.severity})`), `- Dirty beds: ${sum.dirtyBeds}`, `- Discharge-ready: ${sum.dischargeReady}`, '');
+    lines.push(`- Occupancy: ${sum.occupancy.pct}%`, `- ICU: ${sum.icu.pct}%`, ...snapshot.departments.map((d) => `- ${d.department}: ${d.utilizationPct}% now, ${d.predicted2hPct}% in 2h (${d.severity})`), `- Dirty beds: ${sum.dirtyBeds}`, `- Discharge-ready: ${sum.dischargeReady}`, '');
     if (format === 'handover') {
-      lines.push('## 3) Open risks', a.rootCause ? `- Bottleneck: ${a.rootCause}${a.cascade.length ? ` → ${a.cascade.join(' → ')}` : ''}` : '- None.', '', '## 4) Pending discharges', ...dischargeCandidates().candidates.filter((c) => c.ready).map((c) => `- ${c.alias} (${c.bedId}), owner ${c.doctorName}; blocked by: ${c.blockingFactors.join(', ') || 'none'}`), '', '## 5) First actions for the incoming shift');
+      lines.push('## 3) Open risks', a.rootCause ? `- Bottleneck: ${a.rootCause}${a.cascade.length ? `, then ${a.cascade.join(', ')}` : ''}` : '- None.', '', '## 4) Pending discharges', ...dischargeCandidates().candidates.filter((c) => c.ready).map((c) => `- ${c.alias} (${c.bedId}), owner ${c.doctorName}; blocked by: ${c.blockingFactors.join(', ') || 'none'}`), '', '## 5) First actions for the incoming shift');
     } else {
       lines.push('## 3) Root cause and cascade', a.rootCause ? `${a.rootCause} is the first department in the flow chain above threshold.${a.cascade.length ? ` Downstream impact: ${a.cascade.join(', ')}.` : ''}` : 'No root cause.', ...(format === 'explain' && a.rootCause ? [`Why: ${a.rootCause} is at ${Math.round(a.bottlenecks.find((b) => b.rootCause).utilization * 100)}% utilization (warn 75%, danger 88%) and every department before it in the chain is LOW.`] : []), '', '## 4) Predicted next 2-4 hours', ...(snapshot.departments.filter((d) => d.gap2h > 0).map((d) => `- ${d.department}: short by ${d.gap2h} beds in 2h`).concat(['- Forecasts based on 4 weeks of same-hour history.'])), '', '## 5) Recommended actions');
     }
@@ -920,8 +919,8 @@ const routes = {
   '/staff-roster': () => {
     const pres = { available: 'online', in_consultation: 'online', in_surgery: 'away', on_break: 'away', emergency: 'away', off_duty: 'offline' };
     const doctors = DOCTORS.map((d) => ({ ...d, presence: pres[d.status], location: d.status === 'in_surgery' ? 'OT' : d.department, surgeriesToday: d.department === 'OT' ? 2 : 0, onCall: d.id === 'doc-khan' }));
-    const depts = ['Emergency', 'Radiology', 'General Ward', 'HDU', 'ICU', 'OT'].map((name) => ({ departmentId: name, department: name, doctors: doctors.filter((d) => d.department === name && d.presence !== 'offline').length, nurses: st().staff.filter((x) => x.department === name && x.role === 'nurse' && x.onShift).length, floats: st().staff.filter((x) => x.department === name && x.role === 'float_nurse' && x.onShift).length, staff: st().staff.filter((x) => x.department === name && x.role === 'housekeeping').length }));
-    return { doctors, departments: depts, floatPool: st().staff.filter((x) => x.role === 'float_nurse').map((x) => ({ id: x.id, name: x.name, department: x.department, onShift: x.onShift })), totals: { doctorsOnline: doctors.filter((d) => d.presence === 'online').length, doctorsAway: doctors.filter((d) => d.presence === 'away').length, nursesOnShift: depts.reduce((a, d) => a + d.nurses, 0), floatsOnShift: st().staff.filter((x) => x.role === 'float_nurse' && x.onShift).length } };
+    const depts = ['Emergency', 'Radiology', 'General Ward', 'HDU', 'ICU', 'OT'].map((name) => ({ departmentId: name, department: name, doctors: doctors.filter((d) => d.department === name && d.presence !== 'offline').length, nurses: st().staff.filter((x) => x.department === name && x.role === 'nurse' && x.onShift).length, staff: st().staff.filter((x) => x.department === name && x.role === 'housekeeping').length }));
+    return { doctors, departments: depts, totals: { doctorsOnline: doctors.filter((d) => d.presence === 'online').length, doctorsAway: doctors.filter((d) => d.presence === 'away').length, nursesOnShift: depts.reduce((a, d) => a + d.nurses, 0) } };
   },
   '/housekeeping': () => {
     const now = Date.now();
@@ -1036,6 +1035,27 @@ function matchPatch(path, body = {}) {
     return r;
   }
   throw new Error(`Mock route not found: PATCH ${path}`);
+}
+
+/* ───────────────────────── shared with careMock ───────────────────────── */
+
+/** Live in-memory hospital (beds, patients, OT rooms, cases, staff). Shared with careMock. */
+export function getFlowState() {
+  return st();
+}
+export const FLOW_DOCTORS = DOCTORS;
+export const FLOW_ME_DOCTOR = ME_DOCTOR;
+export function pushNotification(title, message, type = 'general') {
+  return notify(title, message, type);
+}
+export function emitLive(event, payload) {
+  emit(event, payload);
+}
+export function recordEvent(type, payload, result) {
+  return logEvent(type, payload, result);
+}
+export function patientReadiness(p) {
+  return readiness(p);
 }
 
 export const flowMock = {

@@ -10,9 +10,9 @@ import { Line, Bar } from 'react-chartjs-2';
 import '../charts/setupChart.js';
 import { clock, dateTime } from '../../utils/flowFormat.js';
 
-const PALETTE = ['#014BAA', '#2BA8E0', '#F2A93B', '#1FA971', '#D64545', '#6D28D9'];
-const GRID = '#EFE7E2';
-const TICK = '#5B6B80';
+const PALETTE = ['#014BAA', '#014BAA', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6'];
+const GRID = 'rgba(148,163,184,0.18)';
+const TICK = '#94A3B8';
 
 function labelFor(ts, spanHours) {
   const d = new Date(ts);
@@ -34,9 +34,9 @@ const baseOptions = (unit) => ({
   plugins: {
     legend: { labels: { color: TICK, usePointStyle: true, boxWidth: 8 } },
     tooltip: {
-      backgroundColor: '#012A63',
+      backgroundColor: '#222536',
       titleColor: '#fff',
-      bodyColor: '#E3ECF8',
+      bodyColor: '#F1F5F9',
       callbacks: { label: (ctx) => (ctx.parsed.y == null ? null : `${ctx.dataset.label}: ${ctx.parsed.y}${unit || ''}`) },
     },
   },
@@ -74,10 +74,10 @@ export function FlowChart({ chartType = 'line', series = {}, seriesKeys, grouped
             type: 'line',
             xMin: 0,
             xMax: 0,
-            borderColor: '#D64545',
+            borderColor: '#EF4444',
             borderWidth: 2,
             borderDash: [4, 4],
-            label: { display: true, content: 'now', position: 'start', backgroundColor: '#D64545', color: '#fff', font: { size: 10 } },
+            label: { display: true, content: 'now', position: 'start', backgroundColor: '#EF4444', color: '#fff', font: { size: 10 } },
           },
         },
       };
@@ -113,7 +113,7 @@ export function FlowChart({ chartType = 'line', series = {}, seriesKeys, grouped
               tension: 0.25,
               fill: { target: 1, above: 'rgba(214,69,69,0.30)', below: 'rgba(0,0,0,0)' },
             },
-            { label: 'Capacity', data: rows.map((r) => r.capacity), borderColor: '#D64545', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false },
+            { label: 'Capacity', data: rows.map((r) => r.capacity), borderColor: '#EF4444', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false },
           ],
         },
         options: baseOptions(unit),

@@ -226,7 +226,7 @@ export function CommandCenterPage() {
               onClick={() => navigate('/alerts')}
               className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline cursor-pointer"
             >
-              View All Alerts →
+              View All Alerts
             </button>
           </div>
 

@@ -28,9 +28,9 @@ const PRESETS = [
 ];
 
 const SCENARIO_STYLE = {
-  A: { border: 'border-[#D64545]', head: 'bg-[#D64545]', text: 'text-[#B02E2E]' },
-  B: { border: 'border-[#F2A93B]', head: 'bg-[#F2A93B]', text: 'text-[#8A5200]' },
-  C: { border: 'border-[#1FA971]', head: 'bg-[#1FA971]', text: 'text-[#13784F]' },
+  A: { border: 'border-[#EF4444]', head: 'bg-[#EF4444]', text: 'text-fg-bad' },
+  B: { border: 'border-[#F59E0B]', head: 'bg-[#F59E0B]', text: 'text-fg-warn' },
+  C: { border: 'border-[#10B981]', head: 'bg-[#10B981]', text: 'text-fg-ok' },
 };
 
 function SliderRow({ id, label, value, min, max, step = 1, unit, onChange }) {
@@ -63,7 +63,7 @@ function SliderRow({ id, label, value, min, max, step = 1, unit, onChange }) {
 function ScenarioCard({ id, s, recommended }) {
   const st = SCENARIO_STYLE[id];
   return (
-    <div className={clsx('rounded-2xl border-2 bg-cream-50 overflow-hidden flex flex-col', st.border, recommended && 'shadow-soft ring-4 ring-[#1FA971]/15')}>
+    <div className={clsx('rounded-2xl border-2 bg-cream-50 overflow-hidden flex flex-col', st.border, recommended && 'shadow-soft ring-4 ring-[#10B981]/15')}>
       <div className={clsx('px-4 py-2 text-white flex items-center justify-between', st.head)}>
         <span className="text-xs font-bold">
           Scenario {id} · {s.label}
@@ -90,13 +90,13 @@ function ScenarioCard({ id, s, recommended }) {
         ].map(([l, v]) => (
           <div key={l}>
             <div className="text-[10px] uppercase font-semibold text-ink-500">{l}</div>
-            <div className={clsx('text-xl font-extrabold tabular-nums', v > 0 && l !== 'Effective beds' ? 'text-[#B02E2E]' : 'text-ink-900')}>{v}</div>
+            <div className={clsx('text-xl font-extrabold tabular-nums', v > 0 && l !== 'Effective beds' ? 'text-fg-bad' : 'text-ink-900')}>{v}</div>
           </div>
         ))}
         <div className="col-span-2 text-[10px] text-ink-500 border-t border-cream-200 pt-2">
           Demand {s.demand} · staff {s.effectiveStaff} nurses
           {s.extraBeds ? ` · +${s.extraBeds} beds` : ''}
-          {s.extraNurses ? ` · +${s.extraNurses} float` : ''}
+          {s.extraNurses ? ` · +${s.extraNurses} nurse${s.extraNurses > 1 ? 's' : ''}` : ''}
           {s.deferredElective ? ` · ${s.deferredElective} elective deferred` : ''}
         </div>
       </div>
@@ -147,9 +147,9 @@ export default function WhatIfSimulatorPage() {
     labels: ['A · Do Nothing', 'B · Partial', 'C · Full'],
     datasets: [
       { label: 'Avg wait (min)', data: [result.scenarioA.avgWaitMin, result.scenarioB.avgWaitMin, result.scenarioC.avgWaitMin], color: '#014BAA' },
-      { label: 'Bed shortage', data: [result.scenarioA.bedShortage, result.scenarioB.bedShortage, result.scenarioC.bedShortage], color: '#D64545' },
-      { label: 'Nurse shortage', data: [result.scenarioA.nurseShortage, result.scenarioB.nurseShortage, result.scenarioC.nurseShortage], color: '#F2A93B' },
-      { label: 'ICU overflow', data: [result.scenarioA.icuOverflow, result.scenarioB.icuOverflow, result.scenarioC.icuOverflow], color: '#2BA8E0' },
+      { label: 'Bed shortage', data: [result.scenarioA.bedShortage, result.scenarioB.bedShortage, result.scenarioC.bedShortage], color: '#EF4444' },
+      { label: 'Nurse shortage', data: [result.scenarioA.nurseShortage, result.scenarioB.nurseShortage, result.scenarioC.nurseShortage], color: '#F59E0B' },
+      { label: 'ICU overflow', data: [result.scenarioA.icuOverflow, result.scenarioB.icuOverflow, result.scenarioC.icuOverflow], color: '#014BAA' },
     ],
   };
 
@@ -228,7 +228,7 @@ export default function WhatIfSimulatorPage() {
                     <li key={a.text} className="flex items-start gap-3 rounded-xl border border-cream-200 bg-cream-50 px-3 py-2">
                       <span className="w-6 h-6 rounded-full bg-royal-500 text-white text-[11px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
                       <span className="flex-1 text-xs font-medium text-ink-900">{a.text}</span>
-                      <span className="text-[11px] font-semibold text-[#13784F] whitespace-nowrap">{a.impact}</span>
+                      <span className="text-[11px] font-semibold text-fg-ok whitespace-nowrap">{a.impact}</span>
                     </li>
                   ))}
                   {!result.actions.length && <li className="text-xs text-ink-500">No extra actions needed.</li>}

@@ -5,10 +5,10 @@
  */
 
 export const BED_STATUS_COLORS = {
-  available: '#1FA971',
-  occupied: '#D64545',
-  cleaning: '#F2A93B',
-  reserved: '#2BA8E0',
+  available: '#10B981',
+  occupied: '#014BAA',
+  cleaning: '#F59E0B',
+  reserved: '#8B5CF6',
   blocked: '#6B7280',
 };
 
@@ -17,7 +17,7 @@ export const BED_STATUS_LABELS = {
   occupied: 'Occupied',
   cleaning: 'Cleaning',
   reserved: 'Reserved',
-  blocked: 'Blocked',
+  blocked: 'Maintenance',
 };
 
 /** Utilization band: green < 70%, amber 70-90%, red > 90%. Accepts 0-1 or 0-100. */
@@ -30,9 +30,9 @@ export function utilBand(value) {
 }
 
 export const BAND_STYLES = {
-  success: { text: 'text-[#13784F]', bg: 'bg-[#1FA971]/10', border: 'border-[#1FA971]', hex: '#1FA971' },
-  warning: { text: 'text-[#9A5B00]', bg: 'bg-[#F2A93B]/15', border: 'border-[#F2A93B]', hex: '#F2A93B' },
-  danger: { text: 'text-[#B02E2E]', bg: 'bg-[#D64545]/10', border: 'border-[#D64545]', hex: '#D64545' },
+  success: { text: 'text-fg-ok', bg: 'bg-[#10B981]/10', border: 'border-[#10B981]', hex: '#10B981' },
+  warning: { text: 'text-fg-warn', bg: 'bg-[#F59E0B]/10', border: 'border-[#F59E0B]', hex: '#F59E0B' },
+  danger: { text: 'text-fg-bad', bg: 'bg-[#EF4444]/10', border: 'border-[#EF4444]', hex: '#EF4444' },
   neutral: { text: 'text-royal-500', bg: 'bg-royal-100', border: 'border-cream-200', hex: '#014BAA' },
 };
 
@@ -69,14 +69,14 @@ export function clock(ts) {
   if (!ts) return '—';
   const d = new Date(ts);
   if (Number.isNaN(d.getTime())) return String(ts);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
 export function dateTime(ts) {
   if (!ts) return '—';
   const d = new Date(ts);
   if (Number.isNaN(d.getTime())) return String(ts);
-  return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
 export function readinessBand(score) {
@@ -136,3 +136,43 @@ export function initials(name) {
 export function displayName(user) {
   return user?.name || user?.fullName || user?.full_name || 'User';
 }
+
+/** Acuity 1 (most critical) .. 5 (least): color for dots and badges. */
+export const ACUITY_COLORS = { 1: '#EF4444', 2: '#F97316', 3: '#F59E0B', 4: '#014BAA', 5: '#10B981' };
+
+export function acuityColor(a) {
+  return ACUITY_COLORS[a] || '#94A3B8';
+}
+
+/** Readable (WCAG AA) text shade for each acuity level, for labels on light backgrounds. */
+export const ACUITY_TEXT = { 1: '#991B1B', 2: '#9A3412', 3: '#92400E', 4: '#014BAA', 5: '#046C4E' };
+
+export function acuityTextColor(a) {
+  return ACUITY_TEXT[a] || '#5B6B80';
+}
+
+/** Whole days since a timestamp, counting the admission day as Day 1. */
+export function dayNumber(since, now = Date.now()) {
+  if (!since) return null;
+  const start = new Date(since);
+  if (Number.isNaN(start.getTime())) return null;
+  const a = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+  const n = new Date(now);
+  const b = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
+  return Math.max(1, Math.round((b - a) / 86400000) + 1);
+}
+
+export function shortDate(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return String(ts);
+  return d.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+/** Doctor calendar / schedule event colors. */
+export const EVENT_COLORS = {
+  consultation: '#014BAA',
+  surgery: '#8B5CF6',
+  rounds: '#10B981',
+  emergency: '#EF4444',
+};

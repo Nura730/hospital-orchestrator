@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const v = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class',
@@ -6,36 +8,43 @@ export default {
     extend: {
       /* ── Color Tokens ─────────────────────────────────────── */
       colors: {
-        /* Predictive Flow Intelligence palette (static: unaffected by .dark) */
+        /* Design-system tokens. Values live in index.css as RGB channels so every class
+           (including /opacity variants) follows the light / dark theme automatically. */
         royal: {
-          900: '#012A63',
-          700: '#0A3F8F',
-          500: '#014BAA',
-          100: '#E3ECF8',
-          DEFAULT: '#014BAA',
+          900: v('royal-900'),
+          700: v('royal-700'),
+          500: v('royal-500'),
+          100: v('royal-100'),
+          DEFAULT: v('royal-500'),
         },
         cream: {
-          50: '#FFFFFF',
-          100: '#F8F3F0',
-          200: '#EFE7E2',
-          DEFAULT: '#F8F3F0',
+          50: v('cream-50'),
+          100: v('cream-100'),
+          200: v('cream-200'),
+          DEFAULT: v('cream-100'),
         },
         ink: {
-          900: '#0F1B2D',
-          500: '#5B6B80',
+          900: v('ink-900'),
+          500: v('ink-500'),
         },
+        card: v('card'),
+        sunken: v('sunken'),
         bed: {
-          available: '#1FA971',
-          occupied: '#D64545',
-          cleaning: '#F2A93B',
-          reserved: '#2BA8E0',
-          blocked: '#6B7280',
+          available: v('bed-available'),
+          occupied: v('bed-occupied'),
+          cleaning: v('bed-cleaning'),
+          reserved: v('bed-reserved'),
+          blocked: v('bed-blocked'),
         },
-        highlight: '#FFE9A8',
-        schematic: {
-          from: '#012A63',
-          to: '#0B1220',
+        /* Readable status text on either theme */
+        fg: {
+          ok: v('fg-ok'),
+          warn: v('fg-warn'),
+          bad: v('fg-bad'),
+          info: v('fg-info'),
+          violet: v('fg-violet'),
         },
+        highlight: v('highlight'),
         primary: {
           50:  'var(--color-primary-50)',
           100: 'var(--color-primary-100)',
@@ -50,15 +59,20 @@ export default {
           950: 'var(--color-primary-950)',
         },
         surface: {
-          DEFAULT: 'var(--color-surface)',
-          alt:    'var(--color-surface-alt)',
-          hover:  'var(--color-surface-hover)',
+          DEFAULT: v('cream-50'),
+          alt: v('sunken'),
+          hover: v('sunken'),
+          elevated: v('cream-50'),
+          sunken: v('sunken'),
+          border: v('cream-200'),
+          foreground: v('ink-900'),
+          muted: v('ink-500'),
         },
-        background: 'var(--color-background)',
-        border:     'var(--color-border)',
-        muted:      'var(--color-muted)',
-        'muted-foreground': 'var(--color-muted-foreground)',
-        foreground: 'var(--color-foreground)',
+        background: v('cream-100'),
+        border: v('cream-200'),
+        muted: v('ink-500'),
+        'muted-foreground': v('ink-500'),
+        foreground: v('ink-900'),
 
         /* Status colors */
         success: {
@@ -129,12 +143,12 @@ export default {
 
       /* ── Shadows ──────────────────────────────────────────── */
       boxShadow: {
-        'card':     '0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06)',
-        'card-lg':  '0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07)',
+        'card':     '0 0 0 0 transparent',
+        'card-lg':  '0 0 0 0 transparent',
         'elevated': '0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08)',
         'modal':    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
         'glow':     '0 0 20px rgb(20 184 166 / 0.15)',
-        'soft':     '0 2px 12px -2px rgb(1 42 99 / 0.08), 0 1px 3px rgb(1 42 99 / 0.06)',
+        'soft':     '0 0 0 0 transparent',
         'neon':     '0 0 10px currentColor',
       },
 
@@ -185,12 +199,12 @@ export default {
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgb(20 184 166 / 0.4)' },
-          '50%':      { boxShadow: '0 0 0 8px rgb(20 184 166 / 0)' },
+          '0%, 100%': { boxShadow: '0 0 0 0 rgb(59 130 246 / 0.45)' },
+          '50%':      { boxShadow: '0 0 0 8px rgb(59 130 246 / 0)' },
         },
         'pulse-root': {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgb(214 69 69 / 0.55)' },
-          '50%':      { boxShadow: '0 0 0 8px rgb(214 69 69 / 0)' },
+          '0%, 100%': { boxShadow: '0 0 0 0 rgb(239 68 68 / 0.55)' },
+          '50%':      { boxShadow: '0 0 0 8px rgb(239 68 68 / 0)' },
         },
         'pulse-critical': {
           '0%, 100%': { boxShadow: '0 0 0 0 rgb(239 68 68 / 0.4)' },

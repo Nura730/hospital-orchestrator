@@ -208,7 +208,7 @@ export const useLiveStore = create((set, get) => ({
             };
           }
           const feedItem = bedId
-            ? [{ id: `feed-${Date.now()}-${bedId}`, at: now, kind: 'bed', title: `${bedId} → ${status}`, detail: status === 'cleaning' ? 'Housekeeping notified' : status === 'reserved' ? 'Reserved for incoming patient' : status === 'available' ? 'Ready for next patient' : 'Bed status updated', impact: status === 'available' ? '+1 bed' : null }]
+            ? [{ id: `feed-${Date.now()}-${bedId}`, at: now, kind: 'bed', title: `${bedId} now ${status}`, detail: status === 'cleaning' ? 'Housekeeping notified' : status === 'reserved' ? 'Reserved for incoming patient' : status === 'available' ? 'Ready for next patient' : 'Bed status updated', impact: status === 'available' ? '+1 bed' : null }]
             : [];
 
           return {
@@ -359,7 +359,7 @@ export const useLiveStore = create((set, get) => ({
             ...state.flowState,
             bottlenecks: payload.bottlenecks || state.flowState.bottlenecks,
             feed: [
-              { id: `feed-${Date.now()}-bn`, at: now, kind: 'bottleneck', title: payload.rootCause ? `Root cause: ${payload.rootCause}` : 'Bottleneck detected', detail: payload.cascade && payload.cascade.length ? `Cascade → ${payload.cascade.join(', ')}` : 'High severity department', impact: null },
+              { id: `feed-${Date.now()}-bn`, at: now, kind: 'bottleneck', title: payload.rootCause ? `Root cause: ${payload.rootCause}` : 'Bottleneck detected', detail: payload.cascade && payload.cascade.length ? `Cascade: ${payload.cascade.join(', ')}` : 'High severity department', impact: null },
               ...state.flowState.feed,
             ].slice(0, 20),
           },

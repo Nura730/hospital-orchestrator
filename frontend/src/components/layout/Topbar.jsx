@@ -1,25 +1,30 @@
 /**
  * @file Topbar.jsx
- * Slim cream top bar: section name, live connection status and the user menu (role + sign out).
- * Page titles, breadcrumbs and the notification bell live in each page's FlowPageHeader.
+ * Slim top bar: section name, live connection status, light/dark toggle and the user menu.
  */
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
-import { LogOut, ChevronDown, Activity } from 'lucide-react';
+import { LogOut, ChevronDown, Activity, Sun, Moon } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore.js';
 import { useLiveStore } from '../../store/liveStore.js';
-import { ROLE_LABELS } from '../../utils/roles.js';
+import { useTheme } from '../../hooks/useTheme.js';
+import { ROLE_LABELS, ROLE_ACCENT } from '../../utils/roles.js';
 import { initials, displayName } from '../../utils/flowFormat.js';
+import NotificationCenter from '../domain/NotificationCenter.jsx';
 
 const SECTION = [
   ['/admin/flow', 'Admin · Flow Intelligence'],
+  ['/admin/patient-journey', 'Admin · Patient Tracking'],
   ['/admin', 'Admin'],
+  ['/patient-journey', 'Patient Journey'],
   ['/doctor/flow', 'Doctor · Flow Intelligence'],
   ['/doctor', 'Doctor'],
   ['/ot/flow', 'OT · Flow Intelligence'],
   ['/ot', 'Operating Theatres'],
+  ['/nurse', 'Nursing'],
+  ['/patient', 'My Care'],
 ];
 
 export function Topbar() {
@@ -29,6 +34,7 @@ export function Topbar() {
   const role = useAuthStore((s) => s.role);
   const logout = useAuthStore((s) => s.logout);
   const isConnected = useLiveStore((s) => s.isConnected);
+  const { isDark, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -53,7 +59,7 @@ export function Topbar() {
   };
 
   return (
-    <header className="h-14 px-4 md:px-6 border-b border-cream-200 bg-cream-50 flex items-center justify-between z-20 shrink-0 select-none">
+    <header className="h-14 px-4 md:px-6 border-b border-cream-200 bg-cream-50 flex items-center justify-between z-20 shrink-0 select-none no-print">
       <div className="flex items-center gap-2 min-w-0">
         <span className="md:hidden w-8 h-8 rounded-lg bg-royal-500 text-white flex items-center justify-center shrink-0">
           <Activity className="w-4 h-4" aria-hidden="true" />
@@ -61,15 +67,27 @@ export function Topbar() {
         <span className="text-xs font-semibold text-ink-500 truncate">{section}</span>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <span
-          className={clsx('inline-flex items-center gap-1.5 text-[11px] font-semibold', isConnected ? 'text-[#13784F]' : 'text-ink-500')}
+          className={clsx('inline-flex items-center gap-1.5 text-[11px] font-semibold px-2', isConnected ? 'text-fg-ok' : 'text-ink-500')}
           role="status"
           title={isConnected ? 'Real-time updates connected' : 'Real-time updates disconnected'}
         >
-          <span className={clsx('w-2 h-2 rounded-full', isConnected ? 'bg-[#1FA971] animate-pulse' : 'bg-[#6B7280]')} aria-hidden="true" />
+          <span className={clsx('w-2 h-2 rounded-full', isConnected ? 'bg-[#10B981] animate-pulse' : 'bg-[#6B7280]')} aria-hidden="true" />
           <span className="hidden sm:inline">{isConnected ? 'Live' : 'Offline'}</span>
         </span>
+
+        {['admin', 'doctor', 'ot_manager'].includes(role) && <NotificationCenter />}
+
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-500 hover:text-ink-900 hover:bg-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500"
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={isDark ? 'Light mode' : 'Dark mode'}
+        >
+          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
 
         <div className="relative" ref={menuRef}>
           <button
@@ -77,9 +95,11 @@ export function Topbar() {
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-haspopup="menu"
-            className="flex items-center gap-2 pl-1.5 pr-2 py-1 rounded-xl hover:bg-royal-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500"
+            className="flex items-center gap-2 pl-1.5 pr-2 py-1 rounded-lg hover:bg-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500"
           >
-            <span className="w-8 h-8 rounded-full bg-royal-500 text-white flex items-center justify-center text-[11px] font-bold">{initials(name)}</span>
+            <span className="w-8 h-8 rounded-full text-white flex items-center justify-center text-[11px] font-bold" style={{ backgroundColor: ROLE_ACCENT[role] || '#014BAA' }}>
+              {initials(name)}
+            </span>
             <span className="hidden md:flex flex-col text-left leading-tight">
               <span className="text-xs font-semibold text-ink-900">{name}</span>
               <span className="text-[10px] text-ink-500">{ROLE_LABELS[role] || role}</span>
@@ -92,7 +112,7 @@ export function Topbar() {
                 <p className="text-xs font-semibold text-ink-900 truncate">{name}</p>
                 <p className="text-[11px] text-ink-500 truncate">{user?.email}</p>
               </div>
-              <button type="button" role="menuitem" onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 mt-1 text-xs text-[#B02E2E] hover:bg-[#D64545]/10 rounded-lg">
+              <button type="button" role="menuitem" onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 mt-1 text-xs text-fg-bad hover:bg-[#EF4444]/10 rounded-lg">
                 <LogOut className="w-4 h-4" aria-hidden="true" /> Sign out
               </button>
             </div>

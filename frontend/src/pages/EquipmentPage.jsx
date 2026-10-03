@@ -116,7 +116,7 @@ export function EquipmentPage() {
               labels={['Available', 'In Use', 'Maintenance', 'Offline']}
               counts={[availableCount, inUseCount, maintCount, offlineCount]}
               title="15 Assets"
-              colors={['#10b981', '#0d9488', '#f59e0b', '#64748b']}
+              colors={['#10b981', '#014BAA', '#f59e0b', '#64748b']}
             />
           </ChartCard>
 

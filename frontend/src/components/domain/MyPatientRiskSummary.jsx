@@ -23,7 +23,7 @@ export function MyPatientRiskSummary() {
     <div className="flow-card-pad">
       <SectionHeader
         title="My patient risk summary"
-        subtitle="Only your patients · predictions from historical data"
+        subtitle="Only your patients"
         icon={HeartPulse}
         actions={
           <Link to="/doctor/flow/predictions" className="flow-btn-ghost !py-1">
@@ -39,8 +39,8 @@ export function MyPatientRiskSummary() {
         <>
           <div className="grid grid-cols-3 gap-2 mb-3">
             {[
-              ['Critical', critical.length, 'text-[#B02E2E]'],
-              ['Discharge-ready', ready.length, 'text-[#13784F]'],
+              ['Critical', critical.length, 'text-fg-bad'],
+              ['Discharge-ready', ready.length, 'text-fg-ok'],
               ['Stay > 48h', longStay.length, 'text-royal-900'],
             ].map(([label, n, cls]) => (
               <div key={label} className="rounded-xl bg-cream-100 p-2.5 text-center">

@@ -48,7 +48,7 @@ export function KpiCard({
         ? '#f59e0b'
         : status === 'success'
         ? '#10b981'
-        : '#0d9488';
+        : '#014BAA';
 
     sparklineSvg = (
       <svg width={width} height={height} className="shrink-0 overflow-visible">

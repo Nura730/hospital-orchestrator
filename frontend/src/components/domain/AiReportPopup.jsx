@@ -82,8 +82,8 @@ export function ReportBody({ text }) {
       const rest = trimmed.slice(m[0].length).trim();
       const impact = /expected impact/i.test(label);
       out.push(
-        <div key={i} className={clsx('my-1 ml-4 rounded-lg border-l-4 px-3 py-1.5 text-xs', impact ? 'border-[#1FA971] bg-[#1FA971]/10' : 'border-royal-500 bg-royal-100')}>
-          <span className={clsx('font-bold mr-1', impact ? 'text-[#13784F]' : 'text-royal-700')}>{label}:</span>
+        <div key={i} className={clsx('my-1 ml-4 rounded-lg border-l-4 px-3 py-1.5 text-xs', impact ? 'border-[#10B981] bg-[#10B981]/10' : 'border-royal-500 bg-royal-100')}>
+          <span className={clsx('font-bold mr-1', impact ? 'text-fg-ok' : 'text-royal-700')}>{label}:</span>
           {inline(rest)}
         </div>
       );
@@ -208,7 +208,7 @@ export function AiReportPopup({ open, onClose, scope = 'admin', defaultFormat = 
             </button>
           ))}
         </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-[#FFE9A8] text-[#6B4E00] px-2.5 py-1 text-[11px] font-semibold">
+        <span className="inline-flex items-center gap-1 rounded-full bg-highlight text-fg-warn px-2.5 py-1 text-[11px] font-semibold">
           <ShieldAlert className="w-3.5 h-3.5" aria-hidden="true" /> AI-generated, verify before acting
         </span>
         {report && (
@@ -257,7 +257,7 @@ export function AiReportPopup({ open, onClose, scope = 'admin', defaultFormat = 
                     compact
                   />
                 )}
-                <pre className="text-[11px] bg-[#0B1220] text-[#D5E2F5] rounded-xl p-3 overflow-auto max-h-72 scrollbar-thin">{JSON.stringify(report.snapshot, null, 2)}</pre>
+                <pre className="text-[11px] bg-[#0B1220] text-[#CBD5E1] rounded-xl p-3 overflow-auto max-h-72 scrollbar-thin">{JSON.stringify(report.snapshot, null, 2)}</pre>
               </div>
             )}
           </div>

@@ -1,191 +1,150 @@
 /* ================================================================
    MediOrchestra — Global Styles
-   Tailwind layers + CSS custom properties + scrollbar + animations
+   Design tokens (light + dark), base, components and utilities.
+   Every color token is stored as RGB channels so Tailwind's /opacity
+   modifiers work (see tailwind.config.js).
    ================================================================ */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ── Light Theme (default) ──────────────────────────────────────── */
+/* ── Light theme (default): cream #F8F3F0 + royal blue #014BAA ─── */
 :root {
-  /* Primary — Teal */
-  --color-primary-50:  #f0fdfa;
-  --color-primary-100: #ccfbf1;
-  --color-primary-200: #99f6e4;
-  --color-primary-300: #5eead4;
-  --color-primary-400: #2dd4bf;
-  --color-primary-500: #14b8a6;
-  --color-primary-600: #0d9488;
-  --color-primary-700: #0f766e;
-  --color-primary-800: #115e59;
-  --color-primary-900: #134e4a;
-  --color-primary-950: #042f2e;
+  color-scheme: light;
 
-  /* Surface / Background */
-  --color-background:       #f8fafc;
-  --color-surface:           #ffffff;
-  --color-surface-alt:       #f1f5f9;
-  --color-surface-hover:     #e2e8f0;
+  --royal-900: 1 42 99;       /* headings: #012A63 */
+  --royal-700: 1 59 135;      /* primary hover: #013B87 */
+  --royal-500: 1 75 170;      /* primary: #014BAA */
+  --royal-100: 227 236 248;   /* primary tint: #E3ECF8 */
 
-  /* Text */
-  --color-foreground:        #0f172a;
-  --color-muted:             #94a3b8;
-  --color-muted-foreground:  #64748b;
+  --cream-100: 248 243 240;   /* page background: #F8F3F0 */
+  --cream-50: 255 255 255;    /* cards: #FFFFFF */
+  --card: 255 255 255;
+  --sunken: 251 248 246;      /* table header / hover: #FBF8F6 */
+  --cream-200: 236 227 221;   /* borders: #ECE3DD */
 
-  /* Border */
-  --color-border:            #e2e8f0;
+  --ink-900: 15 27 45;        /* text: #0F1B2D */
+  --ink-500: 91 107 128;      /* secondary text: #5B6B80 */
 
-  /* Chart palette */
-  --chart-1: #0d9488;
-  --chart-2: #0ea5e9;
-  --chart-3: #8b5cf6;
-  --chart-4: #f59e0b;
-  --chart-5: #ec4899;
-  --chart-6: #22c55e;
-  --chart-7: #ef4444;
-  --chart-8: #6366f1;
+  --bed-available: 16 185 129;
+  --bed-occupied: 1 75 170;
+  --bed-cleaning: 245 158 11;
+  --bed-reserved: 139 92 246;
+  --bed-blocked: 107 114 128;
 
-  /* Scrollbar */
-  --scrollbar-thumb: #cbd5e1;
+  --fg-ok: 4 108 78;          /* #046C4E: AA on white and on green tints */
+  --fg-warn: 146 64 14;       /* #92400E: AA on white and on amber tints */
+  --fg-bad: 185 28 28;        /* #B91C1C */
+  --fg-info: 1 75 170;
+  --fg-violet: 109 40 217;
+
+  --highlight: 255 233 168;
+
+  --color-primary-50:  #eef4fc;
+  --color-primary-100: #e3ecf8;
+  --color-primary-200: #bcd2ef;
+  --color-primary-300: #86ade0;
+  --color-primary-400: #3f7acb;
+  --color-primary-500: #014baa;
+  --color-primary-600: #013f90;
+  --color-primary-700: #013475;
+  --color-primary-800: #012a5e;
+  --color-primary-900: #012a63;
+  --color-primary-950: #00173a;
+
+  --scrollbar-thumb: #d9cfc8;
   --scrollbar-track: transparent;
 }
 
-/* ── Predictive Flow Intelligence tokens ─────────────────────────── */
-:root {
-  --blue-900: #012A63;
-  --blue-700: #0A3F8F;
-  --blue-500: #014BAA;
-  --blue-100: #E3ECF8;
-  --cream-50: #FFFFFF;
-  --cream-100: #F8F3F0;
-  --cream-200: #EFE7E2;
-  --ink-900: #0F1B2D;
-  --ink-500: #5B6B80;
-  --bed-available: #1FA971;
-  --bed-occupied: #D64545;
-  --bed-cleaning: #F2A93B;
-  --bed-reserved: #2BA8E0;
-  --bed-blocked: #6B7280;
-  --highlight-row: #FFE9A8;
-}
-
-/* ── Dark Theme ─────────────────────────────────────────────────── */
+/* ── Dark theme (optional, from the top-bar toggle) ─────────────── */
 .dark {
-  --color-primary-50:  #042f2e;
-  --color-primary-100: #134e4a;
-  --color-primary-200: #115e59;
-  --color-primary-300: #0f766e;
-  --color-primary-400: #0d9488;
-  --color-primary-500: #14b8a6;
-  --color-primary-600: #2dd4bf;
-  --color-primary-700: #5eead4;
-  --color-primary-800: #99f6e4;
-  --color-primary-900: #ccfbf1;
-  --color-primary-950: #f0fdfa;
+  color-scheme: dark;
 
-  --color-background:       #0c1222;
-  --color-surface:           #131c31;
-  --color-surface-alt:       #1a2540;
-  --color-surface-hover:     #1e2d4a;
+  --royal-900: 241 245 249;
+  --royal-700: 1 59 135;
+  --royal-500: 59 130 246;
+  --royal-100: 34 37 54;
 
-  --color-foreground:        #f1f5f9;
-  --color-muted:             #475569;
-  --color-muted-foreground:  #94a3b8;
+  --cream-100: 15 17 23;
+  --cream-50: 26 29 39;
+  --card: 34 37 54;
+  --sunken: 34 37 54;
+  --cream-200: 46 51 71;
 
-  --color-border:            #1e293b;
+  --ink-900: 241 245 249;
+  --ink-500: 148 163 184;
 
-  --chart-1: #2dd4bf;
-  --chart-2: #38bdf8;
-  --chart-3: #a78bfa;
-  --chart-4: #fbbf24;
-  --chart-5: #f472b6;
-  --chart-6: #4ade80;
-  --chart-7: #f87171;
-  --chart-8: #818cf8;
+  --bed-occupied: 59 130 246;
 
-  --scrollbar-thumb: #334155;
-  --scrollbar-track: transparent;
+  --fg-ok: 52 211 153;
+  --fg-warn: 251 191 36;
+  --fg-bad: 248 113 113;
+  --fg-info: 96 165 250;
+  --fg-violet: 167 139 250;
+
+  --highlight: 113 63 18;
+
+  --scrollbar-thumb: #2e3347;
 }
 
-/* ── Base Layer ─────────────────────────────────────────────────── */
+/* ── Base ───────────────────────────────────────────────────────── */
 @layer base {
   *,
   *::before,
   *::after {
-    @apply border-border;
+    @apply border-cream-200;
+  }
+
+  html,
+  body {
+    @apply bg-cream-100 text-ink-900 font-sans;
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Focus rings — accessible and consistent */
   :focus-visible {
-    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-background;
+    @apply outline-none ring-2 ring-royal-500 ring-offset-2 ring-offset-cream-100;
   }
 
-  /* Tabular numbers for KPIs and data */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
-}
 
-/* ── Component Layer ────────────────────────────────────────────── */
-@layer components {
-  /* Card base */
-  .card {
-    @apply bg-surface rounded-xl border border-border shadow-card p-4;
-  }
-
-  .card-lg {
-    @apply bg-surface rounded-xl border border-border shadow-card-lg p-5;
-  }
-
-  /* Glass effect for overlays */
-  .glass {
-    @apply bg-surface/80 backdrop-blur-xl border border-border/50;
-  }
-
-  /* Status dot */
-  .status-dot {
-    @apply inline-block w-2 h-2 rounded-full;
-  }
-
-  /* Truncate text */
-  .text-truncate {
-    @apply truncate overflow-hidden whitespace-nowrap;
-  }
-
-  /* Scrollable container */
-  .scroll-container {
-    @apply overflow-auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
-  }
-
-  /* Data table row hover */
-  .table-row-hover {
-    @apply transition-colors duration-150 hover:bg-surface-alt;
+  /* One table style everywhere: single outer border (on the wrapper), row dividers only. */
+  table {
+    border-collapse: collapse;
   }
 }
 
-/* ── Flow Intelligence components (cream / royal blue, theme-independent) ── */
+/* ── Components ─────────────────────────────────────────────────── */
 @layer components {
+  /* Cards: 1px border, no shadow, no gradient */
+  .card,
+  .flow-card {
+    @apply bg-cream-50 rounded-xl border border-cream-200;
+  }
+  .card-lg,
+  .flow-card-pad {
+    @apply bg-cream-50 rounded-xl border border-cream-200 p-4;
+  }
+
   .flow-page {
     @apply -m-4 md:-m-6 p-4 md:p-6 min-h-full bg-cream-100 text-ink-900;
   }
-  .flow-card {
-    @apply bg-cream-50 rounded-2xl border border-cream-200 shadow-soft;
+
+  /* Small grey section label used across dashboards */
+  .label-xs {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-ink-500;
   }
-  .flow-card-pad {
-    @apply bg-cream-50 rounded-2xl border border-cream-200 shadow-soft p-4 md:p-5;
-  }
+
+  /* Buttons */
   .flow-btn {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors
       focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-100
       disabled:opacity-50 disabled:cursor-not-allowed;
   }
@@ -193,51 +152,88 @@
     @apply flow-btn bg-royal-500 text-white hover:bg-royal-700;
   }
   .flow-btn-secondary {
-    @apply flow-btn bg-cream-50 text-royal-500 border border-cream-200 hover:bg-royal-100;
+    @apply flow-btn bg-cream-50 text-ink-900 border border-cream-200 hover:bg-sunken;
   }
   .flow-btn-ghost {
-    @apply flow-btn text-ink-500 hover:text-royal-500 hover:bg-royal-100;
+    @apply flow-btn text-ink-500 hover:text-ink-900 hover:bg-sunken;
   }
   .flow-btn-danger {
-    @apply flow-btn bg-bed-occupied text-white hover:brightness-95;
+    @apply flow-btn bg-[#DC2626] text-white hover:bg-[#B91C1C];
   }
+  .flow-btn-success {
+    @apply flow-btn bg-[#047857] text-white hover:bg-[#065F46];
+  }
+
   .flow-input {
-    @apply w-full rounded-xl border border-cream-200 bg-cream-50 px-3 py-2 text-xs text-ink-900 placeholder-ink-500
+    @apply w-full rounded-lg border border-cream-200 bg-cream-50 px-3 py-2 text-xs text-ink-900 placeholder-ink-500
       focus:outline-none focus:ring-2 focus:ring-royal-500;
   }
   .flow-chip {
     @apply inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors;
   }
-  .flow-table th {
-    @apply px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-ink-500 whitespace-nowrap;
+
+  /* Tables: wrap with .table-wrap for the single outer border */
+  .table-wrap {
+    @apply w-full overflow-x-auto rounded-xl border border-cream-200 bg-cream-50;
   }
-  .flow-table td {
+  .flow-table,
+  .mo-table {
+    @apply w-full text-left;
+    border-collapse: collapse;
+  }
+  :where(.flow-table, .mo-table) th {
+    @apply bg-sunken px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-ink-500 whitespace-nowrap;
+    border-bottom: 1px solid rgb(var(--cream-200));
+  }
+  :where(.flow-table, .mo-table) td {
     @apply px-3 py-2.5 text-xs text-ink-900 whitespace-nowrap;
+    border-bottom: 1px solid rgb(var(--cream-200));
   }
-  .flow-table tbody tr:nth-child(even) {
-    background-color: var(--cream-100);
+  :where(.flow-table, .mo-table) tbody tr:last-child td {
+    border-bottom: 0;
   }
+  .flow-table tbody tr,
+  .mo-table tbody tr {
+    @apply transition-colors hover:bg-sunken;
+  }
+
   .flow-skeleton {
-    @apply rounded-lg animate-pulse;
-    background-color: var(--cream-200);
+    @apply rounded-lg animate-pulse bg-sunken;
   }
+
+  /* Previously a navy gradient; now a plain surface panel */
   .schematic-panel {
-    background: linear-gradient(160deg, #012A63 0%, #0B1220 100%);
+    @apply bg-cream-50 border border-cream-200;
+  }
+
+  /* Status dot */
+  .status-dot {
+    @apply inline-block w-2 h-2 rounded-full;
+  }
+
+  .scroll-container {
+    @apply overflow-auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  .table-row-hover {
+    @apply transition-colors duration-150 hover:bg-sunken;
   }
 }
 
-/* ── Utility Layer ──────────────────────────────────────────────── */
+/* ── Utilities ──────────────────────────────────────────────────── */
 @layer utilities {
-  /* Hide scrollbar but keep scrolling */
-  .scrollbar-hidden {
+  .scrollbar-hidden,
+  .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .scrollbar-hidden::-webkit-scrollbar {
+  .scrollbar-hidden::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
 
-  /* Custom scrollbar for Webkit */
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -249,43 +245,21 @@
     background: var(--scrollbar-thumb);
     border-radius: 9999px;
   }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: var(--color-muted);
-  }
 
-  /* Animated gradient background */
-  .gradient-primary {
-    @apply bg-gradient-to-r from-primary-600 to-primary-500;
-  }
-
-  .gradient-dark {
-    @apply bg-gradient-to-br from-[#0c1222] via-[#131c31] to-[#1a2540];
-  }
-
-  /* Pulse for live updates on bed cells */
   .pulse-update {
     animation: pulse-update 600ms ease-out;
   }
 
-  /* Skeleton shimmer */
   .skeleton {
-    @apply bg-surface-alt rounded;
-    background: linear-gradient(
-      90deg,
-      var(--color-surface-alt) 25%,
-      var(--color-surface-hover) 50%,
-      var(--color-surface-alt) 75%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 2s linear infinite;
+    @apply bg-sunken rounded animate-pulse;
   }
 }
 
-/* ── Keyframes (non-tailwind) ───────────────────────────────────── */
+/* ── Keyframes ──────────────────────────────────────────────────── */
 @keyframes pulse-update {
-  0%   { box-shadow: 0 0 0 0 rgb(20 184 166 / 0.5); }
-  70%  { box-shadow: 0 0 0 10px rgb(20 184 166 / 0); }
-  100% { box-shadow: 0 0 0 0 rgb(20 184 166 / 0); }
+  0%   { box-shadow: 0 0 0 0 rgb(59 130 246 / 0.5); }
+  70%  { box-shadow: 0 0 0 10px rgb(59 130 246 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(59 130 246 / 0); }
 }
 
 @keyframes shimmer {
@@ -293,7 +267,6 @@
   100% { background-position: 200% 0; }
 }
 
-/* ── Transitions for route pages ────────────────────────────────── */
 .page-enter {
   animation: fade-in 200ms ease-out;
 }
@@ -303,25 +276,23 @@
   100% { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Print styles ───────────────────────────────────────────────── */
+/* ── Print: only the report sheet is printed when one is open ───── */
 @media print {
   .no-print {
     display: none !important;
   }
+  body.printing-report * {
+    visibility: hidden !important;
+  }
+  body.printing-report .print-area,
+  body.printing-report .print-area * {
+    visibility: visible !important;
+  }
+  body.printing-report .print-area {
+    position: fixed;
+    inset: 0;
+    padding: 24px;
+    background: #ffffff;
+    color: #0f172a;
+  }
 }
-
-/* ── Flow Command Center dark mode (scoped; the rest of the app stays cream/blue) ── */
-.flow-dark.flow-page { background-color: #0B1220; color: #E3ECF8; }
-.flow-dark .flow-card,
-.flow-dark .flow-card-pad { background-color: #101B33; border-color: #1E2D4A; color: #E3ECF8; }
-.flow-dark .text-ink-900,
-.flow-dark .text-royal-900 { color: #E3ECF8; }
-.flow-dark .text-ink-500 { color: #9FB6D9; }
-.flow-dark .bg-cream-50,
-.flow-dark .bg-cream-100 { background-color: #14223F; }
-.flow-dark .border-cream-200 { border-color: #1E2D4A; }
-.flow-dark .bg-royal-100 { background-color: #17305C; }
-.flow-dark .flow-table tbody tr:nth-child(even) { background-color: #14223F; }
-.flow-dark .flow-btn-secondary { background-color: #14223F; border-color: #1E2D4A; color: #CFE0FA; }
-.flow-dark .flow-input { background-color: #14223F; border-color: #1E2D4A; color: #E3ECF8; }
-.flow-dark .flow-skeleton { background-color: #1E2D4A; }

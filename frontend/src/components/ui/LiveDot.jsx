@@ -12,7 +12,7 @@ export function LiveDot({ isConnected = true, showLabel = true, className = '' }
       className={clsx(
         'inline-flex items-center gap-2 select-none text-xs font-medium px-2 py-1 rounded-full border',
         isConnected
-          ? 'bg-success-500/10 text-success-700 dark:text-success-400 border-success-500/20'
+          ? 'bg-success-500/10 text-fg-ok border-success-500/20'
           : 'bg-warning-500/10 text-warning-700 dark:text-warning-400 border-warning-500/20',
         className
       )}

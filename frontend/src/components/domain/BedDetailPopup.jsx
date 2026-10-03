@@ -33,7 +33,7 @@ export function BedDetailPopup({ tile, onClose, onChanged, allowActions = true }
     try {
       const res = await flowApi.postEvent(eventType, payload);
       toast.success(`${label} (${res?.tookMs ?? '<1'} ms)`);
-      if (eventType === 'CLEANING_DONE' && res?.result?.recommendation) toast(`Suggested: ${res.result.recommendation.title}`, { icon: '💡' });
+      if (eventType === 'CLEANING_DONE' && res?.result?.recommendation) toast(`Suggested: ${res.result.recommendation.title}`);
       onChanged?.(res);
       onClose();
     } catch (e) {

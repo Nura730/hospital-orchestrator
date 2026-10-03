@@ -1,13 +1,13 @@
 /**
  * @file LoginPage.jsx
- * Sign-in for the three MediOrchestra roles (Admin, Doctor, OT Manager): one-click demo buttons
- * using the seeded backend accounts, or email + password with a role selector.
+ * Sign-in for the five MediOrchestra roles (Admin, Doctor, OT Manager, Nurse, Patient): one-click demo
+ * buttons using the demo accounts, or email + password with a role selector.
  */
 
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import { Activity, ShieldCheck, Stethoscope, Scissors, Lock, Mail, ArrowRight, Loader2, Radar, Brain, Zap } from 'lucide-react';
+import { Activity, ShieldCheck, Stethoscope, Scissors, HeartHandshake, User, Lock, Mail, ArrowRight, Loader2, Radar, Brain, Zap } from 'lucide-react';
 import { useAuthStore } from '../store/authStore.js';
 import { ROLES, DEFAULT_USERS, ROLE_HOME, isRouteAllowed } from '../utils/roles.js';
 
@@ -15,7 +15,11 @@ const ROLE_OPTIONS = [
   { key: 'admin', role: ROLES.ADMIN, label: 'Hospital Admin', hint: 'Command Center, simulator, discharge planning', icon: ShieldCheck },
   { key: 'doctor', role: ROLES.DOCTOR, label: 'Doctor', hint: 'Your patients, predictions, discharges', icon: Stethoscope },
   { key: 'ot_manager', role: ROLES.OT_MANAGER, label: 'OT Manager', hint: 'Theatres, post-op beds, ICU overflow', icon: Scissors },
+  { key: 'nurse', role: ROLES.NURSE, label: 'Nurse', hint: 'Shift, patients, tasks, bed board', icon: HeartHandshake },
+  { key: 'patient', role: ROLES.PATIENT, label: 'Patient', hint: 'My status, treatment, requests', icon: User },
 ];
+
+const SHORT_LABEL = { admin: 'Admin', doctor: 'Doctor', ot_manager: 'OT Manager', nurse: 'Nurse', patient: 'Patient' };
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -59,12 +63,12 @@ export function LoginPage() {
   return (
     <div className="min-h-screen w-screen flex bg-cream-100 text-ink-900">
       {/* Left: what the product does */}
-      <section className="hidden lg:flex flex-col justify-between w-[46%] p-12 bg-gradient-to-br from-royal-900 via-royal-700 to-royal-500 text-white relative overflow-hidden">
+      <section className="hidden lg:flex flex-col justify-between w-[46%] p-12 bg-gradient-to-br from-[#012A63] via-[#0A3F8F] to-[#014BAA] text-white relative overflow-hidden">
         <div className="absolute -right-24 -top-24 w-96 h-96 rounded-full bg-white/5" aria-hidden="true" />
         <div className="absolute -left-16 bottom-10 w-72 h-72 rounded-full bg-white/5" aria-hidden="true" />
 
         <div className="flex items-center gap-3 relative">
-          <div className="w-11 h-11 rounded-xl bg-white text-royal-500 flex items-center justify-center shadow-lg">
+          <div className="w-11 h-11 rounded-xl bg-white text-[#014BAA] flex items-center justify-center shadow-lg">
             <Activity className="w-6 h-6" aria-hidden="true" />
           </div>
           <div>
@@ -112,7 +116,7 @@ export function LoginPage() {
           </div>
 
           {/* One-click demo roles */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2" role="group" aria-label="Quick demo login">
+          <div className="grid grid-cols-2 sm:grid-cols-3 auto-rows-fr gap-2" role="group" aria-label="Quick demo login">
             {ROLE_OPTIONS.map((r) => {
               const Icon = r.icon;
               return (
@@ -122,7 +126,7 @@ export function LoginPage() {
                   onClick={() => handleDemo(r.key)}
                   disabled={loading}
                   className={clsx(
-                    'rounded-2xl border-2 p-3 text-left transition-colors bg-cream-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500 disabled:opacity-60',
+                    'h-full flex flex-col rounded-2xl border-2 p-3 text-left transition-colors bg-cream-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500 disabled:opacity-60',
                     selected === r.key ? 'border-royal-500 shadow-soft' : 'border-cream-200 hover:border-royal-500/40'
                   )}
                 >
@@ -159,9 +163,9 @@ export function LoginPage() {
                     type="button"
                     onClick={() => pickRole(r.key)}
                     aria-pressed={selected === r.key}
-                    className={clsx('flex-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-colors', selected === r.key ? 'bg-royal-500 text-white' : 'text-ink-500 hover:text-royal-500')}
+                    className={clsx('flex-1 px-1.5 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-colors', selected === r.key ? 'bg-royal-500 text-white' : 'text-ink-500 hover:text-royal-500')}
                   >
-                    {r.label}
+                    {SHORT_LABEL[r.key]}
                   </button>
                 ))}
               </div>

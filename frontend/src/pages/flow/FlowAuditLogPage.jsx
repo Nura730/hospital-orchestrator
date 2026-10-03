@@ -16,10 +16,10 @@ function summarize(e) {
   const p = e.payload || {};
   const r = e.result || {};
   if (e.error) return e.error;
-  if (e.eventType === 'DISCHARGE_SIGNED') return `${r.alias || p.patientId} discharged · ${r.bedId || ''} → cleaning`;
+  if (e.eventType === 'DISCHARGE_SIGNED') return `${r.alias || p.patientId} discharged · ${r.bedId || ''} to cleaning`;
   if (e.eventType === 'CLEANING_DONE') return `${p.bedId} ready${r.recommendation ? ` · suggested: ${r.recommendation.title}` : ''}`;
   if (e.eventType === 'OT_COMPLETE') return `${r.caseNumber || p.caseId} complete${r.postOpBedId ? ` · post-op ${r.postOpBedId}` : ''}`;
-  if (e.eventType === 'PATIENT_DETERIORATED') return `${r.alias || p.patientId} → acuity ${r.acuity ?? p.newAcuity}`;
+  if (e.eventType === 'PATIENT_DETERIORATED') return `${r.alias || p.patientId} now acuity ${r.acuity ?? p.newAcuity}`;
   if (e.eventType === 'AMBULANCE_INCOMING') return `ETA ${p.eta} min, acuity ${p.acuity}${r.bedId ? ` · ${r.bedId} ${r.bedMode}` : ''}`;
   return Object.keys(p).length ? JSON.stringify(p).slice(0, 120) : '—';
 }
@@ -110,7 +110,7 @@ export default function FlowAuditLogPage() {
                     {open === e.id && (
                       <tr>
                         <td colSpan={6}>
-                          <pre className="text-[11px] bg-[#0B1220] text-[#D5E2F5] rounded-xl p-3 overflow-auto max-h-60 whitespace-pre-wrap">{JSON.stringify({ payload: e.payload, result: e.result }, null, 2)}</pre>
+                          <pre className="text-[11px] bg-[#0B1220] text-[#CBD5E1] rounded-xl p-3 overflow-auto max-h-60 whitespace-pre-wrap">{JSON.stringify({ payload: e.payload, result: e.result }, null, 2)}</pre>
                         </td>
                       </tr>
                     )}

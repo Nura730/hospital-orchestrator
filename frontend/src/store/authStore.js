@@ -9,6 +9,18 @@ import { ROLES, DEFAULT_USERS } from '../utils/roles.js';
 
 const STORAGE_KEY = 'mediorchestra_auth';
 
+/* Nurse and Patient accounts are frontend demo accounts: the backend has no such user types yet,
+   so they are checked here and never sent to the API. */
+const LOCAL_ROLES = [ROLES.NURSE, ROLES.PATIENT];
+
+async function localLogin({ email, password, role }) {
+  const account = Object.values(DEFAULT_USERS).find((u) => u.role === role && u.localOnly);
+  const ok = account && String(email || '').trim().toLowerCase() === account.email && password === account.demoPassword;
+  if (!ok) return { ok: false, error: 'Invalid email or password for this role' };
+  const { demoPassword, backendEmail, localOnly, ...user } = account; // eslint-disable-line no-unused-vars
+  return { ok: true, data: { user, token: `local-demo-${role}-${Date.now()}` } };
+}
+
 function loadInitialState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -55,7 +67,7 @@ export const useAuthStore = create((set, get) => ({
   login: async ({ email, password, role }) => {
     set({ loading: true, error: null });
     try {
-      const res = await apiLogin({ email, password, role });
+      const res = LOCAL_ROLES.includes(role) ? await localLogin({ email, password, role }) : await apiLogin({ email, password, role });
       if (!res.ok) {
         throw new Error(res.error || 'Authentication failed');
       }
@@ -106,7 +118,7 @@ export const useAuthStore = create((set, get) => ({
    */
   logout: async () => {
     try {
-      await apiLogout();
+      if (!LOCAL_ROLES.includes(get().role)) await apiLogout();
     } catch {
       // Ignore network errors on logout
     }
@@ -125,7 +137,7 @@ export const useAuthStore = create((set, get) => ({
    * Refresh current profile from backend.
    */
   fetchMe: async () => {
-    if (!get().token) return;
+    if (!get().token || LOCAL_ROLES.includes(get().role)) return;
     try {
       const res = await apiGetMe();
       if (res.ok && res.data) {

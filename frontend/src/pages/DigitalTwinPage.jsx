@@ -80,7 +80,7 @@ export function DigitalTwinPage() {
           </div>
           <div>
             <span className="text-xs text-surface-muted font-medium">Flow Rate</span>
-            <p className="text-sm font-bold text-surface-foreground">Optimal ER → ICU Transit</p>
+            <p className="text-sm font-bold text-surface-foreground">Optimal ER to ICU Transit</p>
           </div>
         </Card>
 

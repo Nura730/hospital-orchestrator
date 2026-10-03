@@ -1,59 +1,83 @@
 /**
  * @file StatusPill.jsx
- * One pill for every status vocabulary in the flow module: bed status, severity, root cause/cascade,
- * doctor presence, post-op bed availability and recommendation risk/status.
+ * One pill for every status vocabulary: bed status, severity, root cause/cascade, presence,
+ * post-op bed availability, recommendation risk/status, patient status, tasks and requests.
  */
 
 import React from 'react';
 import clsx from 'clsx';
 
+const GREEN = ['bg-[#10B981]/10 text-fg-ok border-[#10B981]/30', '#10B981'];
+const RED = ['bg-[#EF4444]/10 text-fg-bad border-[#EF4444]/30', '#EF4444'];
+const AMBER = ['bg-[#F59E0B]/10 text-fg-warn border-[#F59E0B]/30', '#F59E0B'];
+const BLUE = ['bg-[#014BAA]/10 text-fg-info border-[#014BAA]/30', '#014BAA'];
+const PURPLE = ['bg-[#8B5CF6]/10 text-fg-violet border-[#8B5CF6]/30', '#8B5CF6'];
+const GREY = ['bg-[#6B7280]/10 text-ink-500 border-[#6B7280]/30', '#94A3B8'];
+
+const s = (tone, label) => [tone[0], label, tone[1]];
+
 const STYLES = {
   // bed / room status
-  available: ['bg-[#1FA971]/10 text-[#13784F] border-[#1FA971]/40', 'Available', '#1FA971'],
-  occupied: ['bg-[#D64545]/10 text-[#B02E2E] border-[#D64545]/40', 'Occupied', '#D64545'],
-  cleaning: ['bg-[#F2A93B]/15 text-[#8A5200] border-[#F2A93B]/50', 'Cleaning', '#F2A93B'],
-  reserved: ['bg-[#2BA8E0]/10 text-[#136E96] border-[#2BA8E0]/40', 'Reserved', '#2BA8E0'],
-  blocked: ['bg-[#6B7280]/10 text-[#4B5260] border-[#6B7280]/40', 'Blocked', '#6B7280'],
+  available: s(GREEN, 'Available'),
+  occupied: s(BLUE, 'Occupied'),
+  cleaning: s(AMBER, 'Cleaning'),
+  reserved: s(PURPLE, 'Reserved'),
+  blocked: s(GREY, 'Maintenance'),
+  maintenance: s(GREY, 'Maintenance'),
   // severity
-  HIGH: ['bg-[#D64545]/10 text-[#B02E2E] border-[#D64545]/40', 'High', '#D64545'],
-  MEDIUM: ['bg-[#F2A93B]/15 text-[#8A5200] border-[#F2A93B]/50', 'Medium', '#F2A93B'],
-  LOW: ['bg-[#1FA971]/10 text-[#13784F] border-[#1FA971]/40', 'Low', '#1FA971'],
-  root: ['bg-[#D64545] text-white border-[#D64545]', 'ROOT CAUSE', '#fff'],
-  cascade: ['bg-[#F28C28] text-white border-[#F28C28]', 'CASCADE', '#fff'],
-  ok: ['bg-[#1FA971]/10 text-[#13784F] border-[#1FA971]/40', 'OK', '#1FA971'],
-  // presence
-  online: ['bg-[#1FA971]/10 text-[#13784F] border-[#1FA971]/40', 'Online', '#1FA971'],
-  away: ['bg-[#F2A93B]/15 text-[#8A5200] border-[#F2A93B]/50', 'Away', '#F2A93B'],
-  offline: ['bg-[#6B7280]/10 text-[#4B5260] border-[#6B7280]/40', 'Offline', '#6B7280'],
+  HIGH: s(RED, 'High'),
+  MEDIUM: s(AMBER, 'Medium'),
+  LOW: s(GREEN, 'Low'),
+  root: ['bg-[#DC2626] text-white border-[#DC2626]', 'ROOT CAUSE', '#FFFFFF'],
+  cascade: ['bg-[#B45309] text-white border-[#B45309]', 'AFFECTED', '#FFFFFF'],
+  ok: s(GREEN, 'OK'),
+  // presence / duty
+  online: s(GREEN, 'Online'),
+  away: s(AMBER, 'Away'),
+  offline: s(GREY, 'Offline'),
+  on_duty: s(GREEN, 'On Duty'),
+  on_break: s(AMBER, 'On Break'),
+  off_duty: s(GREY, 'Off Duty'),
+  in_consultation: s(BLUE, 'In Consultation'),
+  emergency: s(RED, 'Emergency'),
   // post-op availability
-  YES: ['bg-[#1FA971] text-white border-[#1FA971]', 'YES', '#fff'],
-  NO: ['bg-[#D64545] text-white border-[#D64545]', 'NO', '#fff'],
-  PREDICTED_FREE: ['bg-[#F2A93B] text-[#3D2600] border-[#F2A93B]', 'PREDICTED FREE', '#3D2600'],
-  'N/A': ['bg-cream-200 text-ink-500 border-cream-200', 'N/A', '#5B6B80'],
+  YES: ['bg-[#047857] text-white border-[#047857]', 'YES', '#FFFFFF'],
+  NO: ['bg-[#DC2626] text-white border-[#DC2626]', 'NO', '#FFFFFF'],
+  PREDICTED_FREE: ['bg-[#B45309] text-white border-[#B45309]', 'PREDICTED FREE', '#FFFFFF'],
+  'N/A': s(GREY, 'N/A'),
   // recommendation risk / status
-  low: ['bg-[#1FA971]/10 text-[#13784F] border-[#1FA971]/40', 'Low risk', '#1FA971'],
-  medium: ['bg-[#F2A93B]/15 text-[#8A5200] border-[#F2A93B]/50', 'Medium risk', '#F2A93B'],
-  high: ['bg-[#D64545]/10 text-[#B02E2E] border-[#D64545]/40', 'High risk', '#D64545'],
-  pending: ['bg-royal-100 text-royal-700 border-royal-500/30', 'Pending', '#014BAA'],
-  approved: ['bg-[#1FA971]/10 text-[#13784F] border-[#1FA971]/40', 'Approved', '#1FA971'],
-  rejected: ['bg-[#6B7280]/10 text-[#4B5260] border-[#6B7280]/40', 'Rejected', '#6B7280'],
-  applied: ['bg-royal-500 text-white border-royal-500', 'Applied', '#fff'],
+  low: s(GREEN, 'Low risk'),
+  medium: s(AMBER, 'Medium risk'),
+  high: s(RED, 'High risk'),
+  pending: s(AMBER, 'Pending'),
+  approved: s(GREEN, 'Approved'),
+  rejected: s(GREY, 'Rejected'),
+  applied: ['bg-royal-500 text-white border-royal-500', 'Applied', '#FFFFFF'],
   // patient status
-  admitted: ['bg-royal-100 text-royal-700 border-royal-500/30', 'Admitted', '#014BAA'],
-  critical: ['bg-[#D64545]/10 text-[#B02E2E] border-[#D64545]/40', 'Critical', '#D64545'],
-  waiting: ['bg-[#F2A93B]/15 text-[#8A5200] border-[#F2A93B]/50', 'Waiting', '#F2A93B'],
-  in_recovery: ['bg-[#2BA8E0]/10 text-[#136E96] border-[#2BA8E0]/40', 'In recovery', '#2BA8E0'],
-  in_surgery: ['bg-[#6D28D9]/10 text-[#5B21B6] border-[#6D28D9]/30', 'In surgery', '#6D28D9'],
-  discharged: ['bg-[#6B7280]/10 text-[#4B5260] border-[#6B7280]/40', 'Discharged', '#6B7280'],
+  admitted: s(BLUE, 'Admitted'),
+  critical: s(RED, 'Critical'),
+  waiting: s(AMBER, 'Waiting'),
+  in_recovery: s(GREEN, 'In Recovery'),
+  in_surgery: s(PURPLE, 'In Surgery'),
+  discharged: s(GREY, 'Discharged'),
+  // tasks / requests / schedule
+  done: s(GREEN, 'Done'),
+  completed: s(GREEN, 'Completed'),
+  in_progress: s(BLUE, 'In Progress'),
+  scheduled: s(BLUE, 'Scheduled'),
+  addressed: s(GREEN, 'Addressed'),
+  sent: s(BLUE, 'Sent'),
+  urgent: s(RED, 'Urgent'),
+  skipped: s(GREY, 'Skipped'),
 };
 
 export function StatusPill({ status, label, size = 'sm', dot = true, className = '' }) {
-  const [cls, defaultLabel, dotColor] = STYLES[status] || ['bg-cream-200 text-ink-500 border-cream-200', String(status || '—'), '#5B6B80'];
+  const [cls, defaultLabel, dotColor] = STYLES[status] || [GREY[0], String(status || '—').replace(/_/g, ' '), GREY[1]];
   return (
     <span
       className={clsx(
         'inline-flex items-center gap-1.5 rounded-full border font-semibold whitespace-nowrap',
-        size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2.5 py-0.5 text-[11px]',
+        size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : size === 'lg' ? 'px-3 py-1 text-xs' : 'px-2.5 py-0.5 text-[11px]',
         cls,
         className
       )}

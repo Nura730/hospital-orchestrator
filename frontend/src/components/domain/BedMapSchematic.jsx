@@ -1,67 +1,62 @@
 /**
  * @file BedMapSchematic.jsx
- * Reference C: dark navy hospital floor schematic with neon tiles grouped by zone (ED, Radiology,
- * General Ward, HDU, ICU, PACU, OT), header chips, legend with live counts and info cards.
- * Clicking a tile opens BedDetailPopup.
+ * Hospital bed map grouped by zone (ED, Radiology, General Ward, HDU, ICU, PACU, OT): header numbers,
+ * legend with live counts and 48px bed cells. Clicking an occupied bed opens PatientDetailPopup, an empty
+ * bed opens BedInfoPanel and a theatre opens BedDetailPopup.
  */
 
 import React, { useMemo, useState } from 'react';
 import clsx from 'clsx';
-import { Activity, Truck, Users, Sparkles, Wrench } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { Truck, Users, Sparkles, Wrench, LogOut } from 'lucide-react';
 import BedTile from './BedTile.jsx';
 import BedDetailPopup from './BedDetailPopup.jsx';
+import BedInfoPanel from './BedInfoPanel.jsx';
+import PatientDetailPopup from './PatientDetailPopup.jsx';
+import flowApi from '../../api/flowApi.js';
+import { errorText } from '../../hooks/useFlowPolling.js';
 import { BED_STATUS_COLORS, BED_STATUS_LABELS } from '../../utils/flowFormat.js';
 
 const ZONE_LABELS = {
-  ED: 'Emergency Dept · triage pods & resus',
-  Radiology: 'Radiology · imaging bays',
-  'General Ward': 'General Ward · medical & isolation',
-  HDU: 'High Dependency Unit',
-  ICU: 'ICU · critical care pods',
-  PACU: 'PACU · post-op recovery',
-  OT: 'OT Suites',
+  ED: 'Emergency',
+  Radiology: 'Radiology',
+  'General Ward': 'General Ward',
+  HDU: 'HDU',
+  ICU: 'ICU',
+  PACU: 'Post-op Recovery',
+  OT: 'Operating Theatres',
 };
 
-function Chip({ children, tone = 'default' }) {
+function InfoTile({ icon: Icon, label, value, sub }) {
   return (
-    <span
-      className={clsx(
-        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-bold tracking-wide font-mono',
-        tone === 'live' ? 'border-[#1FA971] text-[#5BE3A6] bg-[#1FA971]/10' : 'border-white/20 text-white bg-white/5'
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
-function InfoCard({ icon: Icon, label, value, sub }) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 min-w-[150px] flex-1">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[#9FB6D9]">
-        <Icon className="w-3.5 h-3.5" aria-hidden="true" /> {label}
+    <div className="flex items-center gap-2.5 rounded-lg border border-cream-200 px-3 py-2 min-w-[150px] flex-1">
+      <Icon className="w-4 h-4 text-ink-500 shrink-0" aria-hidden="true" />
+      <div className="min-w-0">
+        <div className="text-sm font-bold text-ink-900 tabular-nums">{value}</div>
+        <div className="text-[10px] text-ink-500 truncate">
+          {label}
+          {sub ? ` · ${sub}` : ''}
+        </div>
       </div>
-      <div className="text-lg font-bold text-white tabular-nums">{value}</div>
-      {sub && <div className="text-[10px] text-[#9FB6D9]">{sub}</div>}
     </div>
   );
 }
 
 /**
- * @param {{ data: object, loading?: boolean, statusFilter?: string, search?: string, onChanged?: Function, compact?: boolean, dark?: boolean }} props
+ * @param {{ data: object, loading?: boolean, statusFilter?: string, search?: string, onChanged?: Function, compact?: boolean, allowActions?: boolean }} props
  */
-export function BedMapSchematic({ data, loading = false, statusFilter = 'all', search = '', onChanged, compact = false, allowActions = true }) {
+export function BedMapSchematic({ data, loading = false, statusFilter = 'all', search = '', onChanged, compact = false, allowActions = true, showLegend = true }) {
   const [selected, setSelected] = useState(null);
+  const [busy, setBusy] = useState(false);
   const q = search.trim().toUpperCase();
-
-  const zones = useMemo(() => (data ? data.zones : []), [data]);
+  const zones = useMemo(() => (data?.zones ? data.zones : []), [data]);
 
   if (loading && !data) {
     return (
-      <div className="schematic-panel rounded-2xl p-5 min-h-[320px]" aria-busy="true">
+      <div className="flow-card p-4 min-h-[320px]" aria-busy="true">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-32 rounded-xl bg-white/5 animate-pulse" />
+            <div key={i} className="h-32 flow-skeleton" />
           ))}
         </div>
       </div>
@@ -69,51 +64,63 @@ export function BedMapSchematic({ data, loading = false, statusFilter = 'all', s
   }
   if (!data) return null;
 
-  const { header, legend, info } = data;
+  const { header, legend = [], info } = data;
+  const close = () => setSelected(null);
+  const isRoom = selected?.kind === 'ot_room';
+  const hasPatient = Boolean(selected && !isRoom && selected.patientId);
+
+  const signDischarge = async () => {
+    if (!selected?.patientId) return;
+    setBusy(true);
+    try {
+      await flowApi.postEvent('DISCHARGE_SIGNED', { patientId: selected.patientId });
+      toast.success(`Discharge signed for ${selected.patientAlias || 'patient'}`);
+      onChanged?.();
+      close();
+    } catch (e) {
+      toast.error(errorText(e, 'Could not sign discharge'));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <div className="schematic-panel rounded-2xl p-4 md:p-5 text-white shadow-soft">
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <div className="flex items-center gap-2">
-          <Activity className="w-4 h-4 text-[#5BE3A6]" aria-hidden="true" />
-          <h3 className="text-sm font-bold tracking-wide">Live Hospital Map</h3>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Chip>
-            {header.occupied}/{header.totalBeds} BEDS
-          </Chip>
-          <Chip>{Math.round(header.occupancyPct)}% OCCUPANCY</Chip>
-          <Chip tone={header.flowActive ? 'live' : 'default'}>
-            <span className={clsx('w-1.5 h-1.5 rounded-full', header.flowActive ? 'bg-[#5BE3A6] animate-pulse' : 'bg-white/40')} />
-            {header.flowActive ? 'FLOW ACTIVE' : 'FLOW IDLE'}
-          </Chip>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-3 mb-4" aria-label="Legend">
-        {legend.map((l) => (
-          <span key={l.status} className="inline-flex items-center gap-1.5 text-[11px] text-[#D5E2F5]">
-            <span className="w-3 h-3 rounded-sm border" style={{ backgroundColor: `${BED_STATUS_COLORS[l.status]}55`, borderColor: BED_STATUS_COLORS[l.status] }} aria-hidden="true" />
-            {BED_STATUS_LABELS[l.status]} <b className="text-white tabular-nums">{l.count}</b>
+    <div className="flow-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div className="flex items-baseline gap-3">
+          <span className="text-lg font-bold tabular-nums text-ink-900">
+            {header?.occupied ?? '—'}/{header?.totalBeds ?? '—'}
           </span>
-        ))}
+          <span className="text-xs text-ink-500">beds · {Math.round(header?.occupancyPct ?? 0)}% occupied</span>
+        </div>
+        {showLegend && (
+        <div className="flex flex-wrap gap-3" aria-label="Legend">
+          {legend.map((l) => (
+            <span key={l.status} className="inline-flex items-center gap-1.5 text-[11px] text-ink-500">
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: BED_STATUS_COLORS[l.status] }} aria-hidden="true" />
+              {BED_STATUS_LABELS[l.status]} <b className="text-ink-900 tabular-nums">{l.count}</b>
+            </span>
+          ))}
+        </div>
+        )}
       </div>
 
-      <div className={clsx('grid gap-4', compact ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3')}>
+      {/* Columns (not grid rows) so short zones don't leave empty space */}
+      <div className={clsx('gap-3', compact ? 'columns-1 lg:columns-2' : 'columns-1 md:columns-2 xl:columns-3')}>
         {zones.map((z) => (
-          <section key={z.zone} className="rounded-xl border border-white/10 bg-white/[0.03] p-3" aria-label={ZONE_LABELS[z.zone] || z.zone}>
+          <section key={z.zone} className="break-inside-avoid mb-3 rounded-lg border border-cream-200 p-3" aria-label={ZONE_LABELS[z.zone] || z.zone}>
             <div className="flex items-center justify-between gap-2 mb-2">
-              <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#9FB6D9]">{ZONE_LABELS[z.zone] || z.zone}</h4>
-              <span className="text-[10px] font-mono text-[#D5E2F5] tabular-nums">
-                {z.counts.occupied}/{z.counts.total - z.counts.blocked}
-                {z.counts.cleaning > 0 && <span className="text-[#F2A93B]"> · {z.counts.cleaning} dirty</span>}
+              <h4 className="label-xs">{ZONE_LABELS[z.zone] || z.zone}</h4>
+              <span className="text-[10px] text-ink-500 tabular-nums">
+                {z.counts?.occupied ?? 0}/{(z.counts?.total ?? 0) - (z.counts?.blocked ?? 0)}
+                {z.counts?.cleaning > 0 && <span className="text-fg-warn"> · {z.counts.cleaning} cleaning</span>}
               </span>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {z.tiles.map((t) => {
+              {(z.tiles || []).map((t) => {
                 const statusMiss = statusFilter !== 'all' && t.status !== statusFilter;
-                const searchMiss = q && !t.id.toUpperCase().includes(q) && !(t.patientAlias || '').toUpperCase().includes(q);
-                return <BedTile key={t.id} tile={t} size={compact ? 'sm' : 'md'} onSelect={setSelected} dimmed={statusMiss || Boolean(searchMiss)} highlighted={Boolean(q) && !searchMiss} />;
+                const searchMiss = q && !String(t.id).toUpperCase().includes(q) && !String(t.patientAlias || '').toUpperCase().includes(q);
+                return <BedTile key={t.id} tile={t} onSelect={setSelected} dimmed={statusMiss || Boolean(searchMiss)} highlighted={Boolean(q) && !searchMiss} />;
               })}
             </div>
           </section>
@@ -121,15 +128,31 @@ export function BedMapSchematic({ data, loading = false, statusFilter = 'all', s
       </div>
 
       {info && (
-        <div className="flex flex-wrap gap-3 mt-4">
-          <InfoCard icon={Truck} label="In transit" value={info.inTransit.reservedBeds + info.inTransit.inSurgery} sub={`${info.inTransit.reservedBeds} reserved · ${info.inTransit.inSurgery} in surgery`} />
-          <InfoCard icon={Users} label="Nurse ratio" value={info.nurseRatio.ratio != null ? `1:${info.nurseRatio.ratio}` : '—'} sub={`${info.nurseRatio.nurses} nurses on shift`} />
-          <InfoCard icon={Sparkles} label="Cleaning queue" value={info.cleaningQueue.beds} sub={info.cleaningQueue.beds ? `oldest ${info.cleaningQueue.oldestMinutes} min` : 'clear'} />
-          {info.equipment && <InfoCard icon={Wrench} label="Equipment free" value={`${info.equipment.available}/${info.equipment.total}`} sub="sub-depot stock" />}
+        <div className="flex flex-wrap gap-2">
+          <InfoTile icon={Truck} label="In transit" value={(info.inTransit?.reservedBeds ?? 0) + (info.inTransit?.inSurgery ?? 0)} sub={`${info.inTransit?.inSurgery ?? 0} in surgery`} />
+          <InfoTile icon={Users} label="Nurse ratio" value={info.nurseRatio?.ratio != null ? `1:${info.nurseRatio.ratio}` : '—'} sub={`${info.nurseRatio?.nurses ?? 0} nurses`} />
+          <InfoTile icon={Sparkles} label="Cleaning queue" value={info.cleaningQueue?.beds ?? 0} sub={info.cleaningQueue?.beds ? `oldest ${info.cleaningQueue.oldestMinutes} min` : 'clear'} />
+          {info.equipment && <InfoTile icon={Wrench} label="Equipment free" value={`${info.equipment.available}/${info.equipment.total}`} />}
         </div>
       )}
 
-      <BedDetailPopup tile={selected} onClose={() => setSelected(null)} onChanged={onChanged} allowActions={allowActions} />
+      {isRoom && <BedDetailPopup tile={selected} onClose={close} onChanged={onChanged} allowActions={allowActions} />}
+      {hasPatient && (
+        <PatientDetailPopup
+          patientId={selected.patientId || null}
+          bedInfo={selected}
+          onClose={close}
+          onChanged={onChanged}
+          footer={
+            allowActions && selected.status === 'occupied' ? (
+              <button type="button" className="flow-btn-secondary" disabled={busy} onClick={signDischarge}>
+                <LogOut className="w-3.5 h-3.5" aria-hidden="true" /> {busy ? 'Signing…' : 'Sign discharge'}
+              </button>
+            ) : null
+          }
+        />
+      )}
+      {selected && !isRoom && !hasPatient && <BedInfoPanel bed={selected} onClose={close} onChanged={onChanged} allowActions={allowActions} />}
     </div>
   );
 }

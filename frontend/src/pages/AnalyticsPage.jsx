@@ -101,7 +101,7 @@ export function AnalyticsPage() {
               <p className="text-2xl font-extrabold font-mono text-surface-foreground">
                 {analytics?.safety?.totalRecommendationsExecuted || 142}
               </p>
-              <span className="text-[10px] text-surface-muted">Beds, float staff, & surgical slots</span>
+              <span className="text-[10px] text-surface-muted">Beds, staff and surgical slots</span>
             </div>
           </div>
         </Card>

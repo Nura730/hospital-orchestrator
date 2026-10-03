@@ -16,9 +16,9 @@ import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { Search, Download, Bell, CheckCircle2, Clock, BedDouble, Sparkles, Home, X, Check, ChevronRight, Stethoscope, UserPlus, CalendarClock } from 'lucide-react';
 import FlowPageHeader from '../../components/domain/FlowPageHeader.jsx';
-import PredictionConfidenceBadge from '../../components/domain/PredictionConfidenceBadge.jsx';
 import AiReportButton from '../../components/domain/AiReportButton.jsx';
 import { FlowSkeleton, FlowEmpty, FlowError, FlowModal } from '../../components/domain/FlowUi.jsx';
+import PatientDetailPopup from '../../components/domain/PatientDetailPopup.jsx';
 import StatusPill from '../../components/domain/StatusPill.jsx';
 import flowApi from '../../api/flowApi.js';
 import { useFlowPolling, errorText } from '../../hooks/useFlowPolling.js';
@@ -27,9 +27,9 @@ import { exportCsv, timeUntil, clock, dateTime } from '../../utils/flowFormat.js
 /* ── Helpers ───────────────────────────────────────────────────────────── */
 
 const GROUPS = {
-  ready: { label: 'Ready', color: '#1FA971', pill: 'bg-[#1FA971]/10 text-[#13784F]', dot: 'bg-[#1FA971]' },
-  almost: { label: 'Almost ready', color: '#F2A93B', pill: 'bg-[#F2A93B]/15 text-[#8A5200]', dot: 'bg-[#F2A93B]' },
-  notyet: { label: 'Not yet', color: '#9AA4B2', pill: 'bg-[#6B7280]/10 text-[#4B5260]', dot: 'bg-[#9AA4B2]' },
+  ready: { label: 'Ready', color: '#10B981', pill: 'bg-[#10B981]/10 text-fg-ok', dot: 'bg-[#10B981]' },
+  almost: { label: 'Almost ready', color: '#F59E0B', pill: 'bg-[#F59E0B]/15 text-fg-warn', dot: 'bg-[#F59E0B]' },
+  notyet: { label: 'Not yet', color: '#9AA4B2', pill: 'bg-[#6B7280]/10 text-ink-500', dot: 'bg-[#9AA4B2]' },
 };
 
 function groupOf(p) {
@@ -52,8 +52,8 @@ function friendly(f) {
 
 /** One short line: what still needs to happen. */
 function whatsLeft(p) {
-  if (!p.blockingFactors.length) return { text: 'Nothing left: ready to sign', tone: 'text-[#13784F]' };
-  if (p.ready && p.pendingTasks.length) return { text: `Only paperwork: ${p.pendingTasks.join(', ')}`, tone: 'text-[#8A5200]' };
+  if (!p.blockingFactors.length) return { text: 'Nothing left: ready to sign', tone: 'text-fg-ok' };
+  if (p.ready && p.pendingTasks.length) return { text: `Only paperwork: ${p.pendingTasks.join(', ')}`, tone: 'text-fg-warn' };
   const first = friendly(p.blockingFactors[0]);
   const more = p.blockingFactors.length - 1;
   return { text: more > 0 ? `${first} +${more} more` : first, tone: 'text-ink-500' };
@@ -92,12 +92,12 @@ function Stat({ icon: Icon, label, value, hint, color }) {
 }
 
 function ScoreBadge({ score }) {
-  const color = score > 70 ? '#1FA971' : score >= 40 ? '#F2A93B' : '#D64545';
+  const color = score > 70 ? '#10B981' : score >= 40 ? '#F59E0B' : '#EF4444';
   return (
     <span className="inline-flex items-center gap-1.5" title="Discharge readiness out of 100">
       <span className="relative w-10 h-10" role="img" aria-label={`Readiness ${score} of 100`}>
         <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-          <circle cx="18" cy="18" r="15" fill="none" stroke="#EFE7E2" strokeWidth="3.5" />
+          <circle cx="18" cy="18" r="15" fill="none" stroke="#2E3347" strokeWidth="3.5" />
           <circle cx="18" cy="18" r="15" fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeDasharray={94.25} strokeDashoffset={94.25 * (1 - score / 100)} />
         </svg>
         <span className="absolute inset-0 flex items-center justify-center text-[11px] font-extrabold text-ink-900 tabular-nums">{score}</span>
@@ -108,7 +108,7 @@ function ScoreBadge({ score }) {
 
 /* ── Side panel ────────────────────────────────────────────────────────── */
 
-function PatientPanel({ p, onClose, onNotify, onMarkReady, busy }) {
+function PatientPanel({ p, onClose, onNotify, onMarkReady, busy, onDetails }) {
   const audit = useFlowPolling(() => flowApi.getAudit({ limit: 200 }), { intervalMs: 0, toastOnError: false, deps: [p?.patientId] });
 
   useEffect(() => {
@@ -125,25 +125,30 @@ function PatientPanel({ p, onClose, onNotify, onMarkReady, busy }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[60]">
-      <div className="absolute inset-0 bg-[#0F1B2D]/30 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
-      <aside role="dialog" aria-modal="true" aria-label={`Patient ${p.alias}`} className="absolute right-0 top-0 h-full w-full max-w-md bg-cream-50 shadow-modal flex flex-col animate-slide-in-right">
+      <div className="absolute inset-0 bg-ink-900/30 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+      <aside role="dialog" aria-modal="true" aria-label={`Patient ${p.alias}`} className="absolute right-0 top-0 h-full w-full max-w-md bg-cream-50 border-l border-cream-200 flex flex-col animate-slide-in-right">
         {/* Header */}
-        <div className="px-6 pt-6 pb-5 bg-gradient-to-br from-royal-700 to-royal-500 text-white">
+        <div className="px-6 pt-5 pb-4 border-b border-cream-200 text-ink-900">
           <div className="flex items-start justify-between">
-            <span className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center text-lg font-extrabold">{initialsOf(p.alias)}</span>
-            <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white" aria-label="Close">
+            <span className="w-12 h-12 rounded-xl bg-royal-500/10 text-royal-500 flex items-center justify-center text-base font-bold">{initialsOf(p.alias)}</span>
+            <button type="button" onClick={onClose} className="p-1.5 rounded-lg text-ink-500 hover:bg-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500" aria-label="Close">
               <X className="w-5 h-5" />
             </button>
           </div>
-          <h2 className="text-xl font-extrabold mt-3">{p.alias}</h2>
-          <p className="text-sm text-white/85">
+          <h2 className="text-lg font-bold mt-3">{p.alias}</h2>
+          <p className="text-xs text-ink-500">
             Bed {p.bedId} · {p.ward}
           </p>
           <div className="flex items-center gap-2 mt-3">
-            <span className="rounded-full bg-white text-xs font-bold px-3 py-1" style={{ color: g.color }}>
+            <span className="rounded-full border text-xs font-bold px-3 py-1" style={{ color: g.color, borderColor: g.color }}>
               {g.label}
             </span>
-            <span className="text-xs text-white/85">Readiness {p.score}/100</span>
+            <span className="text-xs text-ink-500">Readiness {p.score}/100</span>
+            {onDetails && (
+              <button type="button" className="ml-auto text-[11px] font-semibold text-royal-500 hover:underline" onClick={() => onDetails(p.patientId)}>
+                Full patient details
+              </button>
+            )}
           </div>
         </div>
 
@@ -155,19 +160,12 @@ function PatientPanel({ p, onClose, onNotify, onMarkReady, busy }) {
               ['Acuity', `Level ${p.acuity}`],
               ['Admitted', dateTime(p.admittedAt)],
               ['Going home', p.expectedDischarge ? `${clock(p.expectedDischarge)} (${timeUntil(p.expectedDischarge)})` : '—'],
-              ['Predicted stay', p.los ? `${Math.round(p.los.predictedHours)} hours` : '—'],
             ].map(([k, v]) => (
               <div key={k}>
                 <dt className="text-ink-500">{k}</dt>
                 <dd className="font-semibold text-ink-900 mt-0.5">{v}</dd>
               </div>
             ))}
-            <div>
-              <dt className="text-ink-500">Prediction confidence</dt>
-              <dd className="mt-0.5">
-                <PredictionConfidenceBadge confidence={p.los?.confidence} />
-              </dd>
-            </div>
           </dl>
 
           {/* Checklist */}
@@ -176,7 +174,7 @@ function PatientPanel({ p, onClose, onNotify, onMarkReady, busy }) {
             <ul className="space-y-2">
               {items.map((i) => (
                 <li key={i.label} className="flex items-center gap-3">
-                  <span className={clsx('w-6 h-6 rounded-full flex items-center justify-center shrink-0', i.done ? 'bg-[#1FA971] text-white' : 'border-2 border-cream-200 text-transparent')}>
+                  <span className={clsx('w-6 h-6 rounded-full flex items-center justify-center shrink-0', i.done ? 'bg-[#10B981] text-white' : 'border-2 border-cream-200 text-transparent')}>
                     <Check className="w-3.5 h-3.5" aria-hidden="true" />
                   </span>
                   <span className={clsx('text-sm', i.done ? 'text-ink-500' : 'text-ink-900 font-medium')}>{i.label}</span>
@@ -292,6 +290,7 @@ export default function DischargePlannerPage() {
   const [tab, setTab] = useState('ready');
   const [search, setSearch] = useState('');
   const [openId, setOpenId] = useState(null);
+  const [detailId, setDetailId] = useState(null);
   const [book, setBook] = useState(null);
   const [busy, setBusy] = useState(null);
 
@@ -299,7 +298,7 @@ export default function DischargePlannerPage() {
   const freeing = useFlowPolling(() => flowApi.getBedsAboutToFree(4), { intervalMs: 120000, refreshOn: ['bed.updated'] });
   const summary = useFlowPolling(() => flowApi.getStateSummary(), { intervalMs: 60000, refreshOn: ['bed.updated'] });
 
-  const all = cands.data?.candidates || [];
+  const all = useMemo(() => cands.data?.candidates || [], [cands.data]);
   const counts = useMemo(() => ({ ready: all.filter((p) => groupOf(p) === 'ready').length, almost: all.filter((p) => groupOf(p) === 'almost').length, notyet: all.filter((p) => groupOf(p) === 'notyet').length, all: all.length }), [all]);
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -387,10 +386,10 @@ export default function DischargePlannerPage() {
 
       {/* Stats */}
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6" aria-label="Summary">
-        <Stat icon={Home} label="Ready to go home" value={counts.ready} hint={`of ${counts.all} patients in beds`} color="#1FA971" />
+        <Stat icon={Home} label="Ready to go home" value={counts.ready} hint={`of ${counts.all} patients in beds`} color="#10B981" />
         <Stat icon={CalendarClock} label="Going home today" value={expectedToday} hint="planned discharges" color="#014BAA" />
-        <Stat icon={BedDouble} label="Beds that would free" value={counts.ready + dirty} hint="ready patients + cleaning" color="#2BA8E0" />
-        <Stat icon={Sparkles} label="Beds being cleaned" value={dirty} hint="waiting for housekeeping" color="#F2A93B" />
+        <Stat icon={BedDouble} label="Beds that would free" value={counts.ready + dirty} hint="ready patients + cleaning" color="#014BAA" />
+        <Stat icon={Sparkles} label="Beds being cleaned" value={dirty} hint="waiting for housekeeping" color="#F59E0B" />
       </section>
 
       {/* List */}
@@ -444,13 +443,10 @@ export default function DischargePlannerPage() {
               const active = openId === p.patientId;
               return (
                 <li key={p.patientId}>
+                  {/* Row click is a mouse shortcut; the patient name is the keyboard-accessible button */}
                   <div
-                    role="button"
-                    tabIndex={0}
                     onClick={() => setOpenId(p.patientId)}
-                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setOpenId(p.patientId))}
-                    className={clsx('group flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors focus:outline-none focus-visible:bg-royal-100', active ? 'bg-[#FFE9A8]/70' : 'hover:bg-cream-100')}
-                    aria-label={`${p.alias}, ${g.label}, readiness ${p.score}`}
+                    className={clsx('group flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors', active ? 'bg-highlight/70' : 'hover:bg-cream-100')}
                   >
                     <span className="relative w-11 h-11 rounded-2xl bg-royal-100 text-royal-700 text-xs font-extrabold flex items-center justify-center shrink-0">
                       {initialsOf(p.alias)}
@@ -459,7 +455,9 @@ export default function DischargePlannerPage() {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-ink-900">{p.alias}</span>
+                        <button type="button" onClick={() => setOpenId(p.patientId)} aria-label={`Open ${p.alias}, ${g.label}, readiness ${p.score}`} className="text-sm font-bold text-ink-900 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500">
+                          {p.alias}
+                        </button>
                         <span className={clsx('rounded-full px-2 py-0.5 text-[10px] font-bold', g.pill)}>{g.label}</span>
                       </div>
                       <div className="text-xs text-ink-500 mt-0.5 truncate">
@@ -517,18 +515,18 @@ export default function DischargePlannerPage() {
             <FlowEmpty icon={BedDouble} title="No beds freeing soon" message="No bed is expected to free up in the next 4 hours." />
           </div>
         ) : (
-          <div className="flex gap-3 overflow-x-auto scrollbar-thin pb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3">
             {freeing.data.map((b) => (
-              <div key={b.bedId} className="flow-card px-4 py-3 min-w-[200px] shrink-0">
+              <div key={b.bedId} className="flow-card px-4 py-3 flex flex-col">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-base font-extrabold text-royal-900">{b.bedId}</span>
                   <span className="text-xs font-semibold text-ink-900 tabular-nums">{clock(b.expectedFreeAt)}</span>
                 </div>
                 <div className="text-[11px] text-ink-500 truncate">{b.ward}</div>
                 <div className="text-[11px] text-ink-500">free {timeUntil(b.expectedFreeAt)}</div>
-                <div className="mt-2.5">
+                <div className="mt-auto pt-2.5">
                   {b.preAssignedTo ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#13784F]">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-fg-ok">
                       <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Next: {b.preAssignedTo}
                     </span>
                   ) : (
@@ -543,7 +541,8 @@ export default function DischargePlannerPage() {
         )}
       </section>
 
-      <PatientPanel p={open} onClose={() => setOpenId(null)} onNotify={(p) => notify([p.patientId], p.patientId)} onMarkReady={markReady} busy={busy} />
+      <PatientPanel p={open} onClose={() => setOpenId(null)} onNotify={(p) => notify([p.patientId], p.patientId)} onMarkReady={markReady} busy={busy} onDetails={(id) => { setOpenId(null); setDetailId(id); }} />
+      {detailId && <PatientDetailPopup patientId={detailId} onClose={() => setDetailId(null)} />}
       {book && <BookModal bed={book} onClose={() => setBook(null)} onDone={() => freeing.refresh({ silent: true })} />}
     </div>
   );

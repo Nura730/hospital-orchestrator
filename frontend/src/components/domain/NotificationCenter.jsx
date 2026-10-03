@@ -93,7 +93,7 @@ export function NotificationCenter() {
       <button type="button" onClick={() => setOpen((v) => !v)} className="flow-btn-ghost !p-2 relative" aria-label={`Notifications, ${unread} unread`} aria-expanded={open}>
         <Bell className="w-4 h-4" />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#D64545] text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#DC2626] text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
             {unread > 99 ? '99+' : unread}
           </span>
         )}

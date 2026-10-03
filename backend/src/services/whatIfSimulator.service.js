@@ -151,7 +151,7 @@ function simulateScenarios(b, params) {
     actions.push({ type: 'discharge', text: `Expedite discharge for ${b.dischargeReadyCount} medically ready patients`, impact: `+${b.dischargeReadyCount} beds`, count: b.dischargeReadyCount });
   }
   if (floatNurses > 0) {
-    actions.push({ type: 'staffing', text: `Deploy ${floatNurses} float nurse${floatNurses > 1 ? 's' : ''} to the busiest wards`, impact: `+${floatNurses * SAFE_PATIENTS_PER_NURSE} safe patient slots`, count: floatNurses });
+    actions.push({ type: 'staffing', text: `Deploy ${floatNurses} reserve nurse${floatNurses > 1 ? 's' : ''} to the busiest wards`, impact: `+${floatNurses * SAFE_PATIENTS_PER_NURSE} safe patient slots`, count: floatNurses });
   }
   if (scenarioC.deferredElective > 0) {
     actions.push({ type: 'defer_ot', text: `Defer ${scenarioC.deferredElective} elective OT case${scenarioC.deferredElective > 1 ? 's' : ''} needing post-op beds`, impact: `-${scenarioC.deferredElective} bed demand`, count: scenarioC.deferredElective });

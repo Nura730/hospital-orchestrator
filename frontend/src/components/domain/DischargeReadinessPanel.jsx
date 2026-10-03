@@ -9,17 +9,16 @@ import toast from 'react-hot-toast';
 import { ClipboardCheck, Bell, Eye } from 'lucide-react';
 import { SectionHeader, FlowSkeleton, FlowEmpty, FlowError, ReadinessBar, FlowModal } from './FlowUi.jsx';
 import StatusPill from './StatusPill.jsx';
-import PredictionConfidenceBadge from './PredictionConfidenceBadge.jsx';
 import flowApi from '../../api/flowApi.js';
 import { useFlowPolling, errorText } from '../../hooks/useFlowPolling.js';
 import { dateTime, timeUntil } from '../../utils/flowFormat.js';
 
 export function BlockingChips({ factors = [], max = 3 }) {
-  if (!factors.length) return <span className="text-[11px] text-[#13784F] font-semibold">No blockers</span>;
+  if (!factors.length) return <span className="text-[11px] text-fg-ok font-semibold">No blockers</span>;
   return (
     <div className="flex flex-wrap gap-1 max-w-[280px]">
       {factors.slice(0, max).map((f) => (
-        <span key={f} className="text-[10px] rounded-full bg-[#F2A93B]/15 text-[#8A5200] border border-[#F2A93B]/40 px-2 py-0.5 whitespace-nowrap">
+        <span key={f} className="text-[10px] rounded-full bg-[#F59E0B]/15 text-fg-warn border border-[#F59E0B]/40 px-2 py-0.5 whitespace-nowrap">
           {f}
         </span>
       ))}
@@ -37,8 +36,6 @@ export function PatientDetailModal({ patient, onClose }) {
         <div><dt className="text-ink-500">Doctor</dt><dd className="font-bold">{patient.doctorName || '—'}</dd></div>
         <div><dt className="text-ink-500">Admitted</dt><dd className="font-bold">{dateTime(patient.admittedAt)}</dd></div>
         <div><dt className="text-ink-500">Expected discharge</dt><dd className="font-bold">{dateTime(patient.expectedDischarge)}</dd></div>
-        <div><dt className="text-ink-500">Predicted LOS</dt><dd className="font-bold">{patient.los?.predictedHours}h</dd></div>
-        <div><dt className="text-ink-500">LOS confidence</dt><dd><PredictionConfidenceBadge confidence={patient.los?.confidence} /></dd></div>
         <div className="col-span-2"><dt className="text-ink-500 mb-1">Readiness</dt><dd><ReadinessBar score={patient.score} /></dd></div>
         <div className="col-span-2"><dt className="text-ink-500 mb-1">Blocking factors</dt><dd><BlockingChips factors={patient.blockingFactors} max={10} /></dd></div>
       </dl>
@@ -97,7 +94,7 @@ export function DischargeReadinessPanel({ limit = 10 }) {
             </thead>
             <tbody>
               {rows.map((p) => (
-                <tr key={p.patientId} className={p.ready ? '!bg-[#FFE9A8]/40' : ''}>
+                <tr key={p.patientId} className={p.ready ? '!bg-highlight/50' : ''}>
                   <td className="font-bold text-royal-900">
                     {p.alias}
                     {p.ready && <StatusPill status="approved" label="Ready" size="xs" className="ml-1.5" />}

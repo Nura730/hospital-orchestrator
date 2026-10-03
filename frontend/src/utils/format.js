@@ -153,13 +153,13 @@ export function clamp(value, min, max) {
  * Generate a trend arrow and delta string.
  * @param {number} current
  * @param {number} previous
- * @returns {{ arrow: '↑'|'↓'|'→', delta: string, direction: 'up'|'down'|'flat' }}
+ * @returns {{ delta: string, direction: 'up'|'down'|'flat' }}  (render the direction with an icon)
  */
 export function getTrend(current, previous) {
-  if (previous == null || current == null) return { arrow: '→', delta: '—', direction: 'flat' };
+  if (previous == null || current == null) return { delta: '—', direction: 'flat' };
   const diff = current - previous;
-  if (Math.abs(diff) < 0.5) return { arrow: '→', delta: '0%', direction: 'flat' };
+  if (Math.abs(diff) < 0.5) return { delta: '0%', direction: 'flat' };
   const pctChange = previous !== 0 ? ((diff / previous) * 100).toFixed(1) : '∞';
-  if (diff > 0) return { arrow: '↑', delta: `+${pctChange}%`, direction: 'up' };
-  return { arrow: '↓', delta: `${pctChange}%`, direction: 'down' };
+  if (diff > 0) return { delta: `+${pctChange}%`, direction: 'up' };
+  return { delta: `${pctChange}%`, direction: 'down' };
 }

@@ -1,7 +1,7 @@
 /**
  * @file DoctorPredictionsPage.jsx
  * /doctor/flow/predictions (Reference D, Royal Blue): greeting, weekly numeric cards, calendar strip,
- * table of ONLY this doctor's patients with admission probability, LOS + confidence, expected discharge,
+ * table of ONLY this doctor's patients with admission probability, expected discharge,
  * top 3 factors and quick actions. AI report (scope "doctor").
  */
 
@@ -10,8 +10,8 @@ import clsx from 'clsx';
 import { Search, Brain } from 'lucide-react';
 import FlowPageHeader from '../../components/domain/FlowPageHeader.jsx';
 import FlowKpiCard from '../../components/domain/FlowKpiCard.jsx';
+import PatientDetailPopup from '../../components/domain/PatientDetailPopup.jsx';
 import StatusPill from '../../components/domain/StatusPill.jsx';
-import PredictionConfidenceBadge from '../../components/domain/PredictionConfidenceBadge.jsx';
 import AiReportButton from '../../components/domain/AiReportButton.jsx';
 import { SectionHeader, FlowSkeleton, FlowEmpty, FlowError, ReadinessBar } from '../../components/domain/FlowUi.jsx';
 import DoctorActions from './DoctorActions.jsx';
@@ -45,15 +45,16 @@ export function CalendarStrip({ marks = {} }) {
 }
 
 function probColor(p) {
-  if (p >= 0.8) return 'text-[#B02E2E]';
-  if (p >= 0.5) return 'text-[#8A5200]';
-  return 'text-[#13784F]';
+  if (p >= 0.8) return 'text-fg-bad';
+  if (p >= 0.5) return 'text-fg-warn';
+  return 'text-fg-ok';
 }
 
 export default function DoctorPredictionsPage() {
   const user = useAuthStore((s) => s.user);
   const [search, setSearch] = useState('');
   const [active, setActive] = useState(null);
+  const [popup, setPopup] = useState(null);
   const numbers = useFlowPolling(() => flowApi.getDashboardNumbers('doctor'), { intervalMs: 60000, refreshOn: ['patient.updated'] });
   const pts = useFlowPolling(() => flowApi.getDoctorPatients(), { intervalMs: 60000, refreshOn: ['patient.updated', 'flow.dischargeNudge', 'bed.updated'] });
 
@@ -71,19 +72,19 @@ export default function DoctorPredictionsPage() {
     <div className="flow-page">
       <FlowPageHeader
         title={`Good ${new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}, ${displayName(user)}`}
-        subtitle="Predictions for your patients only: admission probability, length of stay and discharge readiness"
+        subtitle="Admission probability and discharge readiness for your patients"
         crumbs={[{ label: 'Doctor', to: '/doctor/dashboard' }, { label: 'My Patient Predictions' }]}
         actions={<AiReportButton scope="doctor" />}
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-5 mb-5">
-        <section className="xl:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3" aria-label="Weekly report">
-          {(numbers.data?.kpis || Array.from({ length: 5 }).map(() => null)).map((k, i) => (
+      <div className="space-y-3 mb-5">
+        <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3" aria-label="Weekly report">
+          {(numbers.data?.kpis || Array.from({ length: 4 }).map(() => null)).map((k, i) => (
             <FlowKpiCard key={k ? k.key : i} kpi={k} loading={!k} series={numbers.data?.series} />
           ))}
         </section>
-        <div className="flow-card-pad">
-          <h3 className="text-[11px] font-bold uppercase tracking-wide text-ink-500 mb-2">Expected discharges</h3>
+        <div className="flow-card-pad flex flex-wrap items-center gap-4">
+          <h3 className="label-xs shrink-0">Expected discharges</h3>
           <CalendarStrip marks={marks} />
         </div>
       </div>
@@ -110,14 +111,13 @@ export default function DoctorPredictionsPage() {
           <FlowEmpty title="No patients" message="Patients assigned to you appear here." />
         ) : (
           <div className="overflow-x-auto scrollbar-thin">
-            <table className="flow-table w-full min-w-[1100px]">
+            <table className="flow-table w-full min-w-[980px]">
               <thead>
                 <tr>
                   <th scope="col">Patient</th>
                   <th scope="col">Acuity</th>
                   <th scope="col">Status</th>
                   <th scope="col">Admission prob.</th>
-                  <th scope="col">Predicted LOS</th>
                   <th scope="col">Expected discharge</th>
                   <th scope="col">Readiness</th>
                   <th scope="col">Top factors</th>
@@ -126,7 +126,7 @@ export default function DoctorPredictionsPage() {
               </thead>
               <tbody>
                 {list.map((p) => (
-                  <tr key={p.patientId} onClick={() => setActive(p.patientId)} className={clsx('cursor-pointer', active === p.patientId && '!bg-[#FFE9A8]')}>
+                  <tr key={p.patientId} onClick={() => { setActive(p.patientId); setPopup(p.patientId); }} className={clsx('cursor-pointer', active === p.patientId && '!bg-highlight')}>
                     <td>
                       <div className="font-bold text-royal-900">{p.alias}</div>
                       <div className="text-[10px] text-ink-500">
@@ -141,10 +141,6 @@ export default function DoctorPredictionsPage() {
                     </td>
                     <td>
                       <span className={clsx('text-2xl font-extrabold tabular-nums', probColor(p.admissionProbability))}>{Math.round(p.admissionProbability * 100)}%</span>
-                    </td>
-                    <td>
-                      <div className="font-bold tabular-nums">{p.los.predictedHours}h</div>
-                      <PredictionConfidenceBadge confidence={p.los.confidence} />
                     </td>
                     <td>
                       <div>{dateTime(p.expectedDischarge)}</div>
@@ -172,6 +168,7 @@ export default function DoctorPredictionsPage() {
           </div>
         )}
       </section>
+      {popup && <PatientDetailPopup patientId={popup} onClose={() => setPopup(null)} />}
     </div>
   );
 }

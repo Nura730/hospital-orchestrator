@@ -23,8 +23,10 @@ export function useFlowPolling(fetcher, { intervalMs = 0, refreshOn = [], deps =
   const [error, setError] = useState(null);
   const mounted = useRef(true);
   const fetcherRef = useRef(fetcher);
+  const toastRef = useRef(toastOnError);
   const lastToast = useRef(0);
   fetcherRef.current = fetcher;
+  toastRef.current = toastOnError;
 
   const refresh = useCallback(async ({ silent = false } = {}) => {
     if (!silent) setLoading(true);
@@ -39,7 +41,7 @@ export function useFlowPolling(fetcher, { intervalMs = 0, refreshOn = [], deps =
       if (mounted.current) {
         setError(errorText(err));
         // Avoid toast storms while polling
-        if (toastOnError && Date.now() - lastToast.current > 15000) {
+        if (toastRef.current && Date.now() - lastToast.current > 15000) {
           lastToast.current = Date.now();
           toast.error(errorText(err, 'Could not load flow data'));
         }

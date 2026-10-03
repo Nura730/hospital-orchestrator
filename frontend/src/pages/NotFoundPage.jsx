@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 /**
  * 404 Not Found page.
@@ -22,7 +23,7 @@ export default function NotFoundPage() {
                      hover:bg-primary-700 transition-colors duration-200 focus:outline-none focus:ring-2
                      focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-background"
         >
-          ← Back to Command Center
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Back to home
         </Link>
       </div>
     </div>

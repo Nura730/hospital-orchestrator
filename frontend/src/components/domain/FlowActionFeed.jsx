@@ -16,11 +16,11 @@ import { timeAgo } from '../../utils/flowFormat.js';
 
 const ICONS = { bed: BedDouble, recommendation: Lightbulb, ambulance: Ambulance, discharge: LogOut, bottleneck: AlertTriangle };
 const TONES = {
-  bed: 'bg-[#2BA8E0]/15 text-[#136E96]',
+  bed: 'bg-[#014BAA]/15 text-fg-info',
   recommendation: 'bg-royal-100 text-royal-500',
-  ambulance: 'bg-[#D64545]/15 text-[#B02E2E]',
-  discharge: 'bg-[#1FA971]/15 text-[#13784F]',
-  bottleneck: 'bg-[#F2A93B]/20 text-[#8A5200]',
+  ambulance: 'bg-[#EF4444]/15 text-fg-bad',
+  discharge: 'bg-[#10B981]/15 text-fg-ok',
+  bottleneck: 'bg-[#F59E0B]/20 text-fg-warn',
 };
 
 export function FlowActionFeed({ maxHeight = 'max-h-[560px]' }) {
@@ -80,8 +80,8 @@ export function FlowActionFeed({ maxHeight = 'max-h-[560px]' }) {
         subtitle="Newest first · max 20"
         icon={Radio}
         actions={
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#13784F]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#1FA971] animate-pulse" /> LIVE
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-fg-ok">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" /> LIVE
           </span>
         }
       />
@@ -104,7 +104,7 @@ export function FlowActionFeed({ maxHeight = 'max-h-[560px]' }) {
                   </div>
                   {item.detail && <p className="text-[11px] text-ink-500 leading-snug mt-0.5 line-clamp-2">{item.detail}</p>}
                   <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                    {item.impact && <span className="text-[10px] font-semibold text-[#13784F] bg-[#1FA971]/10 rounded-full px-2 py-0.5">{item.impact}</span>}
+                    {item.impact && <span className="text-[10px] font-semibold text-fg-ok bg-[#10B981]/10 rounded-full px-2 py-0.5">{item.impact}</span>}
                     {item.risk && <StatusPill status={item.risk} size="xs" />}
                     {item.kind === 'recommendation' && item.recommendationId && status === 'pending' && (
                       <button type="button" className="flow-btn-primary !py-0.5 !px-2 !text-[10px] ml-auto" onClick={() => approve(item)}>

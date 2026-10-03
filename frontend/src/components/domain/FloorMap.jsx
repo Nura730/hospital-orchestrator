@@ -35,14 +35,14 @@ export function FloorMap({
   };
 
   const getTierColor = (pct, isSelected) => {
-    if (isSelected) return isDark ? '#0f766e' : '#0d9488'; // Selected teal
+    if (isSelected) return isDark ? '#0f766e' : '#014BAA'; // Selected teal
     if (pct >= 90) return isDark ? 'rgba(239, 68, 68, 0.45)' : 'rgba(239, 68, 68, 0.25)'; // Danger Red
     if (pct >= 70) return isDark ? 'rgba(245, 158, 11, 0.4)' : 'rgba(245, 158, 11, 0.22)'; // Warning Amber
     return isDark ? 'rgba(16, 185, 129, 0.35)' : 'rgba(16, 185, 129, 0.2)'; // Normal Green
   };
 
   const getStrokeColor = (pct, isSelected) => {
-    if (isSelected) return '#14b8a6';
+    if (isSelected) return '#014BAA';
     if (pct >= 90) return '#ef4444';
     if (pct >= 70) return '#f59e0b';
     return '#10b981';

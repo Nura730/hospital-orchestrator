@@ -71,8 +71,8 @@ export function DemandCapacityLine({ demandData = null }) {
               const cap = items[0].parsed.y;
               const dem = items[1].parsed.y;
               const diff = dem - cap;
-              if (diff > 0) return `⚠️ Deficit: -${diff} beds short`;
-              return `✅ Buffer: +${Math.abs(diff)} beds available`;
+              if (diff > 0) return `Deficit: -${diff} beds short`;
+              return `Buffer: +${Math.abs(diff)} beds available`;
             }
             return '';
           },

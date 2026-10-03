@@ -23,7 +23,7 @@ export default function HousekeepingBoardPage() {
     try {
       const r = await flowApi.postEvent('CLEANING_DONE', { bedId });
       toast.success(`${bedId} is ready`);
-      if (r?.result?.recommendation) toast(`Next: ${r.result.recommendation.title}`, { icon: '💡' });
+      if (r?.result?.recommendation) toast(`Next: ${r.result.recommendation.title}`);
       q.refresh({ silent: true });
     } catch (e) {
       toast.error(errorText(e, 'Could not update bed'));
@@ -39,9 +39,9 @@ export default function HousekeepingBoardPage() {
       {d && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
           {[
-            ['Dirty beds', d.counts.dirty, '#F2A93B'],
-            ['Overdue (> 45 min)', d.counts.overdue, '#D64545'],
-            ['Cleaned last 4h', d.counts.cleanedLast4h, '#1FA971'],
+            ['Dirty beds', d.counts.dirty, '#F59E0B'],
+            ['Overdue (> 45 min)', d.counts.overdue, '#EF4444'],
+            ['Cleaned last 4h', d.counts.cleanedLast4h, '#10B981'],
             ['Available now', d.counts.available, '#014BAA'],
           ].map(([l, v, c]) => (
             <div key={l} className="flow-card px-4 py-3 border-t-4" style={{ borderTopColor: c }}>
@@ -61,13 +61,13 @@ export default function HousekeepingBoardPage() {
           ) : (
             <ul className="space-y-2">
               {d.cleaning.map((b) => (
-                <li key={b.id} className={clsx('flex items-center gap-3 rounded-xl border-2 p-3', b.waitingMinutes > 45 ? 'border-[#D64545]/50 bg-[#D64545]/5' : 'border-[#F2A93B]/50 bg-[#F2A93B]/5')}>
+                <li key={b.id} className={clsx('flex items-center gap-3 rounded-xl border-2 p-3', b.waitingMinutes > 45 ? 'border-[#EF4444]/50 bg-[#EF4444]/5' : 'border-[#F59E0B]/50 bg-[#F59E0B]/5')}>
                   <span className="font-mono font-extrabold text-sm text-royal-900 w-16">{b.id}</span>
                   <span className="flex-1 min-w-0">
                     <span className="block text-xs truncate">
                       {b.ward} · {b.zone}
                     </span>
-                    <span className={clsx('block text-[11px] font-semibold', b.waitingMinutes > 45 ? 'text-[#B02E2E]' : 'text-[#8A5200]')}>
+                    <span className={clsx('block text-[11px] font-semibold', b.waitingMinutes > 45 ? 'text-fg-bad' : 'text-fg-warn')}>
                       {b.waitingMinutes > 45 && <AlertTriangle className="inline w-3 h-3 mr-0.5" aria-hidden="true" />}
                       waiting {b.waitingMinutes} min
                     </span>
@@ -87,8 +87,8 @@ export default function HousekeepingBoardPage() {
           ) : (
             <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {d.ready.map((b) => (
-                <li key={b.id} className="rounded-xl bg-[#1FA971]/10 border border-[#1FA971]/40 px-3 py-2">
-                  <div className="font-mono font-bold text-xs text-[#13784F]">{b.id}</div>
+                <li key={b.id} className="rounded-xl bg-[#10B981]/10 border border-[#10B981]/40 px-3 py-2">
+                  <div className="font-mono font-bold text-xs text-fg-ok">{b.id}</div>
                   <div className="text-[10px] text-ink-500">{b.cleanedMinutesAgo} min ago</div>
                 </li>
               ))}

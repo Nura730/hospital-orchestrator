@@ -39,7 +39,7 @@ export default function LiveBedMapPage() {
     try {
       const r = await flowApi.postEvent('CLEANING_DONE', { bedId });
       toast.success(`${bedId} ready (${r?.tookMs ?? '<1'} ms)`);
-      if (r?.result?.recommendation) toast(`Suggested: ${r.result.recommendation.title}`, { icon: '💡' });
+      if (r?.result?.recommendation) toast(`Suggested: ${r.result.recommendation.title}`);
     } catch (e) {
       toast.error(errorText(e, 'Could not update bed'));
     } finally {
@@ -51,7 +51,7 @@ export default function LiveBedMapPage() {
     <div className="flow-page">
       <FlowPageHeader
         title="Live Bed Map"
-        subtitle="Every bed and theatre, colored by status, updated within seconds of each event"
+        subtitle="Click a bed for patient or bed details"
         crumbs={[{ label: 'Admin', to: '/admin/dashboard' }, { label: 'Flow Intelligence' }, { label: 'Live Bed Map' }]}
       />
 
@@ -63,7 +63,7 @@ export default function LiveBedMapPage() {
               type="button"
               onClick={() => setStatus(f)}
               aria-pressed={status === f}
-              className={clsx('flow-chip', status === f ? 'bg-royal-500 text-white border-royal-500' : 'bg-cream-50 border-cream-200 text-ink-900')}
+              className={clsx('flow-chip', status === f ? 'bg-royal-500 text-white border-royal-500' : 'bg-cream-50 border-cream-200 text-ink-900 hover:bg-sunken')}
             >
               {f !== 'all' && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: BED_STATUS_COLORS[f] }} aria-hidden="true" />}
               {f === 'all' ? 'All' : BED_STATUS_LABELS[f]}
@@ -81,15 +81,15 @@ export default function LiveBedMapPage() {
       </div>
 
       {q.error && !data && <FlowError message={q.error} onRetry={q.refresh} />}
-      <BedMapSchematic data={data} loading={q.loading} statusFilter={status} search={search} onChanged={() => q.refresh({ silent: true })} />
+      <BedMapSchematic data={data} loading={q.loading} statusFilter={status} search={search} onChanged={() => q.refresh({ silent: true })} showLegend={false} />
 
       {dirty.length > 0 && (
         <section className="flow-card-pad mt-5" aria-label="Dirty beds">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-2">Waiting for cleaning · {dirty.length}</h3>
+          <h3 className="label-xs mb-2">Waiting for cleaning · {dirty.length}</h3>
           <div className="flex flex-wrap gap-2">
             {dirty.map((t) => (
               <button key={t.id} type="button" className="flow-btn-secondary" disabled={cleaning === t.id} onClick={() => markClean(t.id)}>
-                <Sparkles className="w-3.5 h-3.5 text-[#F2A93B]" aria-hidden="true" /> {cleaning === t.id ? 'Saving…' : `Mark ${t.id} cleaning done`}
+                <Sparkles className="w-3.5 h-3.5 text-[#F59E0B]" aria-hidden="true" /> {cleaning === t.id ? 'Saving…' : `${t.id} cleaned`}
               </button>
             ))}
           </div>

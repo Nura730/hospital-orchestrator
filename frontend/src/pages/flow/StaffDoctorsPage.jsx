@@ -1,12 +1,12 @@
 /**
  * @file StaffDoctorsPage.jsx
- * /admin/flow/staff (Reference A cards + Reference B roster table): doctor presence, nurses/float/housekeeping
- * per department, float pool. CSV export.
+ * /admin/flow/staff (Reference A cards + Reference B roster table): doctor presence, nurses and housekeeping
+ * per department. CSV export.
  */
 
 import React, { useMemo, useState } from 'react';
 import clsx from 'clsx';
-import { Users, Search, UserCheck } from 'lucide-react';
+import { Users, Search } from 'lucide-react';
 import FlowPageHeader from '../../components/domain/FlowPageHeader.jsx';
 import StatusPill from '../../components/domain/StatusPill.jsx';
 import RawDataTable from '../../components/domain/RawDataTable.jsx';
@@ -15,7 +15,7 @@ import flowApi from '../../api/flowApi.js';
 import { useFlowPolling } from '../../hooks/useFlowPolling.js';
 import { initials } from '../../utils/flowFormat.js';
 
-const DOT = { online: 'bg-[#1FA971]', away: 'bg-[#F2A93B]', offline: 'bg-[#6B7280]' };
+const DOT = { online: 'bg-[#10B981]', away: 'bg-[#F59E0B]', offline: 'bg-[#6B7280]' };
 
 export default function StaffDoctorsPage() {
   const [presence, setPresence] = useState('all');
@@ -36,16 +36,15 @@ export default function StaffDoctorsPage() {
 
   return (
     <div className="flow-page">
-      <FlowPageHeader title="Staff & Doctors" subtitle="Who is on shift, where, and the float pool" crumbs={[{ label: 'Admin', to: '/admin/dashboard' }, { label: 'Flow Intelligence' }, { label: 'Staff & Doctors' }]} />
+      <FlowPageHeader title="Staff & Doctors" subtitle="Who is on shift and where" crumbs={[{ label: 'Admin', to: '/admin/dashboard' }, { label: 'Flow Intelligence' }, { label: 'Staff & Doctors' }]} />
       {q.error && !r && <FlowError message={q.error} onRetry={q.refresh} />}
 
       {r && (
         <div className="flex flex-wrap gap-3 mb-5">
           {[
-            ['Doctors online', r.totals.doctorsOnline, '#1FA971'],
-            ['Doctors away', r.totals.doctorsAway, '#F2A93B'],
+            ['Doctors online', r.totals.doctorsOnline, '#10B981'],
+            ['Doctors away', r.totals.doctorsAway, '#F59E0B'],
             ['Nurses on shift', r.totals.nursesOnShift, '#014BAA'],
-            ['Float nurses on shift', r.totals.floatsOnShift, '#2BA8E0'],
           ].map(([l, v, c]) => (
             <div key={l} className="flow-card px-4 py-3 flex-1 min-w-[160px] border-l-4" style={{ borderLeftColor: c }}>
               <div className="text-[11px] uppercase font-semibold text-ink-500">{l}</div>
@@ -95,7 +94,7 @@ export default function StaffDoctorsPage() {
                 type="button"
                 onClick={() => setSelected(d.id)}
                 aria-pressed={selected === d.id}
-                className={clsx('text-left rounded-2xl border-2 bg-cream-50 p-3', selected === d.id ? 'border-royal-500 shadow-soft' : 'border-cream-200 hover:border-royal-500/40')}
+                className={clsx('text-left rounded-xl border bg-cream-50 p-3', selected === d.id ? 'border-royal-500' : 'border-cream-200 hover:border-royal-500/40')}
               >
                 <div className="flex items-center gap-2.5">
                   <span className="relative w-11 h-11 rounded-full bg-royal-100 text-royal-700 font-bold text-xs flex items-center justify-center">
@@ -122,34 +121,17 @@ export default function StaffDoctorsPage() {
         )}
       </section>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-        <section className="xl:col-span-2">
-          <RawDataTable
-            title="Staff roster by department"
-            exportName="staff_roster"
-            rows={r?.departments || []}
-            columns={[
-              { key: 'department', label: 'Department' },
-              { key: 'doctors', label: 'Doctors on duty', align: 'right' },
-              { key: 'nurses', label: 'Nurses on shift', align: 'right' },
-              { key: 'floats', label: 'Float', align: 'right' },
-              { key: 'staff', label: 'Housekeeping', align: 'right' },
-            ]}
-          />
-        </section>
-        <section className="flow-card-pad">
-          <SectionHeader title="Float pool" subtitle="Reassignable nurses" icon={UserCheck} />
-          <ul className="space-y-1.5">
-            {(r?.floatPool || []).map((f) => (
-              <li key={f.id} className="flex items-center justify-between rounded-lg bg-cream-100 px-3 py-2">
-                <span className="text-xs font-semibold">{f.name}</span>
-                <span className="text-[11px] text-ink-500">{f.department}</span>
-                <StatusPill status={f.onShift ? 'online' : 'offline'} label={f.onShift ? 'On shift' : 'Off'} size="xs" />
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
+      <RawDataTable
+        title="Staff roster by department"
+        exportName="staff_roster"
+        rows={r?.departments || []}
+        columns={[
+          { key: 'department', label: 'Department' },
+          { key: 'doctors', label: 'Doctors on duty', align: 'right' },
+          { key: 'nurses', label: 'Nurses on shift', align: 'right' },
+          { key: 'staff', label: 'Housekeeping', align: 'right' },
+        ]}
+      />
     </div>
   );
 }

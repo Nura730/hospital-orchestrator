@@ -6,19 +6,17 @@
 import { create } from 'zustand';
 import { AUTONOMY_MODES } from '../utils/constants.js';
 
-const THEME_KEY = 'mediorchestra_theme';
+const THEME_KEY = 'mediorchestra_theme_v2';
 
+/** Light (cream #F8F3F0 + royal blue #014BAA) is the default; dark only when the user picks it. */
 function getInitialTheme() {
   try {
     const saved = localStorage.getItem(THEME_KEY);
     if (saved === 'dark' || saved === 'light') return saved;
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
   } catch {
-    // fallback
+    // storage unavailable
   }
-  return 'dark'; // Clinical operations dashboards look best in sleek dark mode by default
+  return 'light';
 }
 
 export const useUiStore = create((set, get) => ({

@@ -22,7 +22,7 @@ import { useFlowPolling } from '../hooks/useFlowPolling.js';
 import { initials, displayName } from '../utils/flowFormat.js';
 
 const KPI_ICONS = { occupancy: BedDouble, icu: HeartPulse, edArrivals: Ambulance, edDemand: TrendingUp, avgWait: Timer, dirtyBeds: Sparkles, dischargeReady: ClipboardCheck, otUtil: Scissors };
-const DOT = { online: 'bg-[#1FA971]', away: 'bg-[#F2A93B]', offline: 'bg-[#6B7280]' };
+const DOT = { online: 'bg-[#10B981]', away: 'bg-[#F59E0B]', offline: 'bg-[#6B7280]' };
 
 function greeting() {
   const h = new Date().getHours();
@@ -38,8 +38,8 @@ export default function AdminDashboard() {
   return (
     <div className="flow-page">
       <FlowPageHeader
-        title={`${greeting()}, ${displayName(user).split(' ')[0]}`}
-        subtitle="Hospital at a glance: numbers first, charts on demand"
+        title={`${greeting()}, ${displayName(user).replace(/^(Dr\.?|Nurse)\s+/i, '').split(' ')[0]}`}
+        subtitle="Hospital at a glance"
         crumbs={[{ label: 'Admin' }, { label: 'Dashboard' }]}
         actions={<AiReportButton scope="admin" />}
       />
@@ -115,11 +115,10 @@ export default function AdminDashboard() {
               {(roster.data?.departments || []).map((d) => (
                 <li key={d.department} className="rounded-xl bg-cream-100 px-3 py-2.5">
                   <div className="text-xs font-bold text-royal-900 mb-1">{d.department}</div>
-                  <div className="grid grid-cols-4 gap-1 text-center">
+                  <div className="grid grid-cols-3 gap-1 text-center">
                     {[
                       ['Doctors', d.doctors],
                       ['Nurses', d.nurses],
-                      ['Float', d.floats],
                       ['Staff', d.staff],
                     ].map(([l, n]) => (
                       <div key={l}>

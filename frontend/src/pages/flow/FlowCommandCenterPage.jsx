@@ -1,478 +1,342 @@
 /**
  * @file FlowCommandCenterPage.jsx
- * /admin/flow/command-center: one screen to understand the hospital and act.
- *
- *  1. Status hero: one-word hospital status, plain-English explanation, occupancy ring, key numbers,
- *     and each department's fullness now → in 2 hours (prediction strip, numbers only).
- *  2. "What to do now": prioritised actions with their reason and expected result, next to the live feed.
- *  3. Workspace tabs: Live bed map (dark schematic) · Patient flow & forecast · Discharges · Before vs after.
- *
- * Data: /flow/state-summary (30 s + flow.analysisComplete), /flow/bottlenecks, /flow/bed-map, last simulation.
- * Dark mode toggle applies to this page only.
+ * /admin/flow/command-center: numbers-first command center.
+ * Top strip (beds, bottlenecks, discharges ready, dirty beds, next surge), then three columns:
+ * Flow Status (bottleneck chain + one action), Next 6 Hours (compact forecast chart + 3 chips) and
+ * Live Updates, with a 5-row discharge readiness table below.
  */
 
+import FlowPageHeader from '../../components/domain/FlowPageHeader.jsx';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
+import { Line } from 'react-chartjs-2';
 import {
-  Moon,
-  Sun,
-  ArrowUpRight,
-  ArrowDownRight,
-  ArrowRight,
-  Sliders,
-  Zap,
-  CheckCircle2,
-  AlertTriangle,
-  ShieldAlert,
-  HeartPulse,
+  BedDouble,
+  AlertOctagon,
+  LogOut,
   Sparkles,
-  Home,
   Ambulance,
-  Map as MapIcon,
-  GitBranch,
-  ClipboardCheck,
-  Scale,
+  ArrowDown,
+  ArrowUp,
+  TriangleAlert,
+  Zap,
   FlaskConical,
   ChevronDown,
-  Info,
+  Send,
 } from 'lucide-react';
-import FlowPageHeader from '../../components/domain/FlowPageHeader.jsx';
+import '../../components/charts/setupChart.js';
 import AmbulanceIncomingAlert from '../../components/domain/AmbulanceIncomingAlert.jsx';
-import BedMapSchematic from '../../components/domain/BedMapSchematic.jsx';
-import FlowForecastPanel from '../../components/domain/FlowForecastPanel.jsx';
-import FlowActionFeed from '../../components/domain/FlowActionFeed.jsx';
-import DischargeReadinessPanel from '../../components/domain/DischargeReadinessPanel.jsx';
-import WaitTimeImpactBadge from '../../components/domain/WaitTimeImpactBadge.jsx';
 import AiReportButton from '../../components/domain/AiReportButton.jsx';
 import DemoControls from '../../components/domain/DemoControls.jsx';
-import PatientJourney, { STATUS, SHORT_NAME } from '../../components/domain/PatientJourney.jsx';
-import { FlowError, FlowEmpty } from '../../components/domain/FlowUi.jsx';
+import PatientDetailPopup from '../../components/domain/PatientDetailPopup.jsx';
+import { FlowError, FlowSkeleton } from '../../components/domain/FlowUi.jsx';
+import { MiniEmpty } from '../../components/domain/CareUi.jsx';
 import flowApi from '../../api/flowApi.js';
 import { useLiveStore } from '../../store/liveStore.js';
 import { useFlowPolling, errorText } from '../../hooks/useFlowPolling.js';
-import { dateTime } from '../../utils/flowFormat.js';
+import { clock, timeAgo, readinessBand, BAND_STYLES } from '../../utils/flowFormat.js';
 
-const DARK_KEY = 'mediorchestra_cc_dark';
-const TAB_KEY = 'mediorchestra_cc_tab';
+const SEV = {
+  LOW: ['#10B981', 'OK'],
+  MEDIUM: ['#F59E0B', 'Warning'],
+  HIGH: ['#EF4444', 'Critical'],
+};
+const REFRESH_ON = ['flow.analysisComplete', 'bed.updated', 'patient.updated', 'ot.caseCompleted'];
 
-function readLocal(key, fallback) {
-  try {
-    return localStorage.getItem(key) ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-function writeLocal(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    /* ignore */
-  }
-}
-
-/* ── Hospital status in one word ───────────────────────────────────────── */
-
-function overallStatus(summary) {
-  if (!summary) return null;
-  const high = summary.departments.filter((d) => d.severity === 'HIGH');
-  const shortage = summary.shortage2h?.shortage;
-  if (!summary.rootCause) {
-    return { level: 'stable', word: 'Stable', icon: CheckCircle2, ring: '#1FA971', chip: 'bg-[#1FA971] text-white' };
-  }
-  if (shortage || high.length >= 3) {
-    return { level: 'critical', word: 'Under heavy pressure', icon: ShieldAlert, ring: '#D64545', chip: 'bg-[#D64545] text-white' };
-  }
-  return { level: 'busy', word: 'Busy', icon: AlertTriangle, ring: '#F2A93B', chip: 'bg-[#F2A93B] text-[#3D2600]' };
-}
-
-function explain(summary) {
-  if (!summary) return '';
-  const root = summary.departments.find((d) => d.rootCause);
-  const parts = [];
-  if (root) {
-    parts.push(`Patients are getting held up in the ${root.department === 'OT' ? 'Operating Theatres' : root.department} (${root.utilizationPct}% full).`);
-    if (summary.cascade?.length) parts.push(`This is spilling over to ${summary.cascade.map((c) => (c === 'OT' ? 'the Operating Theatres' : c)).join(' and ')}.`);
-  } else {
-    parts.push('Every department has room and patients are moving normally.');
-  }
-  if (summary.shortage2h?.shortage) parts.push(`${summary.shortage2h.department} is expected to run out of beds within 2 hours.`);
-  parts.push(`${summary.dirtyBeds} bed${summary.dirtyBeds === 1 ? ' is' : 's are'} waiting for cleaning and ${summary.dischargeReady} patient${summary.dischargeReady === 1 ? ' is' : 's are'} ready to go home.`);
-  return parts.join(' ');
-}
-
-/* ── Occupancy ring (SVG, no chart library) ─────────────────────────────── */
-
-function OccupancyRing({ value, color, label }) {
-  const r = 52;
-  const c = 2 * Math.PI * r;
-  const v = Math.max(0, Math.min(100, value || 0));
+function StripItem({ icon: Icon, value, label, tone }) {
   return (
-    <div className="relative w-36 h-36 shrink-0" role="img" aria-label={`${label}: ${Math.round(v)} percent`}>
-      <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-        <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="12" />
-        <circle cx="60" cy="60" r={r} fill="none" stroke={color} strokeWidth="12" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - v / 100)} style={{ transition: 'stroke-dashoffset 600ms ease' }} />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-extrabold tabular-nums">{Math.round(v)}%</span>
-        <span className="text-[10px] uppercase tracking-wider text-white/75">{label}</span>
-      </div>
+    <div className="flex items-center gap-2 px-3 py-2 min-w-0">
+      <Icon className={clsx('w-4 h-4 shrink-0', tone || 'text-ink-500')} aria-hidden="true" />
+      <span className="text-sm font-bold tabular-nums text-ink-900">{value}</span>
+      <span className="text-[11px] text-ink-500 truncate">{label}</span>
     </div>
   );
 }
 
-function HeroStat({ icon: Icon, label, value, sub, tone = 'default' }) {
+function FlowStatus({ summary, onApplied }) {
+  const [busy, setBusy] = useState(false);
+  const depts = summary.departments || [];
+  const action = summary.topAction;
+  const apply = async () => {
+    setBusy(true);
+    try {
+      await flowApi.createRecommendationBatch([action], { autoApprove: true, source: 'command_center' });
+      toast.success('Action sent to the team');
+      onApplied();
+    } catch (e) {
+      toast.error(errorText(e, 'Could not apply the action'));
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
-    <div className="rounded-xl bg-white/10 border border-white/10 px-3 py-2.5 min-w-0">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-white/75">
-        <Icon className="w-3.5 h-3.5" aria-hidden="true" /> {label}
-      </div>
-      <div className={clsx('text-2xl font-extrabold tabular-nums leading-tight', tone === 'danger' ? 'text-[#FFB4B4]' : tone === 'warn' ? 'text-[#FFD99A]' : 'text-white')}>{value}</div>
-      {sub && <div className="text-[10px] text-white/70 truncate">{sub}</div>}
-    </div>
-  );
-}
-
-function StatusHero({ summary, edArrivals }) {
-  if (!summary) return <div className="rounded-3xl h-64 bg-royal-500/20 animate-pulse" aria-busy="true" />;
-  const st = overallStatus(summary);
-  const Icon = st.icon;
-  return (
-    <section className="rounded-3xl bg-gradient-to-br from-royal-900 via-royal-700 to-royal-500 text-white p-5 md:p-6 shadow-soft" aria-label="Hospital status">
-      <div className="flex flex-col xl:flex-row gap-6">
-        {/* Headline */}
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] uppercase tracking-wider text-white/70 font-semibold">Hospital status right now</p>
-          <div className="flex items-center gap-3 mt-1">
-            <span className={clsx('inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-extrabold', st.chip)}>
-              <Icon className="w-4 h-4" aria-hidden="true" /> {st.word}
-            </span>
-          </div>
-          <p className="text-sm md:text-base text-white/90 leading-relaxed mt-3 max-w-2xl">{explain(summary)}</p>
-          <p className="text-[11px] text-white/60 mt-3">
-            Limits: busy above {Math.round(summary.thresholds.warn * 100)}% · overloaded above {Math.round(summary.thresholds.danger * 100)}%
-          </p>
-        </div>
-
-        {/* Ring + numbers */}
-        <div className="flex flex-col sm:flex-row items-center gap-5">
-          <OccupancyRing value={summary.occupancy.pct} color={st.ring} label="beds in use" />
-          <div className="grid grid-cols-2 gap-2 w-full sm:w-[340px]">
-            <HeroStat icon={HeartPulse} label="Intensive care" value={`${Math.round(summary.icu.pct)}%`} sub={`${summary.icu.occupied} of ${summary.icu.total} beds`} tone={summary.icu.pct > 90 ? 'danger' : summary.icu.pct >= 70 ? 'warn' : 'default'} />
-            <HeroStat icon={Ambulance} label="Arrivals next 6h" value={edArrivals != null ? Math.round(edArrivals) : '—'} sub="expected at Emergency" />
-            <HeroStat icon={Sparkles} label="Waiting for cleaning" value={summary.dirtyBeds} sub="beds" tone={summary.dirtyBeds > 2 ? 'warn' : 'default'} />
-            <HeroStat icon={Home} label="Ready to go home" value={summary.dischargeReady} sub="patients" />
-          </div>
-        </div>
-      </div>
-
-      {/* Department strip: now → in 2h */}
-      <div className="mt-5 pt-4 border-t border-white/15">
-        <p className="text-[11px] uppercase tracking-wider text-white/70 font-semibold mb-2">How full each area is: now → in 2 hours</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-          {summary.departments.map((d) => {
-            const s = STATUS[d.severity] || STATUS.LOW;
-            const Trend = d.predicted2hPct > d.utilizationPct ? ArrowUpRight : d.predicted2hPct < d.utilizationPct ? ArrowDownRight : ArrowRight;
-            return (
-              <div key={d.department} className={clsx('rounded-xl bg-cream-50 px-3 py-2 text-ink-900 border-l-4', d.rootCause && 'ring-2 ring-[#FFB4B4]')} style={{ borderLeftColor: s.color }}>
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-[11px] font-bold text-royal-900 truncate">{SHORT_NAME[d.department] || d.department}</span>
-                  {d.rootCause && <span className="text-[8px] font-extrabold text-white bg-[#D64545] rounded px-1 py-0.5">START</span>}
-                </div>
-                <div className="flex items-baseline gap-1.5">
-                  <span className={clsx('text-xl font-extrabold tabular-nums', s.text)}>{d.utilizationPct}%</span>
-                  <span className="text-[11px] text-ink-500 inline-flex items-center tabular-nums">
-                    <Trend className="w-3 h-3" aria-hidden="true" />
-                    {d.predicted2hPct}%
-                  </span>
-                </div>
-                <div className={clsx('text-[10px] font-semibold', s.text)}>{s.word}</div>
+    <section className="flow-card p-4 flex flex-col">
+      <h2 className="label-xs mb-3">Flow Status</h2>
+      <ol className="space-y-0.5 mb-3">
+        {depts.map((d, i) => {
+          const [color] = SEV[d.severity] || SEV.LOW;
+          return (
+            <li key={d.department}>
+              <div className="flex items-center gap-3 rounded-lg border border-cream-200 border-l-4 px-3 h-11" style={{ borderLeftColor: color }}>
+                <span className="text-xs font-semibold text-ink-900 flex-1 truncate">{d.department}</span>
+                {d.rootCause && <span className="rounded bg-[#DC2626] px-1.5 py-0.5 text-[9px] font-bold text-white">ROOT CAUSE</span>}
+                <span className="text-sm font-bold tabular-nums text-ink-900">{d.utilizationPct}%</span>
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} role="img" aria-label={SEV[d.severity]?.[1]} />
               </div>
-            );
-          })}
-        </div>
+              {i < depts.length - 1 && <ArrowDown className="w-3 h-3 text-ink-500/50 mx-auto" aria-hidden="true" />}
+            </li>
+          );
+        })}
+      </ol>
+      <div className="mt-auto pt-3 border-t border-cream-200 flex items-center gap-2">
+        <p className="text-xs text-ink-900 flex-1 min-w-0">
+          <span className="text-ink-500">Action: </span>
+          {action ? action.text : 'No action needed'}
+        </p>
+        {action && (
+          <button type="button" className="flow-btn-primary !py-1.5 shrink-0" onClick={apply} disabled={busy}>
+            <Zap className="w-3.5 h-3.5" aria-hidden="true" /> Take Action
+          </button>
+        )}
       </div>
     </section>
   );
 }
 
-/* ── What to do now ─────────────────────────────────────────────────────── */
+function Forecast({ forecast, demand, capacity }) {
+  const data = useMemo(() => {
+    if (!forecast) return null;
+    const labels = forecast.timestamps.map((t) => clock(t));
+    const demandByH = Object.fromEntries((demand || []).map((d) => [d.horizon, d.demand]));
+    return {
+      labels,
+      datasets: [
+        { label: 'Arrivals', data: forecast.predicted, borderColor: '#014BAA', backgroundColor: 'rgba(1,75,170,0.12)', fill: true, tension: 0.35, pointRadius: 2, yAxisID: 'y1' },
+        { label: 'Bed demand', data: labels.map((_, i) => demandByH[i + 1] ?? null), borderColor: '#F59E0B', spanGaps: true, tension: 0.3, pointRadius: 3, yAxisID: 'y' },
+        { label: 'Capacity', data: labels.map(() => capacity), borderColor: '#EF4444', borderDash: [5, 4], pointRadius: 0, yAxisID: 'y' },
+      ],
+    };
+  }, [forecast, demand, capacity]);
 
-function ActionPlan({ bottlenecks, onApplied }) {
-  const actions = useMemo(() => {
-    const root = bottlenecks.find((b) => b.rootCause);
-    const ordered = root ? [root, ...bottlenecks.filter((b) => b !== root)] : bottlenecks;
-    return ordered.flatMap((b) => (b.recommendedActions || []).map((a) => ({ ...a, fromRoot: b.rootCause }))).slice(0, 6);
-  }, [bottlenecks]);
+  const options = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', align: 'end', labels: { color: '#94A3B8', usePointStyle: true, boxWidth: 6, boxHeight: 6, font: { size: 10 } } },
+        tooltip: { backgroundColor: '#222536', titleColor: '#F1F5F9', bodyColor: '#CBD5E1' },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 10 } } },
+        y: { grid: { color: 'rgba(148,163,184,0.15)' }, ticks: { color: '#94A3B8', font: { size: 10 } }, title: { display: false } },
+        y1: { position: 'right', grid: { display: false }, ticks: { color: '#014BAA', font: { size: 10 } }, beginAtZero: true },
+      },
+    }),
+    []
+  );
+
+  const arrivals = forecast ? Math.round(forecast.predicted.reduce((a, b) => a + b, 0)) : null;
+  const last = demand?.[demand.length - 1];
+  const gap = last ? Math.round(last.gap) : null;
+
+  return (
+    <section className="flow-card p-4 flex flex-col">
+      <h2 className="label-xs mb-2">Next 6 Hours · Emergency</h2>
+      <div className="flex-1 min-h-[200px] relative">{data ? <Line data={data} options={options} aria-label={`Emergency forecast for the next 6 hours: about ${arrivals ?? 0} arrivals, bed demand against capacity ${capacity ?? ''}`} /> : <FlowSkeleton lines={5} />}</div>
+      <div className="grid grid-cols-3 gap-2 mt-3">
+        <span className="flex items-center justify-center gap-1 rounded-lg bg-[#014BAA]/10 px-2 py-2 text-[11px] whitespace-nowrap font-semibold text-fg-info">
+          <ArrowUp className="w-3.5 h-3.5" aria-hidden="true" /> +{arrivals ?? '—'} arrivals
+        </span>
+        <span className="flex items-center justify-center gap-1 rounded-lg bg-[#10B981]/10 px-2 py-2 text-[11px] whitespace-nowrap font-semibold text-fg-ok">
+          <ArrowDown className="w-3.5 h-3.5" aria-hidden="true" /> -{last ? Math.round(last.expectedDischarges) : '—'} discharges
+        </span>
+        <span className={clsx('flex items-center justify-center gap-1 rounded-lg px-2 py-2 text-[11px] whitespace-nowrap font-semibold', gap > 0 ? 'bg-[#EF4444]/10 text-fg-bad' : 'bg-[#10B981]/10 text-fg-ok')}>
+          <TriangleAlert className="w-3.5 h-3.5" aria-hidden="true" /> Gap: {gap == null ? '—' : `${gap > 0 ? '+' : ''}${gap} beds`}
+        </span>
+      </div>
+    </section>
+  );
+}
+
+function dotFor(text, type) {
+  const t = text.toLowerCase();
+  if (type === 'alert' || /critical|urgent|ambulance|\d{2,3}%|deteriorat/.test(t)) return '#EF4444';
+  if (/clean|ready|available|completed|done/.test(t)) return '#10B981';
+  if (/discharge|cleaning|waiting|delay/.test(t)) return '#F59E0B';
+  return '#014BAA';
+}
+
+function LiveFeed({ summary }) {
+  const notes = useFlowPolling(() => flowApi.getNotifications(), { intervalMs: 30000, refreshOn: ['notification.new', 'flow.analysisComplete'], toastOnError: false });
+  const feed = useLiveStore((s) => s.flowState.feed);
+  const items = useMemo(() => {
+    const rows = [];
+    const list = Array.isArray(notes.data) ? notes.data : notes.data?.notifications || [];
+    for (const n of list) rows.push({ id: n.id, text: n.title || n.message, at: n.createdAt || n.created_at, type: n.type });
+    for (const f of feed || []) rows.push({ id: f.id, text: f.title || f.text || f.message, at: f.at || f.ts || f.createdAt, type: f.kind });
+    for (const d of summary?.departments || []) if (d.severity === 'HIGH') rows.push({ id: `dept-${d.department}`, text: `${d.department} at ${d.utilizationPct}%`, at: summary.lastAnalysisAt, type: 'alert' });
+    return rows.filter((r) => r.text).sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 20);
+  }, [notes.data, feed, summary]);
+
+  return (
+    <section className="flow-card p-4 flex flex-col">
+      <h2 className="label-xs mb-2">Live Updates</h2>
+      {!items.length && <MiniEmpty text="No updates yet" />}
+      <ul className="flex-1 min-h-[220px] lg:min-h-0 lg:h-0 overflow-y-auto -mr-2 pr-2">
+        {items.map((it) => (
+          <li key={it.id} className="flex items-start gap-2.5 py-1.5">
+            <span className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: dotFor(it.text, it.type) }} aria-hidden="true" />
+            <span className="text-xs text-ink-900 flex-1 min-w-0 truncate" title={it.text}>
+              {it.text}
+            </span>
+            <span className="text-[10px] text-ink-500 whitespace-nowrap">{timeAgo(it.at)}</span>
+          </li>
+        ))}
+      </ul>
+      <Link to="/admin/flow/audit" className="text-[11px] font-semibold text-royal-500 hover:underline mt-2">
+        View all
+      </Link>
+    </section>
+  );
+}
+
+function DischargeTable({ data, onOpen, onChanged }) {
   const [busy, setBusy] = useState(null);
-  const [done, setDone] = useState({});
-
-  const run = async (list, key) => {
-    setBusy(key);
+  const rows = (data?.candidates || []).slice(0, 5);
+  const nudge = async (c) => {
+    setBusy(c.patientId);
     try {
-      const r = await flowApi.createRecommendationBatch(list, { autoApprove: true, source: 'command_center' });
-      setDone((d) => ({ ...d, ...Object.fromEntries(list.map((a) => [a.id, true])) }));
-      toast.success(`${r.created} action${r.created === 1 ? '' : 's'} started · ${r.notificationsSent} people notified${r.nudges ? ` · ${r.nudges} discharge reminders` : ''}`);
-      onApplied?.();
+      await flowApi.nudgeDischarges([c.patientId]);
+      toast.success(`Nudge sent for ${c.alias}`);
+      onChanged();
     } catch (e) {
-      toast.error(errorText(e, 'Could not start the action'));
+      toast.error(errorText(e, 'Could not send nudge'));
     } finally {
       setBusy(null);
     }
   };
-
-  const pending = actions.filter((a) => !done[a.id]);
-
   return (
-    <section className="flow-card-pad h-full flex flex-col" aria-label="What to do now">
-      <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
-        <div>
-          <h2 className="text-base font-extrabold text-royal-900 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-royal-500" aria-hidden="true" /> What to do now
-          </h2>
-          <p className="text-xs text-ink-500">Most helpful first. Each action says why it is suggested and what it should achieve.</p>
-        </div>
-        {pending.length > 1 && (
-          <button type="button" className="flow-btn-primary" onClick={() => run(pending, 'all')} disabled={!!busy}>
-            <Zap className="w-3.5 h-3.5" aria-hidden="true" /> {busy === 'all' ? 'Starting…' : `Do all ${pending.length}`}
-          </button>
-        )}
+    <section>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="label-xs">Discharge Readiness</h2>
+        <Link to="/admin/flow/discharge-planner" className="text-[11px] font-semibold text-royal-500 hover:underline">
+          View all
+        </Link>
       </div>
-
-      {actions.length === 0 ? (
-        <FlowEmpty icon={CheckCircle2} title="Nothing needs doing" message="Every department is within its limits. New suggestions appear here automatically." />
-      ) : (
-        <ol className="space-y-2 flex-1">
-          {actions.map((a, i) => (
-            <li key={a.id} className={clsx('rounded-xl border p-3 flex gap-3 transition-colors', done[a.id] ? 'border-[#1FA971]/40 bg-[#1FA971]/5' : 'border-cream-200 bg-cream-50')}>
-              <span className={clsx('w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center shrink-0', done[a.id] ? 'bg-[#1FA971] text-white' : i === 0 ? 'bg-[#D64545] text-white' : 'bg-royal-500 text-white')}>
-                {done[a.id] ? <CheckCircle2 className="w-4 h-4" aria-hidden="true" /> : i + 1}
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-semibold text-ink-900">{a.text}</p>
-                  {i === 0 && !done[a.id] && <span className="text-[9px] font-extrabold text-white bg-[#D64545] rounded px-1.5 py-0.5">TOP PRIORITY</span>}
-                </div>
-                {a.why && (
-                  <p className="text-xs text-ink-500 mt-0.5 flex gap-1">
-                    <Info className="w-3.5 h-3.5 shrink-0 mt-px text-royal-500" aria-hidden="true" /> Because {a.why.charAt(0).toLowerCase() + a.why.slice(1)}
-                  </p>
-                )}
-                <p className="text-xs font-semibold text-[#13784F] mt-1">Expected result: {a.impact}</p>
-              </div>
-              <div className="shrink-0 self-center">
-                {done[a.id] ? (
-                  <span className="text-[11px] font-bold text-[#13784F]">Started</span>
-                ) : (
-                  <button type="button" className="flow-btn-secondary" onClick={() => run([a], a.id)} disabled={!!busy}>
-                    {busy === a.id ? '…' : 'Do this'}
+      <div className="table-wrap">
+        <table className="mo-table">
+          <thead>
+            <tr>
+              <th scope="col">Patient</th>
+              <th scope="col">Ward</th>
+              <th scope="col">Score</th>
+              <th scope="col">Blocking</th>
+              <th scope="col" className="text-right">
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {!rows.length && (
+              <tr>
+                <td colSpan={5} className="text-center text-ink-500 py-6">
+                  No discharge candidates
+                </td>
+              </tr>
+            )}
+            {rows.map((c) => (
+              <tr key={c.patientId} className="cursor-pointer" onClick={() => onOpen(c.patientId)}>
+                <td className="font-semibold">
+                  {c.alias} <span className="font-normal text-ink-500">· {c.bedId}</span>
+                </td>
+                <td className="max-w-[180px] truncate">{c.ward}</td>
+                <td className={clsx('font-bold tabular-nums', BAND_STYLES[readinessBand(c.score)].text)}>{c.score}</td>
+                <td className="max-w-[260px] truncate text-ink-500">{c.blockingFactors?.[0] || 'None'}</td>
+                <td className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <button type="button" className="flow-btn-secondary !py-1" disabled={busy === c.patientId} onClick={() => nudge(c)}>
+                    <Send className="w-3.5 h-3.5" aria-hidden="true" /> Nudge
                   </button>
-                )}
-              </div>
-            </li>
-          ))}
-        </ol>
-      )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
 
-/* ── Workspace tabs ─────────────────────────────────────────────────────── */
-
-const TABS = [
-  { key: 'map', label: 'Live bed map', icon: MapIcon },
-  { key: 'flow', label: 'Patient flow & forecast', icon: GitBranch },
-  { key: 'discharge', label: 'Discharges', icon: ClipboardCheck },
-  { key: 'impact', label: 'Before vs after', icon: Scale },
-];
-
-function BeforeAfter({ lastSim }) {
-  if (!lastSim) {
-    return (
-      <div className="flow-card-pad">
-        <FlowEmpty icon={FlaskConical} title="No simulation yet" message="Run a what-if scenario to compare doing nothing with full orchestration." action={<Link to="/admin/flow/simulator" className="flow-btn-primary mt-3">Open the simulator</Link>} />
-      </div>
-    );
-  }
-  const rows = [
-    ['A', 'Do nothing', lastSim.scenarioA, '#D64545'],
-    ['B', 'Partial action', lastSim.scenarioB, '#F2A93B'],
-    ['C', 'Full orchestration', lastSim.scenarioC, '#1FA971'],
-  ];
-  const max = Math.max(...rows.map((r) => r[2]?.avgWaitMin || 0), 1);
-  return (
-    <div className="flow-card-pad">
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-        <div>
-          <h3 className="text-base font-extrabold text-royal-900">What our plan changes</h3>
-          <p className="text-xs text-ink-500">
-            Last scenario: +{lastSim.params.arrivalIncreasePct}% patients · {lastSim.params.nursesAbsent} nurses absent · {lastSim.params.icuBedsClosed} ICU beds closed · {dateTime(lastSim.createdAt)}
-          </p>
-        </div>
-        <WaitTimeImpactBadge before={lastSim.scenarioA.avgWaitMin} after={lastSim.scenarioC.avgWaitMin} size="lg" />
-      </div>
-      <div className="space-y-3">
-        {rows.map(([id, label, s, color]) => (
-          <div key={id} className="grid grid-cols-[150px_1fr] sm:grid-cols-[190px_1fr_auto] items-center gap-3">
-            <span className="text-xs font-semibold text-ink-900">
-              {id} · {label}
-            </span>
-            <div className="h-6 rounded-lg bg-cream-200 overflow-hidden" role="img" aria-label={`${label}: average wait ${s?.avgWaitMin} minutes`}>
-              <div className="h-full rounded-lg flex items-center justify-end pr-2 text-[11px] font-bold text-white" style={{ width: `${Math.max(8, ((s?.avgWaitMin || 0) / max) * 100)}%`, backgroundColor: color }}>
-                {s?.avgWaitMin} min
-              </div>
-            </div>
-            <span className="hidden sm:block text-[11px] text-ink-500 tabular-nums">
-              {s?.bedShortage} beds short · {s?.nurseShortage} nurses short
-            </span>
-          </div>
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-2 mt-5">
-        <Link to="/admin/flow/simulator" className="flow-btn-secondary">
-          <Sliders className="w-3.5 h-3.5" aria-hidden="true" /> Run a new simulation
-        </Link>
-        <AiReportButton scope="admin" label="Explain the plan (AI)" variant="secondary" />
-      </div>
-    </div>
-  );
-}
-
-/* ── Page ──────────────────────────────────────────────────────────────── */
-
 export default function FlowCommandCenterPage() {
-  const [dark, setDark] = useState(() => readLocal(DARK_KEY, '0') === '1');
-  const [tab, setTab] = useState(() => readLocal(TAB_KEY, 'map'));
   const [showDemo, setShowDemo] = useState(false);
+  const [popup, setPopup] = useState(null);
   const setFlowState = useLiveStore((s) => s.setFlowState);
-  const bedMap = useLiveStore((s) => s.flowState.bedMap);
-  const liveSummary = useLiveStore((s) => s.flowState.stateSummary);
-
-  const summaryQ = useFlowPolling(() => flowApi.getStateSummary(), { intervalMs: 30000, refreshOn: ['flow.analysisComplete', 'bed.updated', 'flow.ambulanceIncoming'] });
-  const bottleneckQ = useFlowPolling(() => flowApi.getBottlenecks(), { intervalMs: 30000, refreshOn: ['flow.bottleneckDetected', 'flow.analysisComplete', 'bed.updated'] });
-  const bedMapQ = useFlowPolling(() => flowApi.getBedMap(), { intervalMs: 60000, refreshOn: ['ot.caseCompleted', 'patient.updated'] });
-  const forecastQ = useFlowPolling(() => flowApi.getForecast('Emergency', 6), { intervalMs: 120000, refreshOn: ['flow.analysisComplete'], toastOnError: false });
-  const simQ = useFlowPolling(() => flowApi.getSimulationHistory(1), { intervalMs: 0, toastOnError: false });
+  const summaryQ = useFlowPolling(() => flowApi.getStateSummary(), { intervalMs: 30000, refreshOn: REFRESH_ON });
+  const forecastQ = useFlowPolling(() => Promise.all([flowApi.getForecast('Emergency', 6), flowApi.getBedDemand('Emergency')]), { intervalMs: 60000, refreshOn: ['flow.analysisComplete'] });
+  const dischargeQ = useFlowPolling(() => flowApi.getDischargeCandidates(), { intervalMs: 60000, refreshOn: REFRESH_ON });
+  const summary = summaryQ.data;
 
   useEffect(() => {
-    if (summaryQ.data) setFlowState({ stateSummary: summaryQ.data, lastAnalysisAt: summaryQ.data.lastAnalysisAt });
-  }, [summaryQ.data, setFlowState]);
-  useEffect(() => {
-    if (bottleneckQ.data) setFlowState({ bottlenecks: bottleneckQ.data.bottlenecks });
-  }, [bottleneckQ.data, setFlowState]);
-  useEffect(() => {
-    if (bedMapQ.data) setFlowState({ bedMap: bedMapQ.data });
-  }, [bedMapQ.data, setFlowState]);
-
-  const summary = liveSummary && summaryQ.data && new Date(liveSummary.generatedAt) > new Date(summaryQ.data.generatedAt) ? liveSummary : summaryQ.data;
-  const edArrivals = forecastQ.data ? forecastQ.data.predicted.reduce((a, b) => a + b, 0) : null;
-  const bottlenecks = bottleneckQ.data?.bottlenecks || [];
-  const lastSim = simQ.data && simQ.data[0];
+    if (summary) setFlowState({ stateSummary: summary, lastAnalysisAt: summary.lastAnalysisAt });
+  }, [summary, setFlowState]);
 
   const refreshAll = () => {
     summaryQ.refresh({ silent: true });
-    bottleneckQ.refresh({ silent: true });
-    bedMapQ.refresh({ silent: true });
-  };
-  const toggleDark = () =>
-    setDark((d) => {
-      writeLocal(DARK_KEY, d ? '0' : '1');
-      return !d;
-    });
-  const pickTab = (k) => {
-    setTab(k);
-    writeLocal(TAB_KEY, k);
+    forecastQ.refresh({ silent: true });
+    dischargeQ.refresh({ silent: true });
   };
 
+  const [forecast, demand] = forecastQ.data || [];
+  const ed = summary?.departments?.find((d) => d.department === 'Emergency');
+  const surge = useMemo(() => {
+    if (!forecast) return '—';
+    const i = forecast.predicted.indexOf(Math.max(...forecast.predicted));
+    return `+${i + 1}h`;
+  }, [forecast]);
+  const bottlenecks = (summary?.departments || []).filter((d) => d.severity !== 'LOW').length;
+
   return (
-    <div className={clsx('flow-page', dark && 'flow-dark')}>
+    <div className="space-y-4">
       <FlowPageHeader
-        title="Flow Command Center"
-        subtitle="See what is happening, what will happen next, and what to do about it"
-        crumbs={[{ label: 'Admin', to: '/admin/dashboard' }, { label: 'Flow Intelligence' }, { label: 'Command Center' }]}
-        dark={dark}
+        title="Command Center"
         actions={
           <>
             <button type="button" className="flow-btn-secondary" onClick={() => setShowDemo((v) => !v)} aria-expanded={showDemo}>
-              <FlaskConical className="w-3.5 h-3.5" aria-hidden="true" /> Demo tools <ChevronDown className={clsx('w-3 h-3 transition-transform', showDemo && 'rotate-180')} aria-hidden="true" />
+              <FlaskConical className="w-3.5 h-3.5" aria-hidden="true" /> Demo <ChevronDown className={clsx('w-3 h-3 transition-transform', showDemo && 'rotate-180')} aria-hidden="true" />
             </button>
-            <button type="button" onClick={toggleDark} className="flow-btn-secondary !p-2" aria-pressed={dark} aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
-              {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <AiReportButton scope="admin" label="Explain with AI" />
+            <AiReportButton scope="admin" label="AI Report" />
           </>
         }
       />
-
-      {showDemo && (
-        <div className="mb-4">
-          <DemoControls onChanged={refreshAll} />
-        </div>
-      )}
-
+      {showDemo && <DemoControls onChanged={refreshAll} compact />}
       <AmbulanceIncomingAlert />
       {summaryQ.error && !summary && <FlowError message={summaryQ.error} onRetry={summaryQ.refresh} />}
 
-      <div className="space-y-5">
-        <StatusHero summary={summary} edArrivals={edArrivals} />
-
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-          <div className="xl:col-span-2">
-            <ActionPlan bottlenecks={bottlenecks} onApplied={refreshAll} />
-          </div>
-          <FlowActionFeed maxHeight="max-h-[440px]" />
-        </div>
-
-        {/* Workspace */}
-        <section aria-label="Workspace">
-          <div className="flex gap-1 overflow-x-auto scrollbar-thin border-b border-cream-200 mb-4" role="tablist" aria-label="Command Center views">
-            {TABS.map((t) => {
-              const Icon = t.icon;
-              const active = tab === t.key;
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  role="tab"
-                  id={`cc-tab-${t.key}`}
-                  aria-selected={active}
-                  aria-controls={`cc-panel-${t.key}`}
-                  onClick={() => pickTab(t.key)}
-                  className={clsx(
-                    'inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold whitespace-nowrap border-b-2 -mb-px transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500 rounded-t-lg',
-                    active ? 'border-royal-500 text-royal-500 bg-cream-50' : 'border-transparent text-ink-500 hover:text-royal-500'
-                  )}
-                >
-                  <Icon className="w-4 h-4" aria-hidden="true" /> {t.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div role="tabpanel" id={`cc-panel-${tab}`} aria-labelledby={`cc-tab-${tab}`}>
-            {tab === 'map' && <BedMapSchematic data={bedMap || bedMapQ.data} loading={bedMapQ.loading} onChanged={refreshAll} />}
-
-            {tab === 'flow' && (
-              <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
-                <div className="xl:col-span-3 space-y-3">
-                  <PatientJourney list={bottlenecks} />
-                  <Link to="/admin/flow/bottlenecks" className="flow-btn-secondary">
-                    <GitBranch className="w-3.5 h-3.5" aria-hidden="true" /> Open the full Bottleneck Map
-                  </Link>
-                </div>
-                <div className="xl:col-span-2">
-                  <FlowForecastPanel />
-                </div>
-              </div>
-            )}
-
-            {tab === 'discharge' && <DischargeReadinessPanel />}
-
-            {tab === 'impact' && <BeforeAfter lastSim={lastSim} />}
-          </div>
-        </section>
+      {/* Top strip */}
+      <div className="rounded-xl border border-cream-200 bg-sunken grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-cream-200">
+        <StripItem icon={BedDouble} value={summary ? `${summary.occupancy.occupied}/${summary.occupancy.capacity}` : '—'} label="beds" />
+        <StripItem icon={AlertOctagon} value={summary ? bottlenecks : '—'} label="bottlenecks" tone={bottlenecks ? 'text-[#EF4444]' : 'text-[#10B981]'} />
+        <StripItem icon={LogOut} value={summary?.dischargeReady ?? '—'} label="discharges ready" tone="text-[#10B981]" />
+        <StripItem icon={Sparkles} value={summary?.dirtyBeds ?? '—'} label="dirty beds" tone={summary?.dirtyBeds > 2 ? 'text-[#F59E0B]' : undefined} />
+        <StripItem icon={Ambulance} value={surge} label="next surge" tone="text-[#014BAA]" />
       </div>
+
+      {/* Three columns */}
+      {!summary ? (
+        <FlowSkeleton lines={10} />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <FlowStatus summary={summary} onApplied={refreshAll} />
+          <Forecast forecast={forecast} demand={demand} capacity={ed?.capacity} />
+          <LiveFeed summary={summary} />
+        </div>
+      )}
+
+      <DischargeTable data={dischargeQ.data} onOpen={setPopup} onChanged={refreshAll} />
+
+      {popup && <PatientDetailPopup patientId={popup} onClose={() => setPopup(null)} onChanged={refreshAll} />}
     </div>
   );
 }

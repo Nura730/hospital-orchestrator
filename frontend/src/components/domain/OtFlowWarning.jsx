@@ -18,10 +18,10 @@ export function OtFlowWarning() {
   const Icon = risky ? AlertOctagon : CheckCircle2;
 
   return (
-    <div role={risky ? 'alert' : 'status'} className={clsx('rounded-2xl border-2 p-4 flex flex-wrap items-center gap-3', risky ? 'border-[#D64545] bg-[#D64545]/5' : 'border-[#1FA971]/50 bg-[#1FA971]/5')}>
-      <Icon className={clsx('w-6 h-6 shrink-0', risky ? 'text-[#D64545]' : 'text-[#1FA971]')} aria-hidden="true" />
+    <div role={risky ? 'alert' : 'status'} className={clsx('rounded-2xl border-2 p-4 flex flex-wrap items-center gap-3', risky ? 'border-[#EF4444] bg-[#EF4444]/5' : 'border-[#10B981]/50 bg-[#10B981]/5')}>
+      <Icon className={clsx('w-6 h-6 shrink-0', risky ? 'text-[#EF4444]' : 'text-[#10B981]')} aria-hidden="true" />
       <div className="flex-1 min-w-[220px]">
-        <p className={clsx('text-sm font-bold', risky ? 'text-[#B02E2E]' : 'text-[#13784F]')}>{data.overflow.label}</p>
+        <p className={clsx('text-sm font-bold', risky ? 'text-fg-bad' : 'text-fg-ok')}>{data.overflow.label}</p>
         <p className="text-xs text-ink-500">
           {data.holdingPostOpBeds} surgeries in progress need post-op beds ·{' '}
           {blocked.length ? `${blocked.length} upcoming case${blocked.length > 1 ? 's' : ''} without a bed (${blocked.map((c) => c.caseNumber).join(', ')})` : 'every upcoming case has a bed path'}

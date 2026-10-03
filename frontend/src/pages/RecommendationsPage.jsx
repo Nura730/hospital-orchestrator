@@ -77,7 +77,7 @@ export function RecommendationsPage() {
           AI Orchestration Recommendations
         </h2>
         <p className="text-xs text-surface-muted mt-0.5">
-          Proactive bed step-downs, float nurse reassignments, and surgical slot de-confliction.
+          Proactive bed step-downs, nurse reassignments, and surgical slot de-confliction.
         </p>
       </div>
 
@@ -175,7 +175,7 @@ export function RecommendationsPage() {
                     </span>
                     {act.from && (
                       <span className="text-[11px] text-primary-600 dark:text-primary-400 font-mono mt-1 block">
-                        Source: {act.from} → Destination: {act.to}
+                        Source: {act.from} · Destination: {act.to}
                       </span>
                     )}
                   </div>

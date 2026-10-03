@@ -27,7 +27,7 @@ export function AmbulanceIncomingAlert() {
   const bedText = amb.bedId ? `Bed ${amb.bedId} ${amb.bedMode === 'releasing' ? 'releasing soon' : 'reserved'}` : 'No bed reserved';
 
   return (
-    <div role="alert" aria-live="assertive" className="relative overflow-hidden rounded-2xl bg-[#D64545] text-white shadow-soft mb-4">
+    <div role="alert" aria-live="assertive" className="relative overflow-hidden rounded-xl bg-[#B91C1C] text-white mb-4">
       {!amb.acknowledged && (
         <div className="absolute bottom-0 left-0 h-1 bg-white/60 transition-all" style={{ width: `${(remaining / 60) * 100}%` }} aria-hidden="true" />
       )}
@@ -51,7 +51,7 @@ export function AmbulanceIncomingAlert() {
           <span className="text-[11px] text-white/80 tabular-nums">auto-dismiss {remaining}s</span>
         )}
         {!amb.acknowledged && (
-          <button type="button" onClick={() => setFlowState({ ambulanceIncoming: { ...amb, acknowledged: true } })} className="flow-btn bg-white text-[#B02E2E] hover:bg-white/90">
+          <button type="button" onClick={() => setFlowState({ ambulanceIncoming: { ...amb, acknowledged: true } })} className="flow-btn bg-white text-fg-bad hover:bg-white/90">
             <Check className="w-3.5 h-3.5" aria-hidden="true" /> Acknowledge
           </button>
         )}

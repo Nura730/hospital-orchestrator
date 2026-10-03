@@ -22,7 +22,7 @@ export function GaugeDoughnut({
   const isDanger = percentage >= dangerThreshold;
   const isWarn = percentage >= warnThreshold;
 
-  const fillColor = isDanger ? '#ef4444' : isWarn ? '#f59e0b' : '#0d9488';
+  const fillColor = isDanger ? '#ef4444' : isWarn ? '#f59e0b' : '#014BAA';
 
   const chartData = useMemo(() => ({
     labels: ['Occupied', 'Available'],

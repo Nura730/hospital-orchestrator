@@ -205,7 +205,7 @@ function generateRecommendedActions(b, all) {
           department: b.department,
           sourceDepartment: donor.department,
           count: 1,
-          text: `Reassign float nurse from ${donor.department} to ${b.department}`,
+          text: `Reassign a nurse from ${donor.department} to ${b.department}`,
           impact: `Nurse ratio 1:${ratio.toFixed(1)} → 1:${(b.occupied / (b.nursesOnShift + 1)).toFixed(1)}`,
           why: `${b.department} has 1 nurse per ${ratio.toFixed(1)} patients (safe limit 1:${SAFE_PATIENTS_PER_NURSE}); ${donor.department} runs at 1:${donor.ratio.toFixed(1)}`,
         });

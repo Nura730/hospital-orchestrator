@@ -26,7 +26,7 @@ export function RawDataTable({ rows = [], columns = [], exportName, maxHeight = 
       )}
       <div className={clsx('overflow-auto scrollbar-thin', maxHeight)}>
         <table className="flow-table w-full">
-          <thead className="sticky top-0 bg-cream-50 z-10 shadow-[0_1px_0_#EFE7E2]">
+          <thead className="sticky top-0 bg-cream-50 z-10">
             <tr>
               {columns.map((c) => (
                 <th key={c.key} scope="col" className={clsx(c.align === 'right' && '!text-right', compact && '!py-1.5')}>

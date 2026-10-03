@@ -111,12 +111,12 @@ export function FlowForecastPanel({ defaultDepartment = 'Emergency' }) {
           <h4 className="text-[11px] font-bold uppercase tracking-wide text-ink-500 mb-1.5">Demand vs capacity</h4>
           <div className="grid grid-cols-4 gap-1.5">
             {demand.map((d) => (
-              <div key={d.horizon} className={clsx('rounded-lg border px-2 py-1.5 text-center', d.shortage ? 'border-[#D64545] bg-[#D64545]/10' : 'border-cream-200 bg-cream-50')}>
+              <div key={d.horizon} className={clsx('rounded-lg border px-2 py-1.5 text-center', d.shortage ? 'border-[#EF4444] bg-[#EF4444]/10' : 'border-cream-200 bg-cream-50')}>
                 <div className="text-[10px] text-ink-500">+{d.horizon}h</div>
-                <div className={clsx('text-sm font-extrabold tabular-nums', d.shortage ? 'text-[#B02E2E]' : 'text-royal-900')}>
+                <div className={clsx('text-sm font-extrabold tabular-nums', d.shortage ? 'text-fg-bad' : 'text-royal-900')}>
                   {Math.round(d.demand)}/{d.capacity}
                 </div>
-                <div className={clsx('text-[10px] font-semibold tabular-nums', d.gap > 0 ? 'text-[#B02E2E]' : 'text-[#13784F]')}>{d.gap > 0 ? `short ${d.gap}` : `${Math.abs(d.gap)} spare`}</div>
+                <div className={clsx('text-[10px] font-semibold tabular-nums', d.gap > 0 ? 'text-fg-bad' : 'text-fg-ok')}>{d.gap > 0 ? `short ${d.gap}` : `${Math.abs(d.gap)} spare`}</div>
               </div>
             ))}
           </div>

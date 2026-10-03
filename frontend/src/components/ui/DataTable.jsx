@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo } from 'react';
 import clsx from 'clsx';
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, Search } from 'lucide-react';
 import Button from './Button.jsx';
 import EmptyState from './EmptyState.jsx';
 
@@ -101,10 +101,10 @@ export function DataTable({
       )}
 
       {/* Desktop / Tablet Table */}
-      <div className="overflow-x-auto rounded-xl border border-surface-border bg-surface-elevated shadow-xs">
-        <table className="w-full text-left text-xs border-collapse">
+      <div className="table-wrap">
+        <table className="mo-table">
           <thead>
-            <tr className="bg-surface-sunken/60 border-b border-surface-border text-surface-muted font-semibold uppercase tracking-wider text-[11px]">
+            <tr>
               {columns.map((col) => {
                 const isSorted = sortKey === col.key;
                 return (
@@ -112,7 +112,7 @@ export function DataTable({
                     key={col.key}
                     onClick={() => col.sortable !== false && handleSort(col.key)}
                     className={clsx(
-                      'px-4 py-3 select-none',
+                      'select-none',
                       col.sortable !== false && 'cursor-pointer hover:text-surface-foreground',
                       col.width && `w-[${col.width}]`
                     )}
@@ -128,7 +128,7 @@ export function DataTable({
                               <ChevronDown className="w-3.5 h-3.5 text-primary-500" />
                             )
                           ) : (
-                            <span className="opacity-0 group-hover:opacity-100">↕</span>
+                            <ChevronsUpDown className="w-3.5 h-3.5 opacity-40" aria-hidden="true" />
                           )}
                         </span>
                       )}
@@ -139,7 +139,7 @@ export function DataTable({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-surface-border">
+          <tbody>
             {paginatedData.length > 0 ? (
               paginatedData.map((row, idx) => (
                 <tr
@@ -147,11 +147,11 @@ export function DataTable({
                   onClick={() => onRowClick && onRowClick(row)}
                   className={clsx(
                     'transition-colors duration-100',
-                    onRowClick ? 'hover:bg-primary-500/5 cursor-pointer' : 'hover:bg-surface-sunken/30'
+                    onRowClick && 'cursor-pointer'
                   )}
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3 align-middle text-surface-foreground">
+                    <td key={col.key} className="align-middle">
                       {col.render ? col.render(row[col.key], row) : row[col.key] ?? '—'}
                     </td>
                   ))}

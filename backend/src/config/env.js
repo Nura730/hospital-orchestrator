@@ -1,7 +1,9 @@
+const path = require('path');
 const dotenv = require('dotenv');
 const { z } = require('zod');
 
-// Load environment variables from .env file
+// Load environment variables from backend/.env or cwd/.env
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config();
 
 const envSchema = z.object({

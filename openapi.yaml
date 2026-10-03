@@ -1,0 +1,427 @@
+openapi: 3.0.3
+info:
+  title: MediOrchestra Hospital Management System API
+  description: Comprehensive production-ready backend API for MediOrchestra supporting Hospital Admin, Doctor, and OT Manager roles.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Local Development Server
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      responses:
+        '200':
+          description: Operational health status
+
+  /auth/login:
+    post:
+      summary: Authenticate user (Admin, Doctor, or OT Manager)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, userType]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                userType:
+                  type: string
+                  enum: [admin, doctor, ot_manager]
+      responses:
+        '200':
+          description: Successfully authenticated with JWT token and role-specific profile
+
+  /auth/logout:
+    post:
+      security:
+        - BearerAuth: []
+      summary: Logout active session
+      responses:
+        '200':
+          description: Success
+
+  /auth/me:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get full user profile based on role
+      responses:
+        '200':
+          description: Current user profile
+
+  /auth/change-password:
+    patch:
+      security:
+        - BearerAuth: []
+      summary: Change account password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Password updated successfully
+
+  /admin/dashboard:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Master Hospital Dashboard (Admin Only)
+      responses:
+        '200':
+          description: Single consolidated overview of hospital operations
+
+  /admin/dashboard/live-kpis:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Lightweight live KPI metrics polled every 30s
+      responses:
+        '200':
+          description: Live KPI metrics
+
+  /admin/doctors:
+    get:
+      security:
+        - BearerAuth: []
+      summary: List all doctors with filters
+      responses:
+        '200':
+          description: List of doctors
+    post:
+      security:
+        - BearerAuth: []
+      summary: Register new doctor and user credentials
+      responses:
+        '201':
+          description: Doctor created
+
+  /admin/doctors/{id}:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get full doctor profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Doctor profile
+    patch:
+      security:
+        - BearerAuth: []
+      summary: Update doctor information
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Updated doctor
+    delete:
+      security:
+        - BearerAuth: []
+      summary: Deactivate doctor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Doctor deactivated
+
+  /admin/patients:
+    get:
+      security:
+        - BearerAuth: []
+      summary: List all patients with filters
+      responses:
+        '200':
+          description: List of patients
+    post:
+      security:
+        - BearerAuth: []
+      summary: Register new patient
+      responses:
+        '201':
+          description: Patient registered
+
+  /admin/patients/{id}:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get patient details with timeline, bed, and doctor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Patient detail
+
+  /doctor/dashboard:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Doctor Private Dashboard (Isolated data)
+      responses:
+        '200':
+          description: Doctor dashboard
+
+  /doctor/my-patients:
+    get:
+      security:
+        - BearerAuth: []
+      summary: List patients assigned strictly to this doctor
+      responses:
+        '200':
+          description: Assigned patients
+
+  /doctor/my-patients/{id}:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get patient details (Forbidden if not assigned)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Patient detail
+        '403':
+          description: Forbidden - Patient belongs to another doctor
+
+  /doctor/ot-requests:
+    post:
+      security:
+        - BearerAuth: []
+      summary: Request an OT slot for a patient
+      responses:
+        '201':
+          description: OT Request created
+    get:
+      security:
+        - BearerAuth: []
+      summary: Get doctor's own OT requests
+      responses:
+        '200':
+          description: List of requests
+
+  /doctor/status:
+    patch:
+      security:
+        - BearerAuth: []
+      summary: Doctor self-updates availability status
+      responses:
+        '200':
+          description: Status updated
+
+  /ot/rooms:
+    get:
+      security:
+        - BearerAuth: []
+      summary: List all OT rooms with current status
+      responses:
+        '200':
+          description: List of rooms
+
+  /ot/timeline:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Today's full OT Gantt timeline
+      responses:
+        '200':
+          description: Timeline
+
+  /ot/available-doctors:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Discover available surgeons for immediate or scheduled cases
+      parameters:
+        - name: specialization
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Available doctors
+
+  /ot/cases:
+    get:
+      security:
+        - BearerAuth: []
+      summary: List OT cases
+      responses:
+        '200':
+          description: Cases
+    post:
+      security:
+        - BearerAuth: []
+      summary: Schedule new OT case with conflict verification
+      responses:
+        '201':
+          description: Case scheduled
+
+  /ot/cases/{id}/start:
+    patch:
+      security:
+        - BearerAuth: []
+      summary: Mark case as in_progress
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Case started
+
+  /ot/cases/{id}/complete:
+    patch:
+      security:
+        - BearerAuth: []
+      summary: Mark case as completed, frees room, post-op bed handling
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Case completed
+
+  /ot/cases/{id}/cancel:
+    patch:
+      security:
+        - BearerAuth: []
+      summary: Cancel OT case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Case cancelled
+
+  /beds:
+    get:
+      security:
+        - BearerAuth: []
+      summary: List all hospital beds
+      responses:
+        '200':
+          description: Beds list
+
+  /beds/heatmap:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Ward and department bed heatmap
+      responses:
+        '200':
+          description: Bed heatmap
+
+  /people/summary:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Hospital personnel and census summary
+      responses:
+        '200':
+          description: Census summary
+
+  /alerts:
+    get:
+      security:
+        - BearerAuth: []
+      summary: List hospital alerts
+      responses:
+        '200':
+          description: Alerts list
+    post:
+      security:
+        - BearerAuth: []
+      summary: Create alert
+      responses:
+        '201':
+          description: Alert created
+
+  /alerts/{id}/acknowledge:
+    patch:
+      security:
+        - BearerAuth: []
+      summary: Acknowledge open alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert acknowledged
+
+  /alerts/{id}/resolve:
+    patch:
+      security:
+        - BearerAuth: []
+      summary: Resolve alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert resolved
+
+  /kpis/current:
+    get:
+      security:
+        - BearerAuth: []
+      summary: Current live KPI snapshot
+      responses:
+        '200':
+          description: Live snapshot
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

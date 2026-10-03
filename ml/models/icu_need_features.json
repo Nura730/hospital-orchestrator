@@ -1,0 +1,44 @@
+{
+  "target": "requires_icu",
+  "task": "binary",
+  "target_transform": null,
+  "features": {
+    "age": "int64",
+    "acuity_level": "int64",
+    "requires_ot": "int64",
+    "requires_diagnostic": "int64",
+    "arrival_hour": "int32",
+    "arrival_day_of_week": "int32",
+    "arrival_is_weekend": "int64",
+    "arrival_hour_sin": "float64",
+    "arrival_hour_cos": "float64",
+    "is_elderly": "int64",
+    "is_pediatric": "int64",
+    "age_x_acuity": "int64",
+    "high_risk_flag": "int64",
+    "gender": "category",
+    "priority": "category",
+    "diagnostic_type": "category"
+  },
+  "categories": {
+    "gender": [
+      "F",
+      "M"
+    ],
+    "priority": [
+      "CRITICAL",
+      "ELECTIVE",
+      "HIGH",
+      "LOW",
+      "MEDIUM"
+    ],
+    "diagnostic_type": [
+      "CT",
+      "LAB",
+      "MRI",
+      "ULTRASOUND",
+      "XRAY",
+      "nan"
+    ]
+  }
+}

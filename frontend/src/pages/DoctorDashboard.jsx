@@ -50,12 +50,14 @@ const ROUTE_TAB = {
 };
 const TAB_ROUTE = { schedule: '/doctor/schedule', patients: '/doctor/patients', ot: '/doctor/ot-cases', calendar: '/doctor/calendar', notifications: '/doctor/notifications' };
 
+// [value (backend DOCTOR_STATUS), label, color, what other teams now see]
 const STATUS_BUTTONS = [
-  ['available', 'Available', '#047857'],
-  ['in_surgery', 'In Surgery', '#6D28D9'],
-  ['break', 'Break', '#B45309'],
-  ['off_duty', 'Off Duty', '#475569'],
+  ['available', 'Available', '#047857', 'OT and admin can assign you'],
+  ['in_surgery', 'In Surgery', '#6D28D9', 'OT and admin now see you as in surgery'],
+  ['on_break', 'Break', '#B45309', 'OT and admin see you as on break'],
+  ['off_duty', 'Off Duty', '#475569', 'You are hidden from OT assignment'],
 ];
+const STATUS_PILL = { available: 'online', in_surgery: 'in_surgery', on_break: 'on_break', break: 'on_break', off_duty: 'off_duty', in_consultation: 'in_consultation', emergency: 'emergency' };
 const BED_STATE = {
   occupied: ['#014BAA', 'Occupied'],
   critical: ['#B91C1C', 'Critical'],
@@ -445,12 +447,21 @@ export default function DoctorDashboard() {
   const d = q.data;
   const me = displayName(user);
 
+  // Optimistic: the button and badge change on click; the save runs in the background
+  const [pendingStatus, setPendingStatus] = useState(null);
   const setStatus = async (status) => {
+    const current = pendingStatus || d?.doctor.status;
+    if (status === current) return;
+    const [, label, , note] = STATUS_BUTTONS.find(([k]) => k === status);
+    setPendingStatus(status);
     try {
       await careApi.setDoctorStatus(status);
-      q.refresh({ silent: true });
+      toast.success(`Status: ${label}. ${note}.`, { id: 'doctor-status' });
+      await q.refresh({ silent: true });
     } catch (e) {
-      toast.error(errorText(e, 'Could not change status'));
+      toast.error(errorText(e, 'Could not change status'), { id: 'doctor-status' });
+    } finally {
+      setPendingStatus(null);
     }
   };
 
@@ -482,17 +493,33 @@ export default function DoctorDashboard() {
   if (!d) return <FlowSkeleton lines={12} />;
 
   const doc = d.doctor;
+  const myStatus = pendingStatus || (doc.status === 'break' ? 'on_break' : doc.status);
   return (
     <div className="space-y-4">
       {/* Header */}
       <FlowPageHeader
         title={doc.name}
-        subtitle={`${doc.specialty} · Shift ends ${doc.shiftEnd}`}
+        subtitle={
+          <span className="inline-flex flex-wrap items-center gap-2">
+            <StatusPill status={STATUS_PILL[myStatus] || 'online'} label={STATUS_BUTTONS.find(([k]) => k === myStatus)?.[1] || 'Available'} size="xs" />
+            <span>
+              {doc.specialty} · Shift ends {doc.shiftEnd}
+            </span>
+          </span>
+        }
         showHealth={false}
         actions={
           <div className="inline-flex flex-wrap rounded-lg border border-cream-200 bg-cream-50 p-0.5" role="group" aria-label="Set my status">
             {STATUS_BUTTONS.map(([k, l, c]) => (
-              <button key={k} type="button" onClick={() => setStatus(k)} aria-pressed={doc.status === k} className={clsx('px-3 py-1.5 rounded-md text-xs font-semibold transition-colors', doc.status === k ? 'text-white' : 'text-ink-500 hover:text-ink-900')} style={doc.status === k ? { backgroundColor: c } : undefined}>
+              <button
+                key={k}
+                type="button"
+                onClick={() => setStatus(k)}
+                aria-pressed={myStatus === k}
+                disabled={Boolean(pendingStatus)}
+                className={clsx('px-3 py-1.5 rounded-md text-xs font-semibold disabled:cursor-wait', myStatus === k ? 'text-white' : 'text-ink-500 hover:text-ink-900 hover:bg-sunken')}
+                style={myStatus === k ? { backgroundColor: c } : undefined}
+              >
                 {l}
               </button>
             ))}

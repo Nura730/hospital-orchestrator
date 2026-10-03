@@ -9,7 +9,8 @@
  */
 
 import * as care from './mock/careMock.js';
-import { flowApi } from './flowApi.js';
+import { flowApi, isFlowMock } from './flowApi.js';
+import apiClient from './client.js';
 import { loadIcuModel } from '../ml/icuNeed.js';
 
 const wait = (ms = 120 + Math.random() * 160) => new Promise((r) => setTimeout(r, ms));
@@ -51,7 +52,11 @@ export const careApi = {
   getDoctorDashboard: () => call(care.getDoctorDashboard),
   getDoctorEvents: (fromMs, toMs) => call(care.getDoctorEvents, fromMs, toMs),
   addDoctorEvent: (body) => call(care.addDoctorEvent, body),
-  setDoctorStatus: (status) => call(care.setDoctorStatus, status),
+  /** Saves to PATCH /doctor/status on the real backend; always mirrored in the care model. */
+  setDoctorStatus: async (status) => {
+    if (!isFlowMock) await apiClient.patch('/doctor/status', { status });
+    return call(care.setDoctorStatus, status);
+  },
   requestOt: (patientId, procedure, by) => call(care.requestOtForPatient, patientId, procedure, by),
 
   // OT

@@ -684,13 +684,18 @@ export function addDoctorEvent({ start, durationMin = 30, type = 'consultation',
   return e;
 }
 
+const DOCTOR_STATUSES = ['available', 'in_surgery', 'in_consultation', 'on_break', 'off_duty', 'emergency'];
+
+/** Same values as the backend (PATCH /doctor/status). 'break' is accepted as an alias of 'on_break'. */
 export function setDoctorStatus(status) {
+  const value = status === 'break' ? 'on_break' : status;
+  if (!DOCTOR_STATUSES.includes(value)) throw new Error(`Unknown status '${status}'`);
   const c = care();
-  c.doctorStatus = status;
+  c.doctorStatus = value;
   const me = FLOW_DOCTORS.find((d) => d.id === FLOW_ME_DOCTOR);
-  if (me) me.status = status === 'break' ? 'on_break' : status;
-  emitLive('doctor.statusChanged', { doctorId: FLOW_ME_DOCTOR, staffId: FLOW_ME_DOCTOR, name: me?.name, newStatus: status });
-  return { status };
+  if (me) me.status = value;
+  emitLive('doctor.statusChanged', { doctorId: FLOW_ME_DOCTOR, staffId: FLOW_ME_DOCTOR, name: me?.name, newStatus: value });
+  return { status: value };
 }
 
 export function getDoctorDashboard() {

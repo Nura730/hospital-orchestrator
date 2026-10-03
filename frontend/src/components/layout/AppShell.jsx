@@ -15,7 +15,7 @@ export function AppShell() {
   useLiveData();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-surface-base text-surface-foreground">
+    <div className="flex h-screen w-screen overflow-hidden bg-cream-100 text-ink-900">
       {/* Desktop Navigation Sidebar */}
       <Sidebar />
 

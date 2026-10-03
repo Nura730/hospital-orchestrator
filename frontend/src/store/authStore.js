@@ -18,7 +18,7 @@ function loadInitialState() {
         return {
           user: data.user,
           token: data.token,
-          role: data.user.role || ROLES.ADMIN,
+          role: data.user.role || data.user.userType || data.user.user_type || data.role || ROLES.ADMIN,
           isAuthenticated: true,
         };
       }
@@ -27,7 +27,14 @@ function loadInitialState() {
     console.error('Failed to parse cached auth state:', err);
   }
 
-  // Default initial guest/admin state for smooth demo experience
+  // Real backend: start signed out (a fake mock token would only produce 401s)
+  const env = (typeof import.meta !== 'undefined' && import.meta.env) || {};
+  const isMock = env.VITE_USE_MOCK !== undefined ? env.VITE_USE_MOCK !== 'false' : true;
+  if (!isMock) {
+    return { user: null, token: null, role: null, isAuthenticated: false };
+  }
+
+  // Mock mode: default demo admin for a smooth offline experience
   const defaultAdmin = DEFAULT_USERS.admin;
   return {
     user: defaultAdmin,
@@ -57,7 +64,8 @@ export const useAuthStore = create((set, get) => ({
       const stateToSave = {
         user,
         token,
-        role: user.role || role || ROLES.ADMIN,
+        // Backend profiles carry user_type; mock users carry role
+        role: user.role || user.userType || user.user_type || res.data.userType || role || ROLES.ADMIN,
         isAuthenticated: true,
         loading: false,
         error: null,
@@ -86,8 +94,9 @@ export const useAuthStore = create((set, get) => ({
   loginAsDemo: async (roleKey) => {
     const demoUser = DEFAULT_USERS[roleKey] || DEFAULT_USERS.admin;
     return get().login({
-      email: demoUser.email,
-      password: 'password123',
+      // Seeded backend credentials when available (mock mode accepts anything)
+      email: demoUser.backendEmail || demoUser.email,
+      password: demoUser.demoPassword || 'password123',
       role: demoUser.role,
     });
   },
@@ -120,7 +129,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await apiGetMe();
       if (res.ok && res.data) {
-        set({ user: res.data, role: res.data.role });
+        set({ user: res.data, role: res.data.role || res.data.user_type || get().role });
       }
     } catch (err) {
       console.warn('Failed to refresh profile:', err.message);

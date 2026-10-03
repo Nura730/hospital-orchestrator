@@ -14,7 +14,8 @@ const isMock = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_USE_
 // ── Auth Endpoints ──────────────────────────────────────────────────────────
 export async function login(credentials) {
   if (isMock) return mockApi.login(credentials);
-  return apiClient.post('/auth/login', credentials);
+  // Backend expects userType; the UI passes role
+  return apiClient.post('/auth/login', { ...credentials, userType: credentials.userType || credentials.role });
 }
 
 export async function logout() {

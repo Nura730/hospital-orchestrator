@@ -122,7 +122,53 @@ const THRESHOLDS = Object.freeze({
   OT_OVERRUN_ALERT_MINUTES: 15,
 });
 
+/* ── Predictive Flow Intelligence ─────────────────────────────── */
+
+// Patient flow order: a blockage upstream cascades to every department after it.
+const DEPENDENCY_CHAIN = Object.freeze([
+  'Emergency',
+  'Radiology',
+  'General Ward',
+  'HDU',
+  'ICU',
+  'OT',
+]);
+
+// Auto thresholds by hospital size (COUNT(beds)); first band with n < maxBeds wins.
+const FLOW_SIZE_THRESHOLDS = Object.freeze([
+  { label: '<50 beds', maxBeds: 50, warn: 0.65, danger: 0.78 },
+  { label: '50-200 beds', maxBeds: 201, warn: 0.75, danger: 0.88 },
+  { label: '200+ beds', maxBeds: Infinity, warn: 0.82, danger: 0.92 },
+]);
+
+const FLOW_EVENT_TYPES = Object.freeze({
+  DISCHARGE_SIGNED: 'DISCHARGE_SIGNED',
+  CLEANING_DONE: 'CLEANING_DONE',
+  OT_COMPLETE: 'OT_COMPLETE',
+  PATIENT_DETERIORATED: 'PATIENT_DETERIORATED',
+  AMBULANCE_INCOMING: 'AMBULANCE_INCOMING',
+});
+
+const FLOW_SEVERITY = Object.freeze({ HIGH: 'HIGH', MEDIUM: 'MEDIUM', LOW: 'LOW' });
+
+const ADMISSION_BASE_BY_ACUITY = Object.freeze({ 1: 0.95, 2: 0.8, 3: 0.6, 4: 0.3, 5: 0.1 });
+
+const LOS_DEFAULT_HOURS = Object.freeze({ 1: 120, 2: 72, 3: 48, 4: 24, 5: 8 });
+
+// Bed map zones (Reference C schematic)
+const BED_ZONES = Object.freeze(['ED', 'Radiology', 'General Ward', 'HDU', 'ICU', 'PACU', 'OT']);
+
+const SAFE_PATIENTS_PER_NURSE = 4;
+
 module.exports = {
+  DEPENDENCY_CHAIN,
+  FLOW_SIZE_THRESHOLDS,
+  FLOW_EVENT_TYPES,
+  FLOW_SEVERITY,
+  ADMISSION_BASE_BY_ACUITY,
+  LOS_DEFAULT_HOURS,
+  BED_ZONES,
+  SAFE_PATIENTS_PER_NURSE,
   USER_TYPES,
   DOCTOR_STATUS,
   PATIENT_STATUS,

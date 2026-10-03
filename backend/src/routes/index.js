@@ -12,6 +12,7 @@ const equipmentRoutes = require('./equipment.routes');
 const alertRoutes = require('./alert.routes');
 const notificationRoutes = require('./notification.routes');
 const kpiRoutes = require('./kpi.routes');
+const flowRoutes = require('./flow.routes');
 
 const router = Router();
 
@@ -49,5 +50,8 @@ router.use('/notifications', notificationRoutes);
 
 // KPI & Analytics
 router.use('/kpis', kpiRoutes);
+
+// Predictive Flow Intelligence
+router.use('/flow', flowRoutes);
 
 module.exports = router;

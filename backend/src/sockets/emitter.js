@@ -102,6 +102,53 @@ const emitter = {
       notification,
     });
   },
+
+  /* ── Predictive Flow Intelligence ─────────────────────────── */
+
+  /**
+   * New actionable recommendation. Emitted under both names so existing
+   * clients ('recommendation.new') and flow clients ('recommendation.created') receive it.
+   * @param {object} payload
+   */
+  emitRecommendationCreated(payload) {
+    safeEmit(null, 'recommendation.new', payload);
+    safeEmit(null, 'recommendation.created', payload);
+  },
+
+  /**
+   * @param {{ bottlenecks: object[], rootCause: string|null, detectedAt: string }} payload
+   */
+  emitFlowBottleneckDetected(payload) {
+    safeEmit(null, 'flow.bottleneckDetected', payload);
+  },
+
+  /**
+   * @param {{ type: string, departmentId?: number, department?: string, horizon?: number, values?: object }} payload
+   */
+  emitFlowPredictionUpdated(payload) {
+    safeEmit(null, 'flow.predictionUpdated', payload);
+  },
+
+  /**
+   * @param {{ patientId: string, alias: string, doctorId?: string, probability: number, bedId?: string }} payload
+   */
+  emitFlowDischargeNudge(payload) {
+    safeEmit(['admin', 'doctor'], 'flow.dischargeNudge', payload);
+  },
+
+  /**
+   * @param {{ eventId: string, eta: number, acuity: number, injuryType?: string, bedId?: string, probability: number }} payload
+   */
+  emitFlowAmbulanceIncoming(payload) {
+    safeEmit(null, 'flow.ambulanceIncoming', payload);
+  },
+
+  /**
+   * @param {{ analyzedAt: string, stateSummary: object, bottlenecks: object[] }} payload
+   */
+  emitFlowAnalysisComplete(payload) {
+    safeEmit(null, 'flow.analysisComplete', payload);
+  },
 };
 
 module.exports = emitter;

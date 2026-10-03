@@ -67,8 +67,10 @@ class HospitalSocketClient {
     this.socket = io(socketUrl, {
       auth: { token },
       transports: ['websocket', 'polling'],
-      reconnectionAttempts: 5,
+      // Keep retrying (with backoff up to 15 s) so the live feed recovers by itself after a backend restart
+      reconnectionAttempts: Infinity,
       reconnectionDelay: 2000,
+      reconnectionDelayMax: 15000,
     });
 
     this.socket.on('connect', () => {

@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const { checkOtOverruns } = require('./otStatus.job');
 const { escalateAlerts } = require('./escalation.job');
 const { captureKpiSnapshot } = require('./snapshot.job');
+const { startFlowAnalysis, stopFlowAnalysis } = require('./flowAnalysis.job');
 const logger = require('../utils/logger');
 const env = require('../config/env');
 
@@ -33,10 +34,14 @@ function registerJobs() {
   });
   jobs.push(snapshotJob);
 
+  // 4. Predictive Flow Intelligence analysis: every FLOW_ANALYSIS_INTERVAL_MS (default 60 s)
+  jobs.push(startFlowAnalysis());
+
   logger.info('Scheduled background jobs registered successfully.');
 }
 
 function stopJobs() {
+  stopFlowAnalysis();
   jobs.forEach((j) => j.stop());
   jobs = [];
 }

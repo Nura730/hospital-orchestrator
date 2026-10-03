@@ -199,6 +199,12 @@ export const SOCKET_EVENTS = {
   KPI_UPDATED:          'kpi.updated',
   NOTIFICATION_NEW:     'notification.new',
   RECOMMENDATION_NEW:   'recommendation.new',
+  // Predictive Flow Intelligence
+  FLOW_BOTTLENECK_DETECTED: 'flow.bottleneckDetected',
+  FLOW_PREDICTION_UPDATED:  'flow.predictionUpdated',
+  FLOW_DISCHARGE_NUDGE:     'flow.dischargeNudge',
+  FLOW_AMBULANCE_INCOMING:  'flow.ambulanceIncoming',
+  FLOW_ANALYSIS_COMPLETE:   'flow.analysisComplete',
 };
 
 /* ── Forecast Horizons ──────────────────────────────────────────── */

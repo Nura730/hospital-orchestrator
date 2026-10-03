@@ -16,16 +16,11 @@ export function useLiveData() {
   const isLoading = useLiveStore((s) => s.isLoading);
   const isConnected = useLiveStore((s) => s.isConnected);
   const lastEventTimestamp = useLiveStore((s) => s.lastEventTimestamp);
-  const fetchInitialData = useLiveStore((s) => s.fetchInitialData);
   const setConnectionStatus = useLiveStore((s) => s.setConnectionStatus);
   const applyEvent = useLiveStore((s) => s.applyEvent);
 
-  // Initialize dataset on mount
-  useEffect(() => {
-    if (!isInitialized && !isLoading) {
-      fetchInitialData();
-    }
-  }, [isInitialized, isLoading, fetchInitialData]);
+  // Flow Intelligence pages fetch their own data (see useFlowPolling); this hook only owns the
+  // real-time socket. The legacy bulk load (fetchInitialData) is no longer triggered on mount.
 
   // Connect socket and register listeners
   useEffect(() => {

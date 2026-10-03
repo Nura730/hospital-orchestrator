@@ -12,7 +12,10 @@
     "db:setup": "npm run db:schema && npm run db:seed",
     "test": "jest --runInBand",
     "lint": "eslint src/",
-    "format": "prettier --write src/"
+    "format": "prettier --write src/",
+    "db:migrate:flow": "node db/migrateFlow.js",
+    "seed:flow": "node db/flowSeed.js",
+    "db:setup:flow": "npm run db:migrate:flow && npm run seed:flow"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

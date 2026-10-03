@@ -1,59 +1,45 @@
 /**
  * @file MobileBottomNav.jsx
- * Responsive bottom navigation bar for mobile device screens.
+ * Bottom navigation for phones: the signed-in role's pages (same list as the sidebar).
  */
 
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import {
-  LayoutDashboard,
-  Layers,
-  BedDouble,
-  Bell,
-  Sparkles,
-} from 'lucide-react';
-import { useLiveStore } from '../../store/liveStore.js';
+import { useRole } from '../../hooks/useRole.js';
+import { NAV_BY_ROLE } from './Sidebar.jsx';
 
-const MOBILE_NAV = [
-  { path: '/', label: 'Command', icon: LayoutDashboard },
-  { path: '/digital-twin', label: 'Twin', icon: Layers },
-  { path: '/beds-patients', label: 'Beds', icon: BedDouble },
-  { path: '/recommendations', label: 'AI Recs', icon: Sparkles, badgeKey: 'pendingRecommendations' },
-  { path: '/alerts', label: 'Alerts', icon: Bell, badgeKey: 'activeAlerts' },
-];
+const SHORT = {
+  'Command Center': 'Command',
+  'Bottleneck Map': 'Bottlenecks',
+  'What-If Simulator': 'Simulate',
+  'Discharge Planner': 'Discharge',
+  'Live Bed Map': 'Beds',
+  'Staff and Doctors': 'Staff',
+  'My Patient Predictions': 'Predictions',
+  'Flow Impact': 'Impact',
+};
 
 export function MobileBottomNav() {
   const location = useLocation();
-  const counts = useLiveStore((s) => s.counts);
+  const { role } = useRole();
+  // Phones get the five most important pages
+  const items = (NAV_BY_ROLE[role] || []).filter((i) => i.path).slice(0, 5);
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface-elevated/95 backdrop-blur-md border-t border-surface-border flex items-center justify-around z-40 px-2 select-none">
-      {MOBILE_NAV.map((item) => {
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-royal-500 text-white flex items-center justify-around z-40 px-2 select-none" aria-label="Mobile navigation">
+      {items.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
-        const badgeCount = item.badgeKey ? counts[item.badgeKey] : 0;
-
         return (
           <NavLink
             key={item.path}
             to={item.path}
-            className={clsx(
-              'flex flex-col items-center justify-center gap-1 w-14 py-1 rounded-lg text-[10px] font-medium transition-colors relative cursor-pointer',
-              isActive
-                ? 'text-primary-600 dark:text-primary-400 font-bold'
-                : 'text-surface-muted hover:text-surface-foreground'
-            )}
+            aria-current={isActive ? 'page' : undefined}
+            className={clsx('flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 rounded-lg text-[10px] font-medium', isActive ? 'bg-white text-royal-500 font-bold' : 'text-white/80')}
           >
-            <div className="relative">
-              <Icon className="w-5 h-5" />
-              {badgeCount > 0 && (
-                <span className="absolute -top-1 -right-2 text-[9px] font-bold bg-danger-500 text-white rounded-full px-1">
-                  {badgeCount}
-                </span>
-              )}
-            </div>
-            <span>{item.label}</span>
+            <Icon className="w-5 h-5" aria-hidden="true" />
+            <span>{SHORT[item.label] || item.label}</span>
           </NavLink>
         );
       })}

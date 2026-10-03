@@ -70,6 +70,34 @@ export const useLiveStore = create((set, get) => ({
   recommendations: [],
   bottlenecks: [],
 
+  // Predictive Flow Intelligence
+  flowState: {
+    bottlenecks: [],
+    stateSummary: null,
+    activeSimulation: null,
+    dischargeCandidates: [],
+    lastAnalysisAt: null,
+    ambulanceIncoming: null,
+    bedMap: null,
+    lastAiReport: null,
+    feed: [],
+    predictions: {},
+  },
+
+  /** Merge a partial flowState update. */
+  setFlowState: (partial) => set((state) => ({ flowState: { ...state.flowState, ...partial } })),
+
+  /** Push an item onto the live action feed (newest first, max 20). */
+  pushFlowFeed: (item) =>
+    set((state) => ({
+      flowState: {
+        ...state.flowState,
+        feed: [{ id: `feed-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, at: new Date().toISOString(), ...item }, ...state.flowState.feed].slice(0, 20),
+      },
+    })),
+
+  clearAmbulance: () => set((state) => ({ flowState: { ...state.flowState, ambulanceIncoming: null } })),
+
   // Metadata
   isInitialized: false,
   isLoading: false,
@@ -84,47 +112,45 @@ export const useLiveStore = create((set, get) => ({
    */
   fetchInitialData: async () => {
     set({ isLoading: true, error: null });
-    try {
-      const [
-        overviewRes,
-        bedsRes,
-        patientsRes,
-        staffRes,
-        equipmentRes,
-        otRes,
-        alertsRes,
-        recsRes,
-        bottlenecksRes,
-      ] = await Promise.all([
-        getOverview(),
-        getBeds(),
-        getPatients(),
-        getStaff(),
-        getEquipment(),
-        getOtRooms(),
-        getAlerts(),
-        getRecommendations(),
-        getBottlenecks(),
-      ]);
-
-      set({
-        kpis: overviewRes?.data?.kpis || get().kpis,
-        counts: overviewRes?.data?.counts || get().counts,
-        beds: bedsRes?.data || [],
-        patients: patientsRes?.data || [],
-        staff: staffRes?.data || [],
-        equipment: equipmentRes?.data || [],
-        otRooms: otRes?.data || [],
-        alerts: alertsRes?.data || [],
-        recommendations: recsRes?.data || [],
-        bottlenecks: bottlenecksRes?.data || [],
-        isInitialized: true,
-        isLoading: false,
-      });
-    } catch (err) {
-      console.error('Failed to load hospital state:', err);
-      set({ error: err.message, isLoading: false });
+    // Each slice loads independently: one missing/failed endpoint must not fail the whole load.
+    // The store is always marked initialized afterwards; otherwise useLiveData retries in a tight loop
+    // and exhausts the API rate limit.
+    const results = await Promise.allSettled([
+      getOverview(),
+      getBeds(),
+      getPatients(),
+      getStaff(),
+      getEquipment(),
+      getOtRooms(),
+      getAlerts(),
+      getRecommendations(),
+      getBottlenecks(),
+    ]);
+    const value = (i) => (results[i].status === 'fulfilled' ? results[i].value?.data : undefined);
+    const list = (i) => {
+      const d = value(i);
+      return Array.isArray(d) ? d : [];
+    };
+    const failed = results.filter((r) => r.status === 'rejected');
+    if (failed.length) {
+      console.warn(`Hospital state: ${failed.length} of ${results.length} initial requests failed`, failed.map((f) => f.reason?.message));
     }
+
+    set({
+      kpis: value(0)?.kpis || get().kpis,
+      counts: value(0)?.counts || get().counts,
+      beds: list(1),
+      patients: list(2),
+      staff: list(3),
+      equipment: list(4),
+      otRooms: list(5),
+      alerts: list(6),
+      recommendations: list(7),
+      bottlenecks: list(8),
+      isInitialized: true,
+      isLoading: false,
+      error: failed.length === results.length ? 'Could not load hospital state' : null,
+    });
   },
 
   /**
@@ -156,6 +182,35 @@ export const useLiveStore = create((set, get) => ({
           const available = updatedBeds.filter((b) => b.status === BED_STATUS.AVAILABLE).length;
           const cleaning = updatedBeds.filter((b) => b.status === BED_STATUS.CLEANING).length;
 
+          // Patch the flow bed map tile as well
+          let bedMap = state.flowState.bedMap;
+          if (bedMap && bedId) {
+            bedMap = {
+              ...bedMap,
+              zones: bedMap.zones.map((z) => ({
+                ...z,
+                tiles: z.tiles.map((t) =>
+                  t.id === bedId
+                    ? {
+                        ...t,
+                        status: status === 'maintenance' ? 'blocked' : status,
+                        rawStatus: status,
+                        ...(status === 'available' || status === 'cleaning'
+                          ? { patientId: null, patientAlias: null, acuity: null, doctorName: null, expectedRelease: null }
+                          : {}),
+                        ...(status === 'cleaning' ? { cleaningSince: now } : {}),
+                        ...(status === 'available' ? { lastCleanedAt: now, cleaningSince: null } : {}),
+                        pulse: Date.now(),
+                      }
+                    : t
+                ),
+              })),
+            };
+          }
+          const feedItem = bedId
+            ? [{ id: `feed-${Date.now()}-${bedId}`, at: now, kind: 'bed', title: `${bedId} → ${status}`, detail: status === 'cleaning' ? 'Housekeeping notified' : status === 'reserved' ? 'Reserved for incoming patient' : status === 'available' ? 'Ready for next patient' : 'Bed status updated', impact: status === 'available' ? '+1 bed' : null }]
+            : [];
+
           return {
             beds: updatedBeds,
             counts: {
@@ -164,6 +219,7 @@ export const useLiveStore = create((set, get) => ({
               availableBeds: available,
               cleaningBeds: cleaning,
             },
+            flowState: { ...state.flowState, bedMap, feed: [...feedItem, ...state.flowState.feed].slice(0, 20) },
             lastEventTimestamp: now,
           };
         });
@@ -283,6 +339,90 @@ export const useLiveStore = create((set, get) => ({
           counts: {
             ...state.counts,
             pendingRecommendations: state.counts.pendingRecommendations + 1,
+          },
+          flowState: {
+            ...state.flowState,
+            feed: [
+              { id: `feed-${Date.now()}-${payload.id || 'rec'}`, at: now, kind: 'recommendation', title: payload.title || 'New recommendation', detail: payload.detail || payload.type || '', impact: payload.expectedImpact || null, risk: payload.risk, recommendationId: payload.id, status: payload.status },
+              ...state.flowState.feed,
+            ].slice(0, 20),
+          },
+          lastEventTimestamp: now,
+        }));
+        break;
+      }
+
+      // ── Predictive Flow Intelligence ──
+      case SOCKET_EVENTS.FLOW_BOTTLENECK_DETECTED: {
+        set((state) => ({
+          flowState: {
+            ...state.flowState,
+            bottlenecks: payload.bottlenecks || state.flowState.bottlenecks,
+            feed: [
+              { id: `feed-${Date.now()}-bn`, at: now, kind: 'bottleneck', title: payload.rootCause ? `Root cause: ${payload.rootCause}` : 'Bottleneck detected', detail: payload.cascade && payload.cascade.length ? `Cascade → ${payload.cascade.join(', ')}` : 'High severity department', impact: null },
+              ...state.flowState.feed,
+            ].slice(0, 20),
+          },
+          lastEventTimestamp: now,
+        }));
+        break;
+      }
+
+      case SOCKET_EVENTS.FLOW_ANALYSIS_COMPLETE: {
+        set((state) => ({
+          flowState: {
+            ...state.flowState,
+            stateSummary: payload.stateSummary || state.flowState.stateSummary,
+            bottlenecks: payload.bottlenecks || state.flowState.bottlenecks,
+            lastAnalysisAt: payload.analyzedAt || now,
+          },
+          lastEventTimestamp: now,
+        }));
+        break;
+      }
+
+      case SOCKET_EVENTS.FLOW_DISCHARGE_NUDGE: {
+        set((state) => ({
+          flowState: {
+            ...state.flowState,
+            feed: [
+              { id: `feed-${Date.now()}-${payload.patientId}`, at: now, kind: 'discharge', title: `Discharge nudge: ${payload.alias}`, detail: `Readiness ${payload.score ?? Math.round((payload.probability || 0) * 100)}/100${payload.bedId ? ` in ${payload.bedId}` : ''}`, impact: payload.bedId ? `Frees ${payload.bedId}` : null, patientId: payload.patientId },
+              ...state.flowState.feed,
+            ].slice(0, 20),
+          },
+          lastEventTimestamp: now,
+        }));
+        break;
+      }
+
+      case SOCKET_EVENTS.FLOW_AMBULANCE_INCOMING: {
+        set((state) => ({
+          flowState: {
+            ...state.flowState,
+            ambulanceIncoming: { ...payload, receivedAt: payload.receivedAt || now },
+            feed: [
+              { id: `feed-${Date.now()}-amb`, at: now, kind: 'ambulance', title: `Ambulance ETA ${payload.eta} min`, detail: `Acuity ${payload.acuity}${payload.injuryType ? `, ${payload.injuryType}` : ''}`, impact: payload.bedId ? `${payload.bedId} ${payload.bedMode === 'releasing' ? 'releasing' : 'reserved'}` : null },
+              ...state.flowState.feed,
+            ].slice(0, 20),
+          },
+          lastEventTimestamp: now,
+        }));
+        // Auto-clear after 60 s unless a newer ambulance replaced it
+        const receivedAt = payload.receivedAt || now;
+        setTimeout(() => {
+          const current = get().flowState.ambulanceIncoming;
+          if (current && current.receivedAt === receivedAt && !current.acknowledged) {
+            set((state) => ({ flowState: { ...state.flowState, ambulanceIncoming: null } }));
+          }
+        }, 60000);
+        break;
+      }
+
+      case SOCKET_EVENTS.FLOW_PREDICTION_UPDATED: {
+        set((state) => ({
+          flowState: {
+            ...state.flowState,
+            predictions: { ...state.flowState.predictions, [`${payload.type}:${payload.department || payload.departmentId || 'all'}`]: { ...payload, receivedAt: now } },
           },
           lastEventTimestamp: now,
         }));

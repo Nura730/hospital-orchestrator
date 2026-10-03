@@ -1,229 +1,116 @@
 /**
  * @file Role-based access control matrix.
- * Defines which routes and actions each role can access.
+ * MediOrchestra has three logins, matching the backend user types: Admin, Doctor, OT Manager.
  */
 
 /* ── Role Definitions ───────────────────────────────────────────── */
 export const ROLES = {
-  ADMIN:         'admin',
-  BED_MANAGER:   'bed_manager',
-  NURSE_MANAGER: 'nurse_manager',
-  DOCTOR:        'doctor',
+  ADMIN:      'admin',
+  DOCTOR:     'doctor',
+  OT_MANAGER: 'ot_manager',
+};
+
+/* ── Predictive Flow Intelligence routes per role ───────────────── */
+export const FLOW_ROUTES = {
+  admin: [
+    '/admin/dashboard',
+    '/admin/flow/command-center',
+    '/admin/flow/bottlenecks',
+    '/admin/flow/simulator',
+    '/admin/flow/discharge-planner',
+    '/admin/beds-overview',
+    '/admin/flow/staff',
+    '/admin/flow/housekeeping',
+    '/admin/flow/audit',
+  ],
+  doctor: ['/doctor/dashboard', '/doctor/flow/predictions'],
+  ot_manager: ['/ot/dashboard', '/ot/flow/impact'],
+};
+
+/** Landing page after login for each role. */
+export const ROLE_HOME = {
+  admin: '/admin/dashboard',
+  doctor: '/doctor/dashboard',
+  ot_manager: '/ot/dashboard',
 };
 
 /* ── Route Access Matrix ────────────────────────────────────────── */
-/**
- * Maps roles to the routes they can access.
- * Routes not listed here are hidden from that role's navigation.
- */
 export const ROLE_ROUTES = {
-  [ROLES.ADMIN]: [
-    '/',
-    '/digital-twin',
-    '/beds',
-    '/staff',
-    '/equipment',
-    '/recommendations',
-    '/simulator',
-    '/alerts',
-    '/analytics',
-    '/audit',
-    '/m',
-  ],
-  [ROLES.BED_MANAGER]: [
-    '/',
-    '/digital-twin',
-    '/beds',
-    '/staff',
-    '/equipment',
-    '/recommendations',
-    '/simulator',
-    '/alerts',
-    '/analytics',
-    '/m',
-    // NO /audit
-  ],
-  [ROLES.NURSE_MANAGER]: [
-    '/',
-    '/staff',
-    '/alerts',
-    '/digital-twin',
-    '/beds',
-    '/equipment',
-    '/recommendations',
-    '/analytics',
-    '/m',
-  ],
-  [ROLES.DOCTOR]: [
-    '/',
-    '/beds',
-    '/recommendations',
-    '/m',
-  ],
+  [ROLES.ADMIN]: ['/', ...FLOW_ROUTES.admin],
+  [ROLES.DOCTOR]: ['/', ...FLOW_ROUTES.doctor],
+  [ROLES.OT_MANAGER]: ['/', ...FLOW_ROUTES.ot_manager],
 };
 
 /* ── Action Permissions ─────────────────────────────────────────── */
-/**
- * Maps roles to the actions they can perform.
- */
 export const ROLE_ACTIONS = {
-  [ROLES.ADMIN]: [
-    'approve',
-    'reject',
-    'acknowledge_alert',
-    'resolve_alert',
-    'edit_bed',
-    'transfer_patient',
-    'manage_staff',
-    'manage_equipment',
-    'run_simulation',
-    'change_autonomy',
-    'export_audit',
-    'view_audit',
-  ],
-  [ROLES.BED_MANAGER]: [
-    'approve',
-    'reject',
-    'acknowledge_alert',
-    'resolve_alert',
-    'edit_bed',
-    'transfer_patient',
-    'manage_equipment',
-    'run_simulation',
-    'change_autonomy',
-  ],
-  [ROLES.NURSE_MANAGER]: [
-    'acknowledge_alert',
-    'resolve_alert',
-    'manage_staff',
-    // read-only for beds, equipment, recommendations
-  ],
-  [ROLES.DOCTOR]: [
-    // read-only access
-  ],
+  [ROLES.ADMIN]: ['approve', 'reject', 'acknowledge_alert', 'resolve_alert', 'edit_bed', 'run_simulation', 'view_audit', 'export_audit'],
+  [ROLES.DOCTOR]: ['sign_discharge', 'request_ot', 'update_patient'],
+  [ROLES.OT_MANAGER]: ['complete_case', 'defer_case', 'acknowledge_alert'],
 };
 
 /* ── Helpers ────────────────────────────────────────────────────── */
 
-/**
- * Check if a role can access a given route path.
- * @param {string} role - One of ROLES values
- * @param {string} path - Route path like '/beds'
- * @returns {boolean}
- */
 export function canAccessRoute(role, path) {
   if (!role || !ROLE_ROUTES[role]) return false;
   return ROLE_ROUTES[role].includes(path);
 }
 
-/**
- * Check if a role can perform a given action.
- * @param {string} role - One of ROLES values
- * @param {string} action - Action key like 'approve'
- * @returns {boolean}
- */
 export function canPerformAction(role, action) {
   if (!role || !ROLE_ACTIONS[role]) return false;
   return ROLE_ACTIONS[role].includes(action);
 }
 
-/**
- * Get allowed routes for a role (used for nav filtering).
- * @param {string} role
- * @returns {string[]}
- */
 export function getRoutesForRole(role) {
   return ROLE_ROUTES[role] || [];
 }
 
-/**
- * Check if a route is read-only for a role.
- * Nurse managers and doctors have read-only on most pages.
- * @param {string} role
- * @param {string} path
- * @returns {boolean}
- */
-export function isReadOnly(role, path) {
-  if (role === ROLES.ADMIN || role === ROLES.BED_MANAGER) return false;
-  if (role === ROLES.NURSE_MANAGER) {
-    // Staff and Alerts are writable; everything else is read-only
-    return !['/staff', '/alerts'].includes(path);
-  }
-  if (role === ROLES.DOCTOR) {
-    return true; // everything read-only
-  }
-  return true;
-}
-
-/**
- * Get navigation items filtered by role.
- * Returns the nav config with hidden items removed.
- * @param {string} role
- * @returns {Array<{path: string, label: string, icon: string}>}
- */
-export function getNavItemsForRole(role) {
-  const allNav = [
-    { path: '/',               label: 'Command Center', icon: 'LayoutDashboard' },
-    { path: '/digital-twin',   label: 'Digital Twin',   icon: 'Building2' },
-    { path: '/beds',           label: 'Beds & Patients',icon: 'BedDouble' },
-    { path: '/staff',          label: 'Staff & OT',     icon: 'Users' },
-    { path: '/equipment',      label: 'Equipment',      icon: 'Stethoscope' },
-    { path: '/recommendations',label: 'Recommendations',icon: 'Lightbulb' },
-    { path: '/simulator',      label: 'Simulator',      icon: 'FlaskConical' },
-    { path: '/alerts',         label: 'Alerts',         icon: 'AlertTriangle' },
-    { path: '/analytics',      label: 'Analytics',      icon: 'BarChart3' },
-    { path: '/audit',          label: 'Audit Log',      icon: 'ScrollText' },
-  ];
-
-  const allowed = getRoutesForRole(role);
-  return allNav.filter(item => allowed.includes(item.path));
+export function isReadOnly(role) {
+  return role !== ROLES.ADMIN;
 }
 
 /* ── Role Display Names ─────────────────────────────────────────── */
 export const ROLE_LABELS = {
-  [ROLES.ADMIN]:         'Hospital Admin',
-  [ROLES.BED_MANAGER]:   'Bed Manager',
-  [ROLES.NURSE_MANAGER]: 'Nurse Manager',
-  [ROLES.DOCTOR]:        'Doctor',
+  [ROLES.ADMIN]:      'Hospital Admin',
+  [ROLES.DOCTOR]:     'Doctor',
+  [ROLES.OT_MANAGER]: 'OT Manager',
 };
 
 /* ── Default Users for Demo Authentication ──────────────────────── */
+// backendEmail / demoPassword are the accounts created by `npm run db:seed`.
 export const DEFAULT_USERS = {
   admin: {
     id: 'usr-admin',
-    name: 'Admin Marcus Sterling',
-    email: 'admin@hospital.org',
+    name: 'Dr. Sarah Jenkins',
+    email: 'admin@hospital.com',
     role: ROLES.ADMIN,
     department: 'Operations Command',
-  },
-  bed_manager: {
-    id: 'usr-bed-mgr',
-    name: 'Marcus Vance',
-    email: 'bedmgr@hospital.org',
-    role: ROLES.BED_MANAGER,
-    department: 'Bed Management & Admissions',
-  },
-  nurse_manager: {
-    id: 'usr-nurse-mgr',
-    name: 'Nurse Clara Barton, RN',
-    email: 'nursemgr@hospital.org',
-    role: ROLES.NURSE_MANAGER,
-    department: 'Emergency & Acute Nursing',
+    backendEmail: 'admin@hospital.com',
+    demoPassword: 'Admin@1234',
   },
   doctor: {
     id: 'usr-doctor',
-    name: 'Dr. Sarah Lin, MD',
-    email: 'doctor@hospital.org',
+    name: 'Dr. Vikram Seth',
+    email: 'vikram.seth@hospital.com',
     role: ROLES.DOCTOR,
-    department: 'Emergency Medicine',
+    department: 'General Ward',
+    backendEmail: 'vikram.seth@hospital.com',
+    demoPassword: 'Doctor@1234',
+  },
+  ot_manager: {
+    id: 'usr-ot-mgr',
+    name: 'OT Manager',
+    email: 'otmanager1@hospital.com',
+    role: ROLES.OT_MANAGER,
+    department: 'Operating Theatres',
+    backendEmail: 'otmanager1@hospital.com',
+    demoPassword: 'OTManager@1234',
   },
 };
 
 export const ROLE_CONFIG = {
   [ROLES.ADMIN]: { label: 'Hospital Admin', color: 'primary' },
-  [ROLES.BED_MANAGER]: { label: 'Bed Manager', color: 'info' },
-  [ROLES.NURSE_MANAGER]: { label: 'Nurse Manager', color: 'warning' },
   [ROLES.DOCTOR]: { label: 'Doctor / Surgeon', color: 'success' },
+  [ROLES.OT_MANAGER]: { label: 'OT Manager', color: 'info' },
 };
 
 export function can(role, action) {
@@ -232,13 +119,10 @@ export function can(role, action) {
 
 export function isRouteAllowed(role, path) {
   if (!role || !path) return false;
-  if (role === ROLES.ADMIN) return true;
-  if (path === '/' || path === '/_kit' || path === '/404') return true;
-  const normalized = path.replace('-patients', '').replace('-ot', '').replace('-log', '');
-  return canAccessRoute(role, path) || canAccessRoute(role, normalized);
+  if (path === '/' || path === '/404') return true;
+  return canAccessRoute(role, path);
 }
 
 export function getAllowedRoutes(role) {
   return getRoutesForRole(role);
 }
-

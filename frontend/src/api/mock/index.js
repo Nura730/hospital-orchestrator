@@ -130,7 +130,7 @@ export const mockApi = {
         token: `mock-jwt-token-${role}-${Date.now()}`,
         user: {
           id: 'usr-001',
-          name: role === 'doctor' ? 'Dr. Sarah Lin, MD' : role === 'bed_manager' ? 'Marcus Vance' : 'Admin Marcus Sterling',
+          name: role === 'doctor' ? 'Dr. Sarah Lin, MD' : role === 'bed_manager' ? 'Marcus Vance' : role === 'ot_manager' ? 'OT Manager Rhea Kapoor' : 'Admin Marcus Sterling',
           email: email || 'admin@hospital.org',
           role: role || 'admin',
           department: role === 'doctor' ? 'Emergency' : 'Operations',

@@ -51,6 +51,25 @@
   --scrollbar-track: transparent;
 }
 
+/* ── Predictive Flow Intelligence tokens ─────────────────────────── */
+:root {
+  --blue-900: #012A63;
+  --blue-700: #0A3F8F;
+  --blue-500: #014BAA;
+  --blue-100: #E3ECF8;
+  --cream-50: #FFFFFF;
+  --cream-100: #F8F3F0;
+  --cream-200: #EFE7E2;
+  --ink-900: #0F1B2D;
+  --ink-500: #5B6B80;
+  --bed-available: #1FA971;
+  --bed-occupied: #D64545;
+  --bed-cleaning: #F2A93B;
+  --bed-reserved: #2BA8E0;
+  --bed-blocked: #6B7280;
+  --highlight-row: #FFE9A8;
+}
+
 /* ── Dark Theme ─────────────────────────────────────────────────── */
 .dark {
   --color-primary-50:  #042f2e;
@@ -154,6 +173,59 @@
   }
 }
 
+/* ── Flow Intelligence components (cream / royal blue, theme-independent) ── */
+@layer components {
+  .flow-page {
+    @apply -m-4 md:-m-6 p-4 md:p-6 min-h-full bg-cream-100 text-ink-900;
+  }
+  .flow-card {
+    @apply bg-cream-50 rounded-2xl border border-cream-200 shadow-soft;
+  }
+  .flow-card-pad {
+    @apply bg-cream-50 rounded-2xl border border-cream-200 shadow-soft p-4 md:p-5;
+  }
+  .flow-btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-100
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .flow-btn-primary {
+    @apply flow-btn bg-royal-500 text-white hover:bg-royal-700;
+  }
+  .flow-btn-secondary {
+    @apply flow-btn bg-cream-50 text-royal-500 border border-cream-200 hover:bg-royal-100;
+  }
+  .flow-btn-ghost {
+    @apply flow-btn text-ink-500 hover:text-royal-500 hover:bg-royal-100;
+  }
+  .flow-btn-danger {
+    @apply flow-btn bg-bed-occupied text-white hover:brightness-95;
+  }
+  .flow-input {
+    @apply w-full rounded-xl border border-cream-200 bg-cream-50 px-3 py-2 text-xs text-ink-900 placeholder-ink-500
+      focus:outline-none focus:ring-2 focus:ring-royal-500;
+  }
+  .flow-chip {
+    @apply inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors;
+  }
+  .flow-table th {
+    @apply px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-ink-500 whitespace-nowrap;
+  }
+  .flow-table td {
+    @apply px-3 py-2.5 text-xs text-ink-900 whitespace-nowrap;
+  }
+  .flow-table tbody tr:nth-child(even) {
+    background-color: var(--cream-100);
+  }
+  .flow-skeleton {
+    @apply rounded-lg animate-pulse;
+    background-color: var(--cream-200);
+  }
+  .schematic-panel {
+    background: linear-gradient(160deg, #012A63 0%, #0B1220 100%);
+  }
+}
+
 /* ── Utility Layer ──────────────────────────────────────────────── */
 @layer utilities {
   /* Hide scrollbar but keep scrolling */
@@ -237,3 +309,19 @@
     display: none !important;
   }
 }
+
+/* ── Flow Command Center dark mode (scoped; the rest of the app stays cream/blue) ── */
+.flow-dark.flow-page { background-color: #0B1220; color: #E3ECF8; }
+.flow-dark .flow-card,
+.flow-dark .flow-card-pad { background-color: #101B33; border-color: #1E2D4A; color: #E3ECF8; }
+.flow-dark .text-ink-900,
+.flow-dark .text-royal-900 { color: #E3ECF8; }
+.flow-dark .text-ink-500 { color: #9FB6D9; }
+.flow-dark .bg-cream-50,
+.flow-dark .bg-cream-100 { background-color: #14223F; }
+.flow-dark .border-cream-200 { border-color: #1E2D4A; }
+.flow-dark .bg-royal-100 { background-color: #17305C; }
+.flow-dark .flow-table tbody tr:nth-child(even) { background-color: #14223F; }
+.flow-dark .flow-btn-secondary { background-color: #14223F; border-color: #1E2D4A; color: #CFE0FA; }
+.flow-dark .flow-input { background-color: #14223F; border-color: #1E2D4A; color: #E3ECF8; }
+.flow-dark .flow-skeleton { background-color: #1E2D4A; }

@@ -6,6 +6,36 @@ export default {
     extend: {
       /* ── Color Tokens ─────────────────────────────────────── */
       colors: {
+        /* Predictive Flow Intelligence palette (static: unaffected by .dark) */
+        royal: {
+          900: '#012A63',
+          700: '#0A3F8F',
+          500: '#014BAA',
+          100: '#E3ECF8',
+          DEFAULT: '#014BAA',
+        },
+        cream: {
+          50: '#FFFFFF',
+          100: '#F8F3F0',
+          200: '#EFE7E2',
+          DEFAULT: '#F8F3F0',
+        },
+        ink: {
+          900: '#0F1B2D',
+          500: '#5B6B80',
+        },
+        bed: {
+          available: '#1FA971',
+          occupied: '#D64545',
+          cleaning: '#F2A93B',
+          reserved: '#2BA8E0',
+          blocked: '#6B7280',
+        },
+        highlight: '#FFE9A8',
+        schematic: {
+          from: '#012A63',
+          to: '#0B1220',
+        },
         primary: {
           50:  'var(--color-primary-50)',
           100: 'var(--color-primary-100)',
@@ -104,6 +134,8 @@ export default {
         'elevated': '0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08)',
         'modal':    '0 25px 50px -12px rgb(0 0 0 / 0.25)',
         'glow':     '0 0 20px rgb(20 184 166 / 0.15)',
+        'soft':     '0 2px 12px -2px rgb(1 42 99 / 0.08), 0 1px 3px rgb(1 42 99 / 0.06)',
+        'neon':     '0 0 10px currentColor',
       },
 
       /* ── Border Radius ────────────────────────────────────── */
@@ -156,6 +188,10 @@ export default {
           '0%, 100%': { boxShadow: '0 0 0 0 rgb(20 184 166 / 0.4)' },
           '50%':      { boxShadow: '0 0 0 8px rgb(20 184 166 / 0)' },
         },
+        'pulse-root': {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgb(214 69 69 / 0.55)' },
+          '50%':      { boxShadow: '0 0 0 8px rgb(214 69 69 / 0)' },
+        },
         'pulse-critical': {
           '0%, 100%': { boxShadow: '0 0 0 0 rgb(239 68 68 / 0.4)' },
           '50%':      { boxShadow: '0 0 0 6px rgb(239 68 68 / 0)' },
@@ -177,6 +213,7 @@ export default {
         'scale-in':        'scale-in 200ms ease-out',
         'pulse-glow':      'pulse-glow 2s ease-in-out infinite',
         'pulse-critical':  'pulse-critical 1.5s ease-in-out infinite',
+        'pulse-root':      'pulse-root 1.6s ease-in-out infinite',
         'shimmer':         'shimmer 2s linear infinite',
         'spin-slow':       'spin-slow 3s linear infinite',
       },

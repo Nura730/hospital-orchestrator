@@ -1,7 +1,7 @@
 /**
  * @file App.jsx
- * Root application component with code-split routing, AppShell layout wrapping,
- * role-guarded routes, and global toast notifications.
+ * Root application component: code-split routes for the three roles (Admin, Doctor, OT Manager),
+ * AppShell layout, role-guarded routes and global toast notifications.
  */
 
 import React, { Suspense, lazy } from 'react';
@@ -9,80 +9,68 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import AppShell from './components/layout/AppShell';
 import ProtectedRoute from './components/layout/ProtectedRoute';
+import { useAuthStore } from './store/authStore.js';
+import { ROLE_HOME } from './utils/roles.js';
 
 /* ── Code-split lazy-loaded pages ────────────────────────────────────────── */
-const LoginPage           = lazy(() => import('./pages/LoginPage'));
-const CommandCenterPage   = lazy(() => import('./pages/CommandCenterPage'));
-const DigitalTwinPage     = lazy(() => import('./pages/DigitalTwinPage'));
-const BedsPatientsPage    = lazy(() => import('./pages/BedsPatientsPage'));
-const StaffOtPage         = lazy(() => import('./pages/StaffOtPage'));
-const EquipmentPage       = lazy(() => import('./pages/EquipmentPage'));
-const RecommendationsPage = lazy(() => import('./pages/RecommendationsPage'));
-const SimulatorPage       = lazy(() => import('./pages/SimulatorPage'));
-const AlertsPage          = lazy(() => import('./pages/AlertsPage'));
-const AnalyticsPage       = lazy(() => import('./pages/AnalyticsPage'));
-const AuditLogPage        = lazy(() => import('./pages/AuditLogPage'));
-const MobileAlertsPage    = lazy(() => import('./pages/MobileAlertsPage'));
-const UiKitShowroomPage   = lazy(() => import('./pages/UiKitShowroomPage'));
-const NotFoundPage        = lazy(() => import('./pages/NotFoundPage'));
+const LoginPage             = lazy(() => import('./pages/LoginPage'));
+const NotFoundPage          = lazy(() => import('./pages/NotFoundPage'));
+const AdminDashboard        = lazy(() => import('./pages/AdminDashboard'));
+const DoctorDashboard       = lazy(() => import('./pages/DoctorDashboard'));
+const OtDashboard           = lazy(() => import('./pages/OtDashboard'));
+const FlowCommandCenterPage = lazy(() => import('./pages/flow/FlowCommandCenterPage'));
+const WhatIfSimulatorPage   = lazy(() => import('./pages/flow/WhatIfSimulatorPage'));
+const BottleneckMapPage     = lazy(() => import('./pages/flow/BottleneckMapPage'));
+const DischargePlannerPage  = lazy(() => import('./pages/flow/DischargePlannerPage'));
+const LiveBedMapPage        = lazy(() => import('./pages/flow/LiveBedMapPage'));
+const StaffDoctorsPage      = lazy(() => import('./pages/flow/StaffDoctorsPage'));
+const HousekeepingBoardPage = lazy(() => import('./pages/flow/HousekeepingBoardPage'));
+const FlowAuditLogPage      = lazy(() => import('./pages/flow/FlowAuditLogPage'));
+const DoctorPredictionsPage = lazy(() => import('./pages/flow/DoctorPredictionsPage'));
+const OtFlowImpactPage      = lazy(() => import('./pages/flow/OtFlowImpactPage'));
 
-/**
- * Page-level loading fallback shimmer
- */
+/** Page-level loading fallback */
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-[60vh] w-full">
+    <div className="flex items-center justify-center min-h-[60vh] w-full bg-cream-100">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-surface-muted text-xs font-mono tracking-wider uppercase">
-          Loading Sector Telemetry...
-        </p>
+        <div className="w-10 h-10 border-4 border-royal-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-ink-500 text-xs font-semibold tracking-wider uppercase">Loading…</p>
       </div>
     </div>
   );
 }
 
+/** "/" sends each role to its own dashboard. */
+function RoleHome() {
+  const role = useAuthStore((s) => s.role);
+  return <Navigate to={ROLE_HOME[role] || '/login'} replace />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
-      {/* Toast notifications container */}
       <Toaster
         position="top-right"
         toastOptions={{
           duration: 3500,
           style: {
-            background: 'var(--color-surface-elevated, #1e293b)',
-            color: 'var(--color-surface-foreground, #f8fafc)',
-            border: '1px solid var(--color-surface-border, #334155)',
+            background: '#FFFFFF',
+            color: '#0F1B2D',
+            border: '1px solid #EFE7E2',
             borderRadius: '0.75rem',
             fontSize: '0.8125rem',
-            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.15)',
+            boxShadow: '0 10px 15px -3px rgb(1 42 99 / 0.15)',
           },
-          success: {
-            iconTheme: { primary: '#10b981', secondary: '#f0fdf4' },
-          },
-          error: {
-            iconTheme: { primary: '#ef4444', secondary: '#fef2f2' },
-          },
+          success: { iconTheme: { primary: '#1FA971', secondary: '#FFFFFF' } },
+          error: { iconTheme: { primary: '#D64545', secondary: '#FFFFFF' } },
         }}
       />
 
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Public authentication */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Standalone mobile quick alert feed */}
-          <Route
-            path="/m"
-            element={
-              <ProtectedRoute>
-                <MobileAlertsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Protected routes wrapped in master AppShell layout */}
           <Route
             element={
               <ProtectedRoute>
@@ -90,23 +78,28 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<CommandCenterPage />} />
-            <Route path="digital-twin" element={<DigitalTwinPage />} />
-            <Route path="beds-patients" element={<BedsPatientsPage />} />
-            <Route path="beds" element={<Navigate to="/beds-patients" replace />} />
-            <Route path="staff-ot" element={<StaffOtPage />} />
-            <Route path="staff" element={<Navigate to="/staff-ot" replace />} />
-            <Route path="equipment" element={<EquipmentPage />} />
-            <Route path="recommendations" element={<RecommendationsPage />} />
-            <Route path="simulator" element={<SimulatorPage />} />
-            <Route path="alerts" element={<AlertsPage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="audit-log" element={<AuditLogPage />} />
-            <Route path="audit" element={<Navigate to="/audit-log" replace />} />
-            <Route path="_kit" element={<UiKitShowroomPage />} />
+            <Route index element={<RoleHome />} />
+
+            {/* Admin */}
+            <Route path="admin/dashboard" element={<AdminDashboard />} />
+            <Route path="admin/flow/command-center" element={<FlowCommandCenterPage />} />
+            <Route path="admin/flow/simulator" element={<WhatIfSimulatorPage />} />
+            <Route path="admin/flow/bottlenecks" element={<BottleneckMapPage />} />
+            <Route path="admin/flow/discharge-planner" element={<DischargePlannerPage />} />
+            <Route path="admin/beds-overview" element={<LiveBedMapPage />} />
+            <Route path="admin/flow/staff" element={<StaffDoctorsPage />} />
+            <Route path="admin/flow/housekeeping" element={<HousekeepingBoardPage />} />
+            <Route path="admin/flow/audit" element={<FlowAuditLogPage />} />
+
+            {/* Doctor */}
+            <Route path="doctor/dashboard" element={<DoctorDashboard />} />
+            <Route path="doctor/flow/predictions" element={<DoctorPredictionsPage />} />
+
+            {/* OT Manager */}
+            <Route path="ot/dashboard" element={<OtDashboard />} />
+            <Route path="ot/flow/impact" element={<OtFlowImpactPage />} />
           </Route>
 
-          {/* 404 handler */}
           <Route path="/404" element={<NotFoundPage />} />
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>

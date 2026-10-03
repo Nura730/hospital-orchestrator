@@ -211,7 +211,7 @@ function TodayBoard({ data, onOpen, onDischarge, busyId }) {
                 <span className="block text-xs font-semibold text-ink-900">
                   {p.alias} <span className="font-normal text-ink-500">· {p.bedId}</span>
                 </span>
-                <span className="block text-[11px] text-ink-500 truncate">{p.diagnosis}</span>
+                <span className="block text-xs text-ink-500 truncate">{p.diagnosis}</span>
               </button>
               <button type="button" className="flow-btn-secondary !py-1 !px-2" onClick={() => onOpen(p.patientId)}>
                 <Eye className="w-3.5 h-3.5" aria-hidden="true" /> View
@@ -230,7 +230,7 @@ function TodayBoard({ data, onOpen, onDischarge, busyId }) {
               {d.done ? <CheckCircle2 className="w-4 h-4 text-[#10B981] shrink-0" aria-hidden="true" /> : <Clock3 className="w-4 h-4 text-[#F59E0B] shrink-0" aria-hidden="true" />}
               <button type="button" onClick={() => onOpen(d.patientId)} className="min-w-0 flex-1 text-left">
                 <span className="block text-xs font-semibold text-ink-900">{d.alias}</span>
-                <span className="block text-[11px] text-ink-500">{d.done ? `Discharged ${clock(d.at)}` : `Due today · readiness ${d.readiness}`}</span>
+                <span className="block text-xs text-ink-500">{d.done ? `Discharged ${clock(d.at)}` : `Due today · readiness ${d.readiness}`}</span>
               </button>
               {!d.done && (
                 <button type="button" className="flow-btn-primary !py-1 !px-2" disabled={busyId === d.patientId} onClick={() => onDischarge(d)}>
@@ -250,11 +250,11 @@ function TodayBoard({ data, onOpen, onDischarge, busyId }) {
             return (
               <li key={b.bedId}>
                 <button type="button" disabled={!b.patientId} onClick={() => b.patientId && onOpen(b.patientId)} className="w-full flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-sunken disabled:hover:bg-transparent">
-                  <span className="w-9 h-7 rounded-md border text-[9px] font-mono font-semibold flex items-center justify-center" style={{ borderColor: color, backgroundColor: `${color}26`, color }}>
+                  <span className="w-9 h-7 rounded-md border text-[10px] font-mono font-semibold flex items-center justify-center" style={{ borderColor: color, backgroundColor: `${color}26`, color }}>
                     {b.bedId.split('-')[1]}
                   </span>
                   <span className="text-xs font-semibold text-ink-900 w-14">{b.bedId}</span>
-                  <span className="text-[11px] flex-1 truncate" style={{ color }}>
+                  <span className="text-xs flex-1 truncate" style={{ color }}>
                     {label}
                     {b.alias ? <span className="text-ink-500"> · {b.alias}</span> : null}
                   </span>
@@ -298,7 +298,7 @@ function ScheduleTab({ events }) {
             return (
               <li key="now" className="relative pl-5 py-1.5" aria-label="Current time">
                 <span className="absolute -left-[6px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-royal-500 animate-pulse-glow" />
-                <span className="text-[11px] font-semibold text-royal-500">Now · {clock(now)}</span>
+                <span className="text-xs font-semibold text-royal-500">Now · {clock(now)}</span>
               </li>
             );
           }
@@ -312,7 +312,7 @@ function ScheduleTab({ events }) {
                 {past ? <CheckCircle2 className="w-4 h-4 text-ink-500 shrink-0" aria-label="Done" /> : <EventIcon type={e.type} className="w-4 h-4 shrink-0" />}
                 <span className="min-w-0">
                   <span className={clsx('block text-xs font-semibold', past ? 'text-ink-500' : 'text-ink-900')}>{e.title}</span>
-                  {e.location && <span className="block text-[11px] text-ink-500">{e.location}</span>}
+                  {e.location && <span className="block text-xs text-ink-500">{e.location}</span>}
                 </span>
               </div>
             </li>
@@ -347,16 +347,16 @@ function PatientsTab({ patients, onOpen, onReport, onUpdate, onRequestOt, onTrac
               <td className="font-mono font-semibold">{p.bedId}</td>
               <td>
                 <span className="font-semibold">{p.alias}</span>
-                <span className="block text-[11px] text-ink-500 truncate max-w-[220px]">{p.diagnosis}</span>
+                <span className="block text-xs text-ink-500 truncate max-w-[220px]">{p.diagnosis}</span>
               </td>
               <td className="tabular-nums">Day {p.daysAdmitted}</td>
               <td>
                 <AcuityBadge level={p.acuity} size="xs" />
               </td>
-              <td>{p.bedId?.startsWith('ICU') ? <span className="text-[11px] text-ink-500">In ICU</span> : <IcuRiskBadge risk={p.icuRisk} size="xs" />}</td>
+              <td>{p.bedId?.startsWith('ICU') ? <span className="text-xs text-ink-500">In ICU</span> : <IcuRiskBadge risk={p.icuRisk} size="xs" />}</td>
               <td>
                 <StatusPill status={p.acuity <= 2 && p.status === 'admitted' ? 'critical' : p.status} size="xs" />
-                {p.otPending && <span className="ml-1 text-[10px] text-fg-violet font-semibold">OT requested</span>}
+                {p.otPending && <span className="ml-1 text-[11px] text-fg-violet font-semibold">OT requested</span>}
               </td>
               <td className="text-right" onClick={(e) => e.stopPropagation()}>
                 <div className="inline-flex gap-1">

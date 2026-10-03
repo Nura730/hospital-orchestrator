@@ -27,7 +27,7 @@ export function BedCell({ bed, onBedClick = null, onClick = null }) {
   const status = bed.status || BED_STATUS.AVAILABLE;
 
   const tooltipContent = (
-    <div className="flex flex-col gap-0.5 text-[11px]">
+    <div className="flex flex-col gap-0.5 text-xs">
       <span className="font-semibold">
         {id} · <span className="capitalize">{status}</span>
       </span>
@@ -46,7 +46,7 @@ export function BedCell({ bed, onBedClick = null, onClick = null }) {
         aria-label={`${id}, ${status}${alias ? `, ${alias}` : ''}`}
         className={clsx('w-12 h-12 rounded-lg border font-mono font-semibold flex items-center justify-center p-1 transition-transform hover:scale-105', STATUS_CELL[status] || STATUS_CELL[BED_STATUS.AVAILABLE])}
       >
-        <span className="text-[9px] tracking-tight truncate w-full text-center">{String(id)}</span>
+        <span className="text-[10px] tracking-tight truncate w-full text-center">{String(id)}</span>
       </button>
     </Tooltip>
   );

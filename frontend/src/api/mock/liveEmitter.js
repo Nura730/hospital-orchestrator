@@ -73,11 +73,9 @@ class LiveEventEmitter {
    * Start 3-second simulation loop.
    */
   start() {
-    if (this.intervalId) return;
-
-    this.intervalId = setInterval(() => {
-      this.tick();
-    }, LIVE_EMITTER_INTERVAL_MS);
+    // The old random bed/alert simulator is intentionally not started: it produced events for beds
+    // that do not exist in the flow model. Live changes now come from real actions (hospitalSync).
+    this.started = true;
   }
 
   /**

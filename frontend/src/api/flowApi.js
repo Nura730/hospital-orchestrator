@@ -7,6 +7,7 @@
 
 import apiClient from './client.js';
 import { flowMock } from './mock/flowMock.js';
+import { commit } from './mock/hospitalSync.js';
 
 const env = (typeof import.meta !== 'undefined' && import.meta.env) || {};
 const appMock = env.VITE_USE_MOCK !== undefined ? env.VITE_USE_MOCK !== 'false' : true;
@@ -24,12 +25,20 @@ async function get(path, params) {
 }
 
 async function post(path, body, config) {
-  if (isFlowMock) return flowMock.post(path, body);
+  if (isFlowMock) {
+    const r = await flowMock.post(path, body);
+    if (path !== '/ai-report' && path !== '/simulate') commit(path);
+    return r;
+  }
   return unwrap(await apiClient.post(`/flow${path}`, body, config));
 }
 
 async function patch(path, body) {
-  if (isFlowMock) return flowMock.patch(path, body);
+  if (isFlowMock) {
+    const r = await flowMock.patch(path, body);
+    commit(path);
+    return r;
+  }
   return unwrap(await apiClient.patch(`/flow${path}`, body));
 }
 
@@ -86,7 +95,11 @@ export const flowApi = {
 
   // Doctor OT request (core doctor API)
   requestOt: async (body) => {
-    if (isFlowMock) return flowMock.requestOt(body);
+    if (isFlowMock) {
+      const r = await flowMock.requestOt(body);
+      commit('ot-request');
+      return r;
+    }
     return unwrap(await apiClient.post('/doctor/ot-requests', body));
   },
 
@@ -96,11 +109,19 @@ export const flowApi = {
     return unwrap(await apiClient.get('/notifications'));
   },
   markNotificationRead: async (id) => {
-    if (isFlowMock) return flowMock.markNotificationRead(id);
+    if (isFlowMock) {
+      const r = await flowMock.markNotificationRead(id);
+      commit('notification-read');
+      return r;
+    }
     return unwrap(await apiClient.patch(`/notifications/${id}/read`));
   },
   markAllNotificationsRead: async () => {
-    if (isFlowMock) return flowMock.markAllNotificationsRead();
+    if (isFlowMock) {
+      const r = await flowMock.markAllNotificationsRead();
+      commit('notifications-read');
+      return r;
+    }
     return unwrap(await apiClient.patch('/notifications/read-all'));
   },
 };

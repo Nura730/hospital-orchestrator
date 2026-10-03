@@ -30,7 +30,7 @@ function inline(text) {
   const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
   return parts.map((p, i) => {
     if (p.startsWith('**') && p.endsWith('**')) return <strong key={i}>{p.slice(2, -2)}</strong>;
-    if (p.startsWith('`') && p.endsWith('`')) return <code key={i} className="px-1 rounded bg-cream-200 text-[11px]">{p.slice(1, -1)}</code>;
+    if (p.startsWith('`') && p.endsWith('`')) return <code key={i} className="px-1 rounded bg-cream-200 text-xs">{p.slice(1, -1)}</code>;
     return <React.Fragment key={i}>{p}</React.Fragment>;
   });
 }
@@ -98,7 +98,7 @@ export function ReportBody({ text }) {
       const n = trimmed.match(/^(\d+)[.)]\s/)[1];
       out.push(
         <p key={i} className="text-xs text-ink-900 leading-relaxed flex gap-2 mt-2 ml-1">
-          <span className="w-5 h-5 rounded-full bg-royal-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0">{n}</span>
+          <span className="w-5 h-5 rounded-full bg-royal-500 text-white text-[11px] font-bold flex items-center justify-center shrink-0">{n}</span>
           <span className="font-medium">{inline(trimmed.replace(/^\d+[.)]\s/, ''))}</span>
         </p>
       );
@@ -202,17 +202,17 @@ export function AiReportPopup({ open, onClose, scope = 'admin', defaultFormat = 
                 setFormat(f.value);
                 generate(f.value);
               }}
-              className={clsx('px-3 py-1 rounded-lg text-[11px] font-semibold transition-colors', format === f.value ? 'bg-royal-500 text-white' : 'text-ink-500 hover:text-royal-500')}
+              className={clsx('px-3 py-1 rounded-lg text-xs font-semibold transition-colors', format === f.value ? 'bg-royal-500 text-white' : 'text-ink-500 hover:text-royal-500')}
             >
               {f.label}
             </button>
           ))}
         </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-highlight text-fg-warn px-2.5 py-1 text-[11px] font-semibold">
+        <span className="inline-flex items-center gap-1 rounded-full bg-highlight text-fg-warn px-2.5 py-1 text-xs font-semibold">
           <ShieldAlert className="w-3.5 h-3.5" aria-hidden="true" /> AI-generated, verify before acting
         </span>
         {report && (
-          <span className="text-[10px] text-ink-500 ml-auto">
+          <span className="text-[11px] text-ink-500 ml-auto">
             {report.provider === 'local-template' ? 'Local template (AI provider unavailable)' : `${report.provider} · ${report.model}`} · {dateTime(report.generatedAt)}
             {report.cached ? ' · cached' : ''}
           </span>
@@ -231,7 +231,7 @@ export function AiReportPopup({ open, onClose, scope = 'admin', defaultFormat = 
       {report && !loading && (
         <>
           {format === 'explain' && (
-            <p className="flex items-center gap-1.5 text-[11px] text-royal-700 bg-royal-100 rounded-lg px-3 py-1.5 mb-3">
+            <p className="flex items-center gap-1.5 text-xs text-royal-700 bg-royal-100 rounded-lg px-3 py-1.5 mb-3">
               <Lightbulb className="w-3.5 h-3.5" aria-hidden="true" /> Blue boxes show <b>why</b>: the evidence and rule behind each finding. Green boxes show the expected impact.
             </p>
           )}
@@ -257,7 +257,7 @@ export function AiReportPopup({ open, onClose, scope = 'admin', defaultFormat = 
                     compact
                   />
                 )}
-                <pre className="text-[11px] bg-[#0B1220] text-[#CBD5E1] rounded-xl p-3 overflow-auto max-h-72 scrollbar-thin">{JSON.stringify(report.snapshot, null, 2)}</pre>
+                <pre className="text-xs bg-[#0B1220] text-[#CBD5E1] rounded-xl p-3 overflow-auto max-h-72 scrollbar-thin">{JSON.stringify(report.snapshot, null, 2)}</pre>
               </div>
             )}
           </div>

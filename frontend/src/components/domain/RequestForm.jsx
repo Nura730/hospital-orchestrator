@@ -71,7 +71,7 @@ export function RequestForm({ patientId, alias, createdBy = 'Admin', onSent, onC
               type="button"
               onClick={() => setPriority(k)}
               aria-pressed={priority === k}
-              className={clsx('px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-colors', priority === k ? 'text-white' : 'text-ink-500 hover:text-ink-900')}
+              className={clsx('px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors', priority === k ? 'text-white' : 'text-ink-500 hover:text-ink-900')}
               style={priority === k ? { backgroundColor: c } : undefined}
             >
               {l}

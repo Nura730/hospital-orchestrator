@@ -59,6 +59,7 @@ const DOCTORS = [
   { id: 'doc-santos', name: 'Dr. Maria Santos', specialization: 'Radiology', department: 'Radiology', status: 'off_duty' },
 ];
 const ME_DOCTOR = 'doc-lin';
+const DOCTOR_DEFAULT_STATUS = DOCTORS.map((d) => d.status);
 
 /* ───────────────────────── state ───────────────────────── */
 
@@ -709,7 +710,15 @@ function processEvent(eventType, payload = {}) {
       const type = 'post_op';
       const bed = s.beds.find((b) => b.type === type && (b.status === 'available' || b.status === 'reserved'));
       let postOpBedId = null;
-      if (bed && c.postOpRequired) {
+      const linked = c.patientId ? s.patients.find((x) => x.id === c.patientId) : null;
+      if (bed && c.postOpRequired && linked) {
+        // The real patient moves from theatre into a recovery bed
+        Object.assign(linked, { status: 'in_recovery', bedId: bed.id, department: bed.department, location: null, requiresOt: false, expectedDischarge: iso(Date.now() + 24 * H) });
+        Object.assign(bed, { status: 'occupied', patientId: linked.id, expectedRelease: linked.expectedDischarge, releaseConfidence: 0.7 });
+        postOpBedId = bed.id;
+        emit('bed.updated', { bedId: bed.id, status: 'occupied' });
+        emit('patient.updated', { patientId: linked.id, status: 'in_recovery' });
+      } else if (bed && c.postOpRequired) {
         const p = { id: uid('pt'), alias: c.patientAlias, acuity: 3, status: 'in_recovery', bedId: bed.id, department: 'General Ward', doctorId: 'doc-hughes', doctorName: c.surgeon, admittedAt: new Date().toISOString(), expectedDischarge: iso(Date.now() + 6 * H), dischargeDate: null, requiresImaging: false, requiresIcu: false, pendingTasks: [] };
         s.patients.push(p);
         Object.assign(bed, { status: 'occupied', patientId: p.id, expectedRelease: p.expectedDischarge, releaseConfidence: 0.7 });
@@ -1008,6 +1017,9 @@ function matchPost(path, body = {}) {
   if (path === '/ai-report') return aiReport(body.scope, body.format);
   if (path === '/demo/reset') {
     const events = s.events;
+    DOCTORS.forEach((d, i) => {
+      d.status = DOCTOR_DEFAULT_STATUS[i];
+    });
     S = buildState();
     S.events = events;
     logEvent('DEMO_RESET', {}, { ok: true });
@@ -1041,6 +1053,33 @@ function matchPatch(path, body = {}) {
     return r;
   }
   throw new Error(`Mock route not found: PATCH ${path}`);
+}
+
+/* ───────────────────────── shared state (hospitalSync) ───────────────────────── */
+
+/** Serializable snapshot of the whole mock hospital (shared across tabs by hospitalSync). */
+export function exportFlowState() {
+  const s = st();
+  return {
+    ...s,
+    events: s.events.slice(0, 300),
+    notifications: s.notifications.slice(0, 200),
+    doctorStatus: Object.fromEntries(DOCTORS.map((d) => [d.id, d.status])),
+    lastAnalysisAt,
+  };
+}
+
+/** Replace the in-memory hospital with a snapshot written by another tab. */
+export function importFlowState(data) {
+  const { doctorStatus, lastAnalysisAt: last, ...rest } = data;
+  S = rest;
+  if (doctorStatus) {
+    DOCTORS.forEach((d) => {
+      if (doctorStatus[d.id]) d.status = doctorStatus[d.id];
+    });
+  }
+  if (last) lastAnalysisAt = last;
+  startAnalysisLoop();
 }
 
 /* ───────────────────────── shared with careMock ───────────────────────── */

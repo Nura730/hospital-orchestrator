@@ -22,6 +22,7 @@ import {
   Scissors,
   Check,
   RefreshCw,
+  BedDouble,
 } from 'lucide-react';
 import { FlowModal, FlowError, FlowSkeleton } from './FlowUi.jsx';
 import StatusPill from './StatusPill.jsx';
@@ -47,10 +48,10 @@ function Header({ profile }) {
       <div className="flex flex-wrap items-center gap-2">
         <StatusPill status={profile.critical && profile.status === 'admitted' ? 'critical' : profile.status} />
         <AcuityBadge level={profile.acuity} />
-        <span className="text-[11px] text-ink-500">
+        <span className="text-xs text-ink-500">
           Admitted {shortDate(profile.admittedAt)} · <b className="text-ink-900">Day {profile.daysAdmitted}</b>
         </span>
-        <span className="text-[11px] text-ink-500">
+        <span className="text-xs text-ink-500">
           {profile.doctor.name}
           {profile.doctor.specialty ? `, ${profile.doctor.specialty}` : ''}
         </span>
@@ -59,9 +60,22 @@ function Header({ profile }) {
   );
 }
 
-function Overview({ data, canRequest, requester, onChanged }) {
+function Overview({ data, canRequest, requester, onChanged, canMove }) {
   const { profile, schedule, requests } = data;
   const [showForm, setShowForm] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const moveToWard = async () => {
+    setMoving(true);
+    try {
+      const r = await careApi.transferPatient(profile.patientId, 'general', requester);
+      toast.success(`${profile.alias} moved to ${r.to}. ${r.from} sent for cleaning.`);
+      onChanged();
+    } catch (e) {
+      toast.error(errorText(e, 'Could not move the patient'));
+    } finally {
+      setMoving(false);
+    }
+  };
   const req = profile.requires;
   const chips = [
     req.icu && ['ICU', HeartPulse, '#EF4444'],
@@ -93,14 +107,22 @@ function Overview({ data, canRequest, requester, onChanged }) {
               'None'
             )}
           </Field>
-          <Field label="Bed">{profile.bed ? `${profile.bed.id} · ${profile.bed.ward} · Floor ${profile.bed.floor}` : 'Not assigned'}</Field>
+          <Field label="Bed">{profile.location ? `In ${profile.location}` : profile.bed ? `${profile.bed.id}, ${profile.bed.ward}, floor ${profile.bed.floor}` : 'Not assigned'}</Field>
           <Field label="Admission type">{profile.admissionType}</Field>
+          {canMove && profile.bed?.type === 'post_op' && (
+            <div className="pt-2 mt-1 border-t border-cream-200">
+              <button type="button" className="flow-btn-primary w-full" onClick={moveToWard} disabled={moving}>
+                <BedDouble className="w-4 h-4" aria-hidden="true" /> {moving ? 'Moving…' : 'Move to general ward'}
+              </button>
+              <p className="text-xs text-ink-500 mt-1.5">The recovery bed goes to housekeeping for cleaning.</p>
+            </div>
+          )}
           <Field label="ICU risk (model)">
             {profile.icuRisk ? (
               <span className="flex flex-col items-end gap-0.5">
                 <IcuRiskBadge risk={profile.icuRisk} showLabel />
                 {profile.icuRisk.factors?.length > 0 && (
-                  <span className="text-[10px] text-ink-500">
+                  <span className="text-[11px] text-ink-500">
                     {profile.icuRisk.factors.map((f) => `${f.factor} ${f.direction === 'up' ? 'raises' : 'lowers'}`).join(' · ')}
                   </span>
                 )}
@@ -117,9 +139,9 @@ function Overview({ data, canRequest, requester, onChanged }) {
             <Avatar name={profile.doctor.name} />
             <div className="min-w-0">
               <p className="text-xs font-semibold text-ink-900 truncate">{profile.doctor.name}</p>
-              <p className="text-[11px] text-ink-500 truncate">{profile.doctor.specialty || 'Primary doctor'}</p>
+              <p className="text-xs text-ink-500 truncate">{profile.doctor.specialty || 'Primary doctor'}</p>
               {profile.doctor.phone && (
-                <p className="text-[11px] text-ink-500 inline-flex items-center gap-1">
+                <p className="text-xs text-ink-500 inline-flex items-center gap-1">
                   <Phone className="w-3 h-3" aria-hidden="true" /> {profile.doctor.phone}
                 </p>
               )}
@@ -129,7 +151,7 @@ function Overview({ data, canRequest, requester, onChanged }) {
             <Avatar name={profile.nurse?.name || 'N A'} color="#BE185D" />
             <div className="min-w-0">
               <p className="text-xs font-semibold text-ink-900 truncate">{profile.nurse?.name || 'No nurse assigned'}</p>
-              <p className="text-[11px] text-ink-500">{profile.nurse ? `Shift ${profile.nurse.shift}` : 'Assigned nurse'}</p>
+              <p className="text-xs text-ink-500">{profile.nurse ? `Shift ${profile.nurse.shift}` : 'Assigned nurse'}</p>
             </div>
           </div>
           {profile.otSurgeon && (
@@ -137,7 +159,7 @@ function Overview({ data, canRequest, requester, onChanged }) {
               <Avatar name={profile.otSurgeon} color="#6D28D9" />
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-ink-900 truncate">{profile.otSurgeon}</p>
-                <p className="text-[11px] text-ink-500">OT surgeon</p>
+                <p className="text-xs text-ink-500">OT surgeon</p>
               </div>
             </div>
           )}
@@ -185,11 +207,11 @@ function Overview({ data, canRequest, requester, onChanged }) {
                 <span className="w-1.5 h-6 rounded-full shrink-0" style={{ backgroundColor: REQ_TONE[r.priority] || '#94A3B8' }} aria-hidden="true" />
                 <span className="min-w-0 flex-1">
                   <span className="block text-xs font-semibold text-ink-900 truncate">{r.typeLabel}</span>
-                  <span className="block text-[11px] text-ink-500 truncate">
+                  <span className="block text-xs text-ink-500 truncate">
                     {r.note || 'No note'} · {r.createdBy} · {timeAgo(r.createdAt)}
                   </span>
                 </span>
-                <span className="text-[10px] uppercase font-semibold text-ink-500">{r.priority}</span>
+                <span className="text-[11px] uppercase font-semibold text-ink-500">{r.priority}</span>
                 <StatusPill status={r.status} size="xs" />
               </li>
             ))}
@@ -220,7 +242,7 @@ export function JourneyDays({ profile, journey }) {
         <section key={d.day}>
           <h4 className="flex items-center gap-2 mb-1.5">
             <span className="text-xs font-bold text-ink-900">Day {d.day}</span>
-            <span className="text-[11px] text-ink-500">{shortDate(d.date)}</span>
+            <span className="text-xs text-ink-500">{shortDate(d.date)}</span>
             <span className="flex-1 h-px bg-cream-200" aria-hidden="true" />
           </h4>
           <ol className="relative ml-1.5 border-l border-cream-200 space-y-0.5">
@@ -228,11 +250,11 @@ export function JourneyDays({ profile, journey }) {
               <li key={`${e.at}-${i}`} className="relative pl-4 py-1.5">
                 <span className="absolute -left-[5px] top-[11px] w-2.5 h-2.5 rounded-full border-2 border-cream-50 bg-royal-500" aria-hidden="true" />
                 <div className="flex items-start gap-2">
-                  <span className="text-[11px] font-semibold tabular-nums text-ink-500 w-10 shrink-0">{clock(e.at)}</span>
+                  <span className="text-xs font-semibold tabular-nums text-ink-500 w-10 shrink-0">{clock(e.at)}</span>
                   <EventIcon type={e.type} className="w-3.5 h-3.5 mt-px shrink-0" />
                   <span className="min-w-0">
                     <span className="block text-xs text-ink-900">{e.description}</span>
-                    {e.by && <span className="block text-[11px] text-ink-500">{e.by}</span>}
+                    {e.by && <span className="block text-xs text-ink-500">{e.by}</span>}
                   </span>
                 </div>
               </li>
@@ -352,6 +374,7 @@ export function PatientDetailPopup({ patientId, bedInfo = null, onClose, footer 
               data={data}
               canRequest={canRequest}
               requester={displayName(user)}
+              canMove={role === 'doctor' || role === 'admin'}
               onChanged={() => {
                 load();
                 onChanged?.();

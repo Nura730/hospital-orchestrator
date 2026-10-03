@@ -45,7 +45,7 @@ export function MyPatientRiskSummary() {
             ].map(([label, n, cls]) => (
               <div key={label} className="rounded-xl bg-cream-100 p-2.5 text-center">
                 <div className={`text-2xl font-extrabold tabular-nums ${cls}`}>{n}</div>
-                <div className="text-[10px] uppercase font-semibold text-ink-500">{label}</div>
+                <div className="text-[11px] uppercase font-semibold text-ink-500">{label}</div>
               </div>
             ))}
           </div>
@@ -54,7 +54,7 @@ export function MyPatientRiskSummary() {
               <li key={p.patientId} className="flex items-center gap-2 rounded-lg border border-cream-200 px-2.5 py-1.5">
                 <span className="text-xs font-bold text-royal-900 w-20">{p.alias}</span>
                 <StatusPill status={p.acuity <= 2 ? 'critical' : 'approved'} label={p.acuity <= 2 ? `Acuity ${p.acuity}` : 'Ready'} size="xs" />
-                <span className="text-[11px] text-ink-500 truncate flex-1">{p.bedId || 'no bed'} · discharge {timeUntil(p.expectedDischarge)}</span>
+                <span className="text-xs text-ink-500 truncate flex-1">{p.bedId || 'no bed'} · discharge {timeUntil(p.expectedDischarge)}</span>
                 <div className="w-28">
                   <ReadinessBar score={p.readiness.score} />
                 </div>

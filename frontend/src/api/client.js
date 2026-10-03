@@ -20,7 +20,7 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     try {
-      const storedAuth = localStorage.getItem('mediorchestra_auth');
+      const storedAuth = sessionStorage.getItem('mediorchestra_auth');
       if (storedAuth) {
         const parsed = JSON.parse(storedAuth);
         const token = parsed?.state?.token || parsed?.token;
@@ -52,7 +52,7 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       // Unauthorized: clear cached auth state
-      localStorage.removeItem('mediorchestra_auth');
+      sessionStorage.removeItem('mediorchestra_auth');
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }

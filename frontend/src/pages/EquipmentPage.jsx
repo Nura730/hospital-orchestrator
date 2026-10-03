@@ -154,13 +154,13 @@ export function EquipmentPage() {
           <div className="space-y-6 text-xs">
             <div className="p-4 bg-surface-sunken rounded-xl flex items-center justify-between">
               <div>
-                <span className="text-surface-muted block text-[11px]">Current Status</span>
+                <span className="text-surface-muted block text-xs">Current Status</span>
                 <div className="mt-1">
                   <StatusBadge status={selectedItem.status} />
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-surface-muted block text-[11px]">Location</span>
+                <span className="text-surface-muted block text-xs">Location</span>
                 <span className="font-bold text-surface-foreground mt-1 block">
                   {selectedItem.location}
                 </span>
@@ -181,15 +181,15 @@ export function EquipmentPage() {
             <div className="space-y-2 border-t border-surface-border pt-4">
               <span className="font-semibold text-surface-foreground block">Telemetry History (Last 3h)</span>
               <div className="space-y-2">
-                <div className="p-2.5 bg-surface-sunken/60 rounded-lg flex justify-between items-center text-[11px]">
+                <div className="p-2.5 bg-surface-sunken/60 rounded-lg flex justify-between items-center text-xs">
                   <span>1 Hour Ago</span>
                   <span className="font-mono text-emerald-500">Connected • Telemetry OK</span>
                 </div>
-                <div className="p-2.5 bg-surface-sunken/60 rounded-lg flex justify-between items-center text-[11px]">
+                <div className="p-2.5 bg-surface-sunken/60 rounded-lg flex justify-between items-center text-xs">
                   <span>2 Hours Ago</span>
                   <span className="font-mono text-emerald-500">Connected • Telemetry OK</span>
                 </div>
-                <div className="p-2.5 bg-surface-sunken/60 rounded-lg flex justify-between items-center text-[11px]">
+                <div className="p-2.5 bg-surface-sunken/60 rounded-lg flex justify-between items-center text-xs">
                   <span>3 Hours Ago</span>
                   <span className="font-mono text-emerald-500">Sync Handshake Received</span>
                 </div>

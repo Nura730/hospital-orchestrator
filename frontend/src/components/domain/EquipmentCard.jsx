@@ -41,7 +41,7 @@ export function EquipmentCard({ equipment, onClick = null }) {
             <h4 className="font-semibold text-xs text-surface-foreground truncate">
               {equipment.name}
             </h4>
-            <span className="font-mono text-[10px] text-surface-muted">
+            <span className="font-mono text-[11px] text-surface-muted">
               {equipment.assetTag}
             </span>
           </div>
@@ -59,7 +59,7 @@ export function EquipmentCard({ equipment, onClick = null }) {
       {/* Battery and Maintenance */}
       <div className="pt-2 border-t border-surface-border flex flex-col gap-2">
         <div className="flex items-center justify-between text-xs">
-          <span className="flex items-center gap-1 text-[11px] text-surface-muted">
+          <span className="flex items-center gap-1 text-xs text-surface-muted">
             {isLowBattery ? (
               <BatteryWarning className="w-3.5 h-3.5 text-danger-500 animate-pulse" />
             ) : (
@@ -80,7 +80,7 @@ export function EquipmentCard({ equipment, onClick = null }) {
         />
 
         {equipment.maintenanceDueDate && (
-          <div className="flex items-center justify-between text-[10px] text-surface-muted font-mono pt-1">
+          <div className="flex items-center justify-between text-[11px] text-surface-muted font-mono pt-1">
             <span>Next Inspection</span>
             <span>{equipment.maintenanceDueDate}</span>
           </div>

@@ -137,13 +137,13 @@ export function LoginPage() {
                     <ArrowRight className="w-3.5 h-3.5 text-ink-500" aria-hidden="true" />
                   </span>
                   <span className="block text-xs font-bold text-royal-900 mt-2">{r.label}</span>
-                  <span className="block text-[10px] text-ink-500 leading-snug mt-0.5">{r.hint}</span>
+                  <span className="block text-[11px] text-ink-500 leading-snug mt-0.5">{r.hint}</span>
                 </button>
               );
             })}
           </div>
 
-          <div className="flex items-center gap-3 text-[11px] text-ink-500" aria-hidden="true">
+          <div className="flex items-center gap-3 text-xs text-ink-500" aria-hidden="true">
             <span className="flex-1 h-px bg-cream-200" /> or sign in with email <span className="flex-1 h-px bg-cream-200" />
           </div>
 
@@ -163,7 +163,7 @@ export function LoginPage() {
                     type="button"
                     onClick={() => pickRole(r.key)}
                     aria-pressed={selected === r.key}
-                    className={clsx('flex-1 px-1.5 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-colors', selected === r.key ? 'bg-royal-500 text-white' : 'text-ink-500 hover:text-royal-500')}
+                    className={clsx('flex-1 px-1.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors', selected === r.key ? 'bg-royal-500 text-white' : 'text-ink-500 hover:text-royal-500')}
                   >
                     {SHORT_LABEL[r.key]}
                   </button>
@@ -189,7 +189,7 @@ export function LoginPage() {
                 <Lock className="w-4 h-4 text-ink-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
                 <input id="login-password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className="flow-input !pl-9 !py-2.5" />
               </div>
-              <p className="text-[10px] text-ink-500 mt-1">
+              <p className="text-[11px] text-ink-500 mt-1">
                 Demo password for this role: <code className="font-mono">{DEFAULT_USERS[selected].demoPassword}</code>
               </p>
             </div>

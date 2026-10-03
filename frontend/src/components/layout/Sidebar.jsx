@@ -34,10 +34,13 @@ import {
   LifeBuoy,
   Clock3,
   CalendarDays,
+  Inbox,
 } from 'lucide-react';
 import { useUiStore } from '../../store/uiStore.js';
 import { useRole } from '../../hooks/useRole.js';
 import { ROLE_LABELS, ROLE_ACCENT } from '../../utils/roles.js';
+import careApi from '../../api/careApi.js';
+import { useFlowPolling } from '../../hooks/useFlowPolling.js';
 
 /* Navigation per role */
 export const NAV_BY_ROLE = {
@@ -52,12 +55,13 @@ export const NAV_BY_ROLE = {
     { path: '/admin/beds-overview', label: 'Live Bed Map', icon: MapIcon },
     { section: 'People' },
     { path: '/admin/patients', label: 'Patients', icon: Users },
+    { path: '/admin/requests', label: 'Request Center', icon: Inbox, badge: 'requests' },
     { path: '/admin/flow/staff', label: 'Staff and Doctors', icon: UserRound },
     { path: '/admin/nurses', label: 'Nurse Management', icon: HeartHandshake },
     { section: 'Patient Tracking' },
     { path: '/admin/patient-journey', label: 'Patient Journey', icon: Route, prefix: true },
     { section: 'Operations' },
-    { path: '/admin/flow/housekeeping', label: 'Housekeeping', icon: Sparkle },
+    { path: '/admin/flow/housekeeping', label: 'Housekeeping', icon: Sparkle, badge: 'cleaning' },
     { path: '/admin/flow/audit', label: 'Audit Log', icon: ScrollText },
   ],
   doctor: [
@@ -66,6 +70,7 @@ export const NAV_BY_ROLE = {
     { section: 'My Work' },
     { path: '/doctor/schedule', label: "Today's Schedule", icon: Clock3 },
     { path: '/doctor/patients', label: 'My Patients', icon: Users },
+    { path: '/doctor/requests', label: 'Requests', icon: Inbox, badge: 'requests' },
     { path: '/doctor/ot-cases', label: 'OT Cases', icon: Scissors },
     { path: '/doctor/calendar', label: 'Calendar', icon: CalendarDays },
     { section: 'Flow Intelligence' },
@@ -74,6 +79,9 @@ export const NAV_BY_ROLE = {
   ot_manager: [
     { section: 'Overview' },
     { path: '/ot/dashboard', label: 'Dashboard', icon: Gauge },
+    { section: 'Theatre' },
+    { path: '/ot/requests', label: 'OT Requests', icon: Inbox, badge: 'otRequests' },
+    { path: '/ot/surgeons', label: 'Surgeons', icon: UserRound },
     { section: 'Flow Intelligence' },
     { path: '/ot/flow/impact', label: 'Flow Impact', icon: Scissors },
   ],
@@ -81,7 +89,7 @@ export const NAV_BY_ROLE = {
     { section: 'My Shift' },
     { path: '/nurse/dashboard', label: 'My Dashboard', icon: Gauge },
     { path: '/nurse/patients', label: 'My Patients', icon: Users },
-    { path: '/nurse/tasks', label: 'Tasks', icon: ListChecks },
+    { path: '/nurse/tasks', label: 'Tasks', icon: ListChecks, badge: 'tasks' },
     { path: '/nurse/beds', label: 'Bed Board', icon: BedDouble },
     { path: '/nurse/notifications', label: 'Notifications', icon: Bell },
   ],
@@ -90,7 +98,7 @@ export const NAV_BY_ROLE = {
     { path: '/patient/dashboard', label: 'My Status', icon: HeartPulse },
     { path: '/patient/treatment', label: 'My Treatment', icon: Route },
     { path: '/patient/reports', label: 'Reports', icon: FileText },
-    { path: '/patient/requests', label: 'Requests', icon: MessageSquare },
+    { path: '/patient/requests', label: 'Requests', icon: MessageSquare, badge: 'requests' },
     { path: '/patient/help', label: 'Help', icon: LifeBuoy },
   ],
 };
@@ -106,6 +114,8 @@ export function Sidebar() {
   const location = useLocation();
   const items = NAV_BY_ROLE[role] || [];
   const accent = ROLE_ACCENT[role] || '#014BAA';
+  // Live counts (new requests, OT queue, beds to clean, tasks), refreshed on every hospital change
+  const badges = useFlowPolling(() => (role ? careApi.getBadgeCounts(role) : Promise.resolve({})), { deps: [role], intervalMs: 60000, toastOnError: false }).data || {};
 
   return (
     <aside
@@ -140,7 +150,7 @@ export function Sidebar() {
             return sidebarCollapsed ? (
               <div key={item.section} className="h-px bg-white/15 my-3 mx-2" aria-hidden="true" />
             ) : (
-              <div key={item.section} className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/80 first:pt-1">
+              <div key={item.section} className="px-3 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-white/80 first:pt-1">
                 {item.section}
               </div>
             );
@@ -159,15 +169,23 @@ export function Sidebar() {
                 isActive ? 'bg-white text-[#014BAA] font-semibold' : 'text-white/85 hover:bg-white/10 hover:text-white'
               )}
             >
-              <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
-              {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+              <span className="relative shrink-0">
+                <Icon className="w-4 h-4" aria-hidden="true" />
+                {sidebarCollapsed && item.badge && badges[item.badge] > 0 && <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-full bg-[#DC2626] border-2 border-[#014BAA]" aria-hidden="true" />}
+              </span>
+              {!sidebarCollapsed && <span className="truncate flex-1">{item.label}</span>}
+              {!sidebarCollapsed && item.badge && badges[item.badge] > 0 && (
+                <span className={clsx('min-w-[22px] h-[22px] px-1.5 rounded-full text-xs font-bold tabular-nums flex items-center justify-center', isActive ? 'bg-[#014BAA] text-white' : 'bg-white text-[#014BAA]')} aria-label={`${badges[item.badge]} new`}>
+                  {badges[item.badge]}
+                </span>
+              )}
             </NavLink>
           );
         })}
       </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-white/10 text-[11px]">
+      <div className="p-3 border-t border-white/10 text-xs">
         {!sidebarCollapsed ? (
           <span className="inline-flex items-center gap-2 font-semibold text-white">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: accent }} aria-hidden="true" />

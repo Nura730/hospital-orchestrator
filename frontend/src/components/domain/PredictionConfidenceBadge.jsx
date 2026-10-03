@@ -13,7 +13,7 @@ export function PredictionConfidenceBadge({ confidence, showValue = true, classN
   const s = BAND_STYLES[band];
   return (
     <span
-      className={clsx('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide whitespace-nowrap', s.bg, s.text, s.border, className)}
+      className={clsx('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide whitespace-nowrap', s.bg, s.text, s.border, className)}
       title={confidence != null ? `Model confidence ${Math.round(confidence * 100)}%` : 'Confidence unknown'}
     >
       <ShieldCheck className="w-3 h-3" aria-hidden="true" />

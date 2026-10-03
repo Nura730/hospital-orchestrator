@@ -85,7 +85,7 @@ function Stat({ icon: Icon, label, value, hint, color }) {
       <div className="min-w-0">
         <div className="text-2xl font-extrabold text-royal-900 tabular-nums leading-none">{value}</div>
         <div className="text-xs font-semibold text-ink-900 mt-1">{label}</div>
-        {hint && <div className="text-[11px] text-ink-500">{hint}</div>}
+        {hint && <div className="text-xs text-ink-500">{hint}</div>}
       </div>
     </div>
   );
@@ -100,7 +100,7 @@ function ScoreBadge({ score }) {
           <circle cx="18" cy="18" r="15" fill="none" stroke="#2E3347" strokeWidth="3.5" />
           <circle cx="18" cy="18" r="15" fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeDasharray={94.25} strokeDashoffset={94.25 * (1 - score / 100)} />
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-[11px] font-extrabold text-ink-900 tabular-nums">{score}</span>
+        <span className="absolute inset-0 flex items-center justify-center text-xs font-extrabold text-ink-900 tabular-nums">{score}</span>
       </span>
     </span>
   );
@@ -145,7 +145,7 @@ function PatientPanel({ p, onClose, onNotify, onMarkReady, busy, onDetails }) {
             </span>
             <span className="text-xs text-ink-500">Readiness {p.score}/100</span>
             {onDetails && (
-              <button type="button" className="ml-auto text-[11px] font-semibold text-royal-500 hover:underline" onClick={() => onDetails(p.patientId)}>
+              <button type="button" className="ml-auto text-xs font-semibold text-royal-500 hover:underline" onClick={() => onDetails(p.patientId)}>
                 Full patient details
               </button>
             )}
@@ -407,7 +407,7 @@ export default function DischargePlannerPage() {
               >
                 {k !== 'all' && <span className={clsx('w-2 h-2 rounded-full', GROUPS[k].dot)} aria-hidden="true" />}
                 {label}
-                <span className={clsx('rounded-full px-1.5 text-[10px] tabular-nums', tab === k ? 'bg-white/25' : 'bg-cream-200 text-ink-900')}>{counts[k]}</span>
+                <span className={clsx('rounded-full px-1.5 text-[11px] tabular-nums', tab === k ? 'bg-white/25' : 'bg-cream-200 text-ink-900')}>{counts[k]}</span>
               </button>
             ))}
           </div>
@@ -458,7 +458,7 @@ export default function DischargePlannerPage() {
                         <button type="button" onClick={() => setOpenId(p.patientId)} aria-label={`Open ${p.alias}, ${g.label}, readiness ${p.score}`} className="text-sm font-bold text-ink-900 hover:underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500">
                           {p.alias}
                         </button>
-                        <span className={clsx('rounded-full px-2 py-0.5 text-[10px] font-bold', g.pill)}>{g.label}</span>
+                        <span className={clsx('rounded-full px-2 py-0.5 text-[11px] font-bold', g.pill)}>{g.label}</span>
                       </div>
                       <div className="text-xs text-ink-500 mt-0.5 truncate">
                         Bed <span className="font-mono text-ink-900">{p.bedId}</span> · {p.ward}
@@ -472,7 +472,7 @@ export default function DischargePlannerPage() {
                     </div>
 
                     <div className="hidden lg:flex flex-col items-end w-28 text-right">
-                      <span className="text-[10px] uppercase tracking-wide text-ink-500">Going home</span>
+                      <span className="text-[11px] uppercase tracking-wide text-ink-500">Going home</span>
                       <span className="text-sm font-semibold text-ink-900 inline-flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-ink-500" aria-hidden="true" /> {timeUntil(p.expectedDischarge)}
                       </span>
@@ -522,8 +522,8 @@ export default function DischargePlannerPage() {
                   <span className="font-mono text-base font-extrabold text-royal-900">{b.bedId}</span>
                   <span className="text-xs font-semibold text-ink-900 tabular-nums">{clock(b.expectedFreeAt)}</span>
                 </div>
-                <div className="text-[11px] text-ink-500 truncate">{b.ward}</div>
-                <div className="text-[11px] text-ink-500">free {timeUntil(b.expectedFreeAt)}</div>
+                <div className="text-xs text-ink-500 truncate">{b.ward}</div>
+                <div className="text-xs text-ink-500">free {timeUntil(b.expectedFreeAt)}</div>
                 <div className="mt-auto pt-2.5">
                   {b.preAssignedTo ? (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-fg-ok">

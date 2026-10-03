@@ -14,7 +14,7 @@ export function ExplainPanel({ explain = null }) {
       {/* Why Section */}
       {explain.why && explain.why.length > 0 && (
         <div>
-          <span className="font-bold text-surface-foreground flex items-center gap-1.5 uppercase tracking-wider text-[11px] mb-2">
+          <span className="font-bold text-surface-foreground flex items-center gap-1.5 uppercase tracking-wider text-xs mb-2">
             <HelpCircle className="w-3.5 h-3.5 text-primary-500" />
             Clinical Reasoning & Root Cause
           </span>
@@ -32,7 +32,7 @@ export function ExplainPanel({ explain = null }) {
       {/* Constraints Checked (Green Checks) */}
       {explain.constraintsChecked && explain.constraintsChecked.length > 0 && (
         <div className="pt-3 border-t border-surface-border/60">
-          <span className="font-bold text-surface-foreground flex items-center gap-1.5 uppercase tracking-wider text-[11px] mb-2">
+          <span className="font-bold text-surface-foreground flex items-center gap-1.5 uppercase tracking-wider text-xs mb-2">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
             Safety Constraints Verified
           </span>
@@ -40,7 +40,7 @@ export function ExplainPanel({ explain = null }) {
             {explain.constraintsChecked.map((constraint, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 p-2 rounded-lg bg-surface-elevated border border-surface-border text-[11px] text-surface-muted"
+                className="flex items-center gap-2 p-2 rounded-lg bg-surface-elevated border border-surface-border text-xs text-surface-muted"
               >
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                 <span className="truncate">{constraint}</span>

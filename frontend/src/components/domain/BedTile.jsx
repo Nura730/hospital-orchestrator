@@ -36,7 +36,7 @@ export function BedTile({ tile, onSelect, dimmed = false, highlighted = false })
         className={clsx(
           'relative flex flex-col items-center justify-center rounded-lg border font-mono font-semibold transition-transform',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500 focus-visible:ring-offset-1 focus-visible:ring-offset-cream-50 hover:scale-105',
-          isRoom ? 'h-12 min-w-[96px] px-2 text-[10px]' : 'h-12 w-12 text-[9px]',
+          isRoom ? 'h-12 min-w-[96px] px-2 text-[11px]' : 'h-12 w-12 text-[10px]',
           CELL_STYLES[status] || CELL_STYLES.blocked,
           dimmed && 'opacity-25',
           highlighted && 'ring-2 ring-royal-500 ring-offset-1 ring-offset-cream-50'
@@ -44,11 +44,11 @@ export function BedTile({ tile, onSelect, dimmed = false, highlighted = false })
       >
         {tile.pulse && Date.now() - tile.pulse < 4000 && <span className="absolute inset-0 rounded-lg border border-current animate-ping" aria-hidden="true" />}
         <span className="leading-tight text-center tracking-tight">{isRoom ? tile.name || tile.id : tile.id}</span>
-        {isRoom && tile.procedure && <span className="text-[8px] font-normal opacity-80 truncate max-w-[88px]">{tile.procedure}</span>}
+        {isRoom && tile.procedure && <span className="text-[9px] font-normal opacity-80 truncate max-w-[88px]">{tile.procedure}</span>}
       </button>
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 hidden group-hover:block group-focus-within:block whitespace-nowrap rounded-md border border-cream-200 bg-cream-50 px-2 py-1 text-[10px] font-medium text-ink-900"
+        className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 hidden group-hover:block group-focus-within:block whitespace-nowrap rounded-md border border-cream-200 bg-cream-50 px-2 py-1 text-[11px] font-medium text-ink-900"
       >
         <b>{tile.id}</b> · {label}
         {alias ? ` · ${alias}` : ''}

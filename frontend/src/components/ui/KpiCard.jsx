@@ -127,7 +127,7 @@ export function KpiCard({
           )}
 
           {subtitle && (
-            <span className="text-[11px] text-surface-muted truncate ml-2">
+            <span className="text-xs text-surface-muted truncate ml-2">
               {subtitle}
             </span>
           )}

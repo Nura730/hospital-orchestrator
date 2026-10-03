@@ -16,7 +16,7 @@ export function RawDataTable({ rows = [], columns = [], exportName, maxHeight = 
     <div className="rounded-xl border border-cream-200 bg-cream-50 overflow-hidden">
       {(title || exportName) && (
         <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-cream-200 bg-cream-100">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-500">{title || 'Raw data'} · {rows.length} rows</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-ink-500">{title || 'Raw data'} ({rows.length} rows)</span>
           {exportName && (
             <button type="button" className="flow-btn-secondary !py-1 !px-2" onClick={() => exportCsv(exportName, columns, rows)} disabled={!rows.length}>
               <Download className="w-3.5 h-3.5" aria-hidden="true" /> Export CSV
@@ -24,7 +24,7 @@ export function RawDataTable({ rows = [], columns = [], exportName, maxHeight = 
           )}
         </div>
       )}
-      <div className={clsx('overflow-auto scrollbar-thin', maxHeight)}>
+      <div className={clsx('overflow-auto scrollbar-thin', maxHeight)} tabIndex={0} role="region" aria-label={title || 'Raw data'}>
         <table className="flow-table w-full">
           <thead className="sticky top-0 bg-cream-50 z-10">
             <tr>

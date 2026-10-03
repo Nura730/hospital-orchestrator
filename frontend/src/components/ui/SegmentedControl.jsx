@@ -14,7 +14,7 @@ export function SegmentedControl({
   className = '',
 }) {
   const sizeClasses = {
-    xs: 'py-1 px-2 text-[11px]',
+    xs: 'py-1 px-2 text-xs',
     sm: 'py-1.5 px-3 text-xs',
     md: 'py-2 px-4 text-sm',
   }[size] || 'py-1.5 px-3 text-xs';

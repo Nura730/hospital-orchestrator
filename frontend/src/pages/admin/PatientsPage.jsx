@@ -120,11 +120,11 @@ export default function PatientsPage() {
                   <tr className={clsx('cursor-pointer', openForm === p.patientId && 'bg-sunken')} onClick={() => setPopup(p.patientId)}>
                     <td>
                       <span className="font-semibold">{p.alias}</span>
-                      <span className="block text-[11px] text-ink-500 truncate max-w-[220px]">{p.diagnosis}</span>
+                      <span className="block text-xs text-ink-500 truncate max-w-[220px]">{p.diagnosis}</span>
                     </td>
                     <td>
                       <span className="font-mono">{p.bedId || '—'}</span>
-                      <span className="block text-[11px] text-ink-500 truncate max-w-[160px]">{p.ward}</span>
+                      <span className="block text-xs text-ink-500 truncate max-w-[160px]">{p.ward}</span>
                     </td>
                     <td className="tabular-nums">{p.status === 'waiting' ? '—' : `Day ${p.daysAdmitted}`}</td>
                     <td>
@@ -142,7 +142,7 @@ export default function PatientsPage() {
                       ) : (
                         <button type="button" className={clsx('flow-btn-secondary !py-1', openForm === p.patientId && '!border-royal-500 !text-royal-500')} onClick={() => setOpenForm(openForm === p.patientId ? null : p.patientId)} aria-expanded={openForm === p.patientId}>
                           <Send className="w-3.5 h-3.5" aria-hidden="true" /> Send Request
-                          {p.openRequests > 0 && <span className="ml-1 rounded-full bg-[#8B5CF6] px-1.5 text-[10px] text-white">{p.openRequests}</span>}
+                          {p.openRequests > 0 && <span className="ml-1 rounded-full bg-[#8B5CF6] px-1.5 text-[11px] text-white">{p.openRequests}</span>}
                         </button>
                       )}
                     </td>

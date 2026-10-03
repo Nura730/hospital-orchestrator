@@ -46,7 +46,7 @@ function SliderRow({ id, label, value, min, max, step = 1, unit, onChange }) {
         </span>
       </div>
       <input id={id} type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-[#014BAA]" />
-      <div className="flex justify-between text-[10px] text-ink-500">
+      <div className="flex justify-between text-[11px] text-ink-500">
         <span>
           {min}
           {unit}
@@ -69,14 +69,14 @@ function ScenarioCard({ id, s, recommended }) {
           Scenario {id} · {s.label}
         </span>
         {recommended && (
-          <span className="inline-flex items-center gap-1 text-[10px] font-extrabold bg-white/25 rounded-full px-2 py-0.5">
+          <span className="inline-flex items-center gap-1 text-[11px] font-extrabold bg-white/25 rounded-full px-2 py-0.5">
             <Award className="w-3 h-3" aria-hidden="true" /> RECOMMENDED
           </span>
         )}
       </div>
       <div className="p-4 grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <div className="text-[10px] uppercase font-semibold text-ink-500">Avg wait</div>
+          <div className="text-[11px] uppercase font-semibold text-ink-500">Avg wait</div>
           <div className={clsx('text-4xl font-extrabold tabular-nums', st.text)}>
             {s.avgWaitMin}
             <span className="text-base font-semibold"> min</span>
@@ -89,11 +89,11 @@ function ScenarioCard({ id, s, recommended }) {
           ['Effective beds', s.effectiveCapacity],
         ].map(([l, v]) => (
           <div key={l}>
-            <div className="text-[10px] uppercase font-semibold text-ink-500">{l}</div>
+            <div className="text-[11px] uppercase font-semibold text-ink-500">{l}</div>
             <div className={clsx('text-xl font-extrabold tabular-nums', v > 0 && l !== 'Effective beds' ? 'text-fg-bad' : 'text-ink-900')}>{v}</div>
           </div>
         ))}
-        <div className="col-span-2 text-[10px] text-ink-500 border-t border-cream-200 pt-2">
+        <div className="col-span-2 text-[11px] text-ink-500 border-t border-cream-200 pt-2">
           Demand {s.demand} · staff {s.effectiveStaff} nurses
           {s.extraBeds ? ` · +${s.extraBeds} beds` : ''}
           {s.extraNurses ? ` · +${s.extraNurses} nurse${s.extraNurses > 1 ? 's' : ''}` : ''}
@@ -175,7 +175,7 @@ export default function WhatIfSimulatorPage() {
                 className={clsx('rounded-xl border-2 px-3 py-2 text-left transition-colors', params.label === p.label ? 'border-royal-500 bg-royal-100' : 'border-cream-200 hover:border-royal-500/40')}
               >
                 <span className="block text-xs font-bold text-royal-900">{p.label}</span>
-                <span className="block text-[10px] text-ink-500">
+                <span className="block text-[11px] text-ink-500">
                   +{p.arrivalIncreasePct}% · -{p.nursesAbsent} nurses{p.icuBedsClosed ? ` · -${p.icuBedsClosed} ICU` : ''}
                 </span>
               </button>
@@ -226,14 +226,14 @@ export default function WhatIfSimulatorPage() {
                 <ol className="space-y-2">
                   {result.actions.map((a, i) => (
                     <li key={a.text} className="flex items-start gap-3 rounded-xl border border-cream-200 bg-cream-50 px-3 py-2">
-                      <span className="w-6 h-6 rounded-full bg-royal-500 text-white text-[11px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                      <span className="w-6 h-6 rounded-full bg-royal-500 text-white text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
                       <span className="flex-1 text-xs font-medium text-ink-900">{a.text}</span>
-                      <span className="text-[11px] font-semibold text-fg-ok whitespace-nowrap">{a.impact}</span>
+                      <span className="text-xs font-semibold text-fg-ok whitespace-nowrap">{a.impact}</span>
                     </li>
                   ))}
                   {!result.actions.length && <li className="text-xs text-ink-500">No extra actions needed.</li>}
                 </ol>
-                <p className="text-[10px] text-ink-500 mt-3">
+                <p className="text-[11px] text-ink-500 mt-3">
                   Baseline: {result.baseline.currentPatients}/{result.baseline.totalBeds} beds, {result.baseline.totalNurses} nurses, {result.baseline.forecastArrivals} ED arrivals forecast (6h), admission rate{' '}
                   {Math.round(result.baseline.admissionRate * 100)}%, {result.baseline.dirtyBeds} dirty beds, {result.baseline.dischargeReadyCount} discharge-ready.
                 </p>

@@ -58,7 +58,7 @@ export function RecommendationCard({
               <h4 className="font-bold text-sm text-surface-foreground">
                 {recommendation.title}
               </h4>
-              <span className="text-[11px] text-surface-muted flex items-center gap-1 mt-0.5">
+              <span className="text-xs text-surface-muted flex items-center gap-1 mt-0.5">
                 <Clock className="w-3 h-3" />
                 Created {formatRelativeTime(recommendation.createdAt)}
               </span>
@@ -80,18 +80,18 @@ export function RecommendationCard({
         {/* Action Steps Preview */}
         {recommendation.actions && recommendation.actions.length > 0 && (
           <div className="p-3 rounded-lg bg-surface-sunken/60 border border-surface-border space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-surface-muted block">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-surface-muted block">
               Execution Sequence ({recommendation.actions.length} Steps)
             </span>
             <div className="space-y-1.5">
               {recommendation.actions.map((act, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs text-surface-foreground">
-                  <span className="w-4 h-4 rounded-full bg-primary-500/20 text-primary-600 dark:text-primary-400 font-mono text-[10px] font-bold flex items-center justify-center shrink-0">
+                  <span className="w-4 h-4 rounded-full bg-primary-500/20 text-primary-600 dark:text-primary-400 font-mono text-[11px] font-bold flex items-center justify-center shrink-0">
                     {i + 1}
                   </span>
                   <span className="font-semibold">{act.patientName || act.staffName || act.type}</span>
                   {act.from && (
-                    <span className="text-surface-muted text-[11px] flex items-center gap-1">
+                    <span className="text-surface-muted text-xs flex items-center gap-1">
                       ({act.from} <ArrowRight className="w-3 h-3 text-primary-500" /> {act.to})
                     </span>
                   )}

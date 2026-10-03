@@ -128,7 +128,7 @@ export function SectionHeader({ title, subtitle, icon: Icon, actions, className 
         )}
         <div className="min-w-0">
           <h3 className="text-sm font-bold text-ink-900 truncate">{title}</h3>
-          {subtitle && <p className="text-[11px] text-ink-500 truncate">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-ink-500 truncate">{subtitle}</p>}
         </div>
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

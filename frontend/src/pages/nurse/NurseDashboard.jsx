@@ -77,7 +77,7 @@ function ShiftTab({ d, onOpen }) {
             ['Time', d.allocation.time],
           ].map(([l, v]) => (
             <div key={l} className="rounded-lg bg-sunken px-3 py-2 min-w-0">
-              <p className="text-[10px] text-ink-500">{l}</p>
+              <p className="text-[11px] text-ink-500">{l}</p>
               <p className="text-xs font-semibold text-ink-900 leading-snug">{v}</p>
             </div>
           ))}
@@ -89,11 +89,11 @@ function ShiftTab({ d, onOpen }) {
             const past = mins >= minutesOf(s.end);
             return (
               <li key={s.start} className={clsx('flex items-center gap-3 rounded-lg px-3 py-2 border-l-2', current ? 'border-royal-500 bg-royal-500/10' : 'border-transparent', past && 'opacity-55')}>
-                <span className="text-[11px] font-semibold tabular-nums text-ink-500 w-24 shrink-0">
+                <span className="text-xs font-semibold tabular-nums text-ink-500 w-24 shrink-0">
                   {s.start} - {s.end}
                 </span>
                 <span className={clsx('text-xs', current ? 'font-semibold text-ink-900' : 'text-ink-900')}>{s.label}</span>
-                {current && <span className="ml-auto text-[10px] font-semibold text-royal-500">Now</span>}
+                {current && <span className="ml-auto text-[11px] font-semibold text-royal-500">Now</span>}
                 {past && <Check className="ml-auto w-3.5 h-3.5 text-ink-500" aria-hidden="true" />}
               </li>
             );
@@ -118,7 +118,7 @@ function ShiftTab({ d, onOpen }) {
                   <AcuityDot level={p.acuity} />
                   <span className="text-xs font-semibold text-ink-900 w-14">{p.bedId}</span>
                   <span className="text-xs text-ink-900">{p.alias}</span>
-                  <span className="ml-auto text-[11px] text-ink-500 truncate">{p.nextTask ? `${p.nextTask.title} ${clock(p.nextTask.dueAt)}` : 'No pending task'}</span>
+                  <span className="ml-auto text-xs text-ink-500 truncate">{p.nextTask ? `${p.nextTask.title} ${clock(p.nextTask.dueAt)}` : 'No pending task'}</span>
                 </button>
               </li>
             ))}
@@ -321,13 +321,13 @@ function TaskCard({ t, onStatus }) {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold text-ink-900 truncate">{t.title}</p>
-          {where && <p className="text-[11px] text-ink-500 truncate">{where}</p>}
-          {t.notes && <p className="text-[11px] text-ink-500 truncate">{t.notes}</p>}
+          {where && <p className="text-xs text-ink-500 truncate">{where}</p>}
+          {t.notes && <p className="text-xs text-ink-500 truncate">{t.notes}</p>}
         </div>
         <StatusPill status={t.status === 'pending' ? (t.priority === 'urgent' ? 'urgent' : 'pending') : t.status} size="xs" className="shrink-0" />
       </div>
       <div className="flex items-center justify-between gap-2 mt-2.5 pl-11">
-        <span className={clsx('text-[11px] tabular-nums', overdue ? 'text-fg-bad font-semibold' : 'text-ink-500')}>
+        <span className={clsx('text-xs tabular-nums', overdue ? 'text-fg-bad font-semibold' : 'text-ink-500')}>
           {t.status === 'done' ? `Done ${clock(t.completedAt)}` : `Due ${clock(t.dueAt)}${overdue ? ' · overdue' : ` · ${timeUntil(t.dueAt)}`}`}
         </span>
         {t.status !== 'done' && (
@@ -385,7 +385,7 @@ function TasksTab({ d, onRefresh }) {
             <h3 className="flex items-center gap-2 mb-2">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
               <span className="label-xs">{label}</span>
-              <span className="rounded-full bg-sunken px-1.5 text-[10px] tabular-nums text-ink-900">{list.length}</span>
+              <span className="rounded-full bg-sunken px-1.5 text-[11px] tabular-nums text-ink-900">{list.length}</span>
             </h3>
             {!list.length && <MiniEmpty text={`No ${label.toLowerCase()} tasks`} />}
             <ul className="space-y-2">
@@ -408,7 +408,7 @@ function BedsTab({ d, onOpen, onBed }) {
     <section>
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <PanelTitle count={d.beds.length}>My beds</PanelTitle>
-        <div className="flex gap-3 text-[11px] text-ink-500">
+        <div className="flex gap-3 text-xs text-ink-500">
           {[
             ['Available', '#10B981'],
             ['Occupied', '#014BAA'],
@@ -436,10 +436,10 @@ function BedsTab({ d, onOpen, onBed }) {
                 {b.acuity && <AcuityDot level={b.acuity} />}
               </div>
               <p className="text-sm font-semibold text-ink-900 mt-1.5 truncate">{b.alias || '—'}</p>
-              <p className="text-[11px] font-semibold capitalize" style={{ color: BED_TEXT[b.status] || BED_TEXT.blocked }}>
+              <p className="text-xs font-semibold capitalize" style={{ color: BED_TEXT[b.status] || BED_TEXT.blocked }}>
                 {b.status}
               </p>
-              <p className="text-[10px] text-ink-900/80 truncate mt-0.5">{b.nextTask ? `${b.nextTask.title} ${clock(b.nextTask.dueAt)}` : 'No task due'}</p>
+              <p className="text-[11px] text-ink-900/80 truncate mt-0.5">{b.nextTask ? `${b.nextTask.title} ${clock(b.nextTask.dueAt)}` : 'No task due'}</p>
             </button>
           );
         })}

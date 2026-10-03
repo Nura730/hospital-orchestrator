@@ -163,10 +163,10 @@ export function DigitalTwinPage() {
                 >
                   <div className="flex flex-col">
                     <span className="font-semibold text-surface-foreground">{s.name}</span>
-                    <span className="text-[11px] text-surface-muted">{s.title}</span>
+                    <span className="text-xs text-surface-muted">{s.title}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[11px] text-surface-muted">
+                    <span className="font-mono text-xs text-surface-muted">
                       Load: {s.workload}%
                     </span>
                     <StatusBadge status={s.status} size="xs" />

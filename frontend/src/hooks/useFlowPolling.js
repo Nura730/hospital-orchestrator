@@ -6,6 +6,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { socketClient } from '../api/socket.js';
+import { liveEmitter } from '../api/mock/liveEmitter.js';
+import { HOSPITAL_CHANGED } from '../api/mock/hospitalSync.js';
 
 export function errorText(err, fallback = 'Request failed') {
   const m = err && err.message;
@@ -17,7 +19,7 @@ export function errorText(err, fallback = 'Request failed') {
  * @param {() => Promise<any>} fetcher
  * @param {{ intervalMs?: number, refreshOn?: string[], deps?: any[], toastOnError?: boolean }} options
  */
-export function useFlowPolling(fetcher, { intervalMs = 0, refreshOn = [], deps = [], toastOnError = true } = {}) {
+export function useFlowPolling(fetcher, { intervalMs = 0, refreshOn = [], deps = [], toastOnError = true, live = true } = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -83,6 +85,23 @@ export function useFlowPolling(fetcher, { intervalMs = 0, refreshOn = [], deps =
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
+
+  // Live: any change to the shared hospital (this tab or another) refreshes the data
+  useEffect(() => {
+    if (!live) return undefined;
+    let pending = null;
+    const off = liveEmitter.on(HOSPITAL_CHANGED, () => {
+      if (pending) return;
+      pending = setTimeout(() => {
+        pending = null;
+        refresh({ silent: true });
+      }, 250);
+    });
+    return () => {
+      if (pending) clearTimeout(pending);
+      off();
+    };
+  }, [live, refresh]);
 
   return { data, loading, error, refresh, setData };
 }

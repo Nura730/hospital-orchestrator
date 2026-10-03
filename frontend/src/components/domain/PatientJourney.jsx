@@ -49,15 +49,15 @@ export function PatientJourney({ list = [], title = 'The patient journey', subti
             <li key={b.department} className="flex flex-col md:flex-row md:items-center flex-1 min-w-0">
               <div className={clsx('flex-1 rounded-xl border-2 px-2 py-3 text-center relative', s.border, s.soft, b.rootCause && 'ring-4 ring-[#EF4444]/25')}>
                 {(b.rootCause || b.isCascade) && (
-                  <span className={clsx('absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[9px] font-extrabold text-white', b.rootCause ? 'bg-[#EF4444]' : 'bg-[#F97316]')}>
+                  <span className={clsx('absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white', b.rootCause ? 'bg-[#EF4444]' : 'bg-[#F97316]')}>
                     {b.rootCause ? 'PROBLEM STARTS HERE' : 'KNOCK-ON EFFECT'}
                   </span>
                 )}
                 <div className="text-xs font-bold text-royal-900 mt-1">{SHORT_NAME[b.department] || b.department}</div>
                 <div className={clsx('font-extrabold tabular-nums', compact ? 'text-xl' : 'text-2xl', s.text)}>{now}%</div>
-                <div className={clsx('text-[10px] font-semibold', s.text)}>{s.word}</div>
+                <div className={clsx('text-[11px] font-semibold', s.text)}>{s.word}</div>
                 {!compact && (
-                  <div className="text-[10px] text-ink-500 mt-0.5 tabular-nums">
+                  <div className="text-[11px] text-ink-500 mt-0.5 tabular-nums">
                     in 2h: <b className={later > now ? 'text-fg-bad' : later < now ? 'text-fg-ok' : 'text-ink-900'}>{later}%</b>
                   </div>
                 )}
@@ -74,7 +74,7 @@ export function PatientJourney({ list = [], title = 'The patient journey', subti
         })}
       </ol>
       {showLegend && (
-        <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-4 text-[11px] text-ink-500" aria-label="Legend">
+        <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-4 text-xs text-ink-500" aria-label="Legend">
           {Object.values(STATUS).map((s) => (
             <span key={s.word} className="inline-flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: s.color }} aria-hidden="true" /> {s.word}

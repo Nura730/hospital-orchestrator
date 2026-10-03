@@ -48,7 +48,7 @@ export function AuditLogPage() {
       label: 'Timestamp',
       width: '180px',
       render: (v) => (
-        <span className="font-mono text-[11px] text-surface-muted">
+        <span className="font-mono text-xs text-surface-muted">
           {new Date(v).toLocaleString()}
         </span>
       ),
@@ -79,7 +79,7 @@ export function AuditLogPage() {
       key: 'ip',
       label: 'Client IP',
       width: '120px',
-      render: (v) => <span className="font-mono text-[11px] text-surface-muted">{v}</span>,
+      render: (v) => <span className="font-mono text-xs text-surface-muted">{v}</span>,
     },
   ];
 

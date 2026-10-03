@@ -80,7 +80,7 @@ export function FlowActionFeed({ maxHeight = 'max-h-[560px]' }) {
         subtitle="Newest first · max 20"
         icon={Radio}
         actions={
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-fg-ok">
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-fg-ok">
             <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" /> LIVE
           </span>
         }
@@ -100,20 +100,20 @@ export function FlowActionFeed({ maxHeight = 'max-h-[560px]' }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-xs font-semibold text-ink-900 leading-snug">{item.title}</p>
-                    <span className="text-[10px] text-ink-500 shrink-0 tabular-nums">{timeAgo(item.at)}</span>
+                    <span className="text-[11px] text-ink-500 shrink-0 tabular-nums">{timeAgo(item.at)}</span>
                   </div>
-                  {item.detail && <p className="text-[11px] text-ink-500 leading-snug mt-0.5 line-clamp-2">{item.detail}</p>}
+                  {item.detail && <p className="text-xs text-ink-500 leading-snug mt-0.5 line-clamp-2">{item.detail}</p>}
                   <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                    {item.impact && <span className="text-[10px] font-semibold text-fg-ok bg-[#10B981]/10 rounded-full px-2 py-0.5">{item.impact}</span>}
+                    {item.impact && <span className="text-[11px] font-semibold text-fg-ok bg-[#10B981]/10 rounded-full px-2 py-0.5">{item.impact}</span>}
                     {item.risk && <StatusPill status={item.risk} size="xs" />}
                     {item.kind === 'recommendation' && item.recommendationId && status === 'pending' && (
-                      <button type="button" className="flow-btn-primary !py-0.5 !px-2 !text-[10px] ml-auto" onClick={() => approve(item)}>
+                      <button type="button" className="flow-btn-primary !py-0.5 !px-2 !text-[11px] ml-auto" onClick={() => approve(item)}>
                         <Check className="w-3 h-3" aria-hidden="true" /> Approve
                       </button>
                     )}
                     {item.kind === 'recommendation' && status && status !== 'pending' && <StatusPill status={status} size="xs" className="ml-auto" />}
                     {item.kind === 'discharge' && item.patientId && (
-                      <button type="button" className="flow-btn-secondary !py-0.5 !px-2 !text-[10px] ml-auto" onClick={() => nudge(item)}>
+                      <button type="button" className="flow-btn-secondary !py-0.5 !px-2 !text-[11px] ml-auto" onClick={() => nudge(item)}>
                         Notify doctor
                       </button>
                     )}

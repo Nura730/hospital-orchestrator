@@ -57,7 +57,7 @@ export function StatTile({ icon: Icon, value, label, tone = 'default', sub, onCl
       )}
       <span className="min-w-0">
         <span className="block text-xl font-bold leading-tight tabular-nums text-ink-900 truncate">{value ?? '—'}</span>
-        <span className="block text-[11px] text-ink-500 truncate">
+        <span className="block text-xs text-ink-500 truncate">
           {label}
           {sub ? <span className="ml-1 text-ink-500/80">· {sub}</span> : null}
         </span>
@@ -88,7 +88,7 @@ export function TabBar({ tabs, active, onChange, className = '' }) {
             {Icon && <Icon className="w-3.5 h-3.5" aria-hidden="true" />}
             {t.label}
             {t.count !== undefined && t.count !== null && (
-              <span className={clsx('rounded-full px-1.5 text-[10px] tabular-nums', isActive ? 'bg-royal-500 text-white' : 'bg-sunken text-ink-500')}>{t.count}</span>
+              <span className={clsx('rounded-full px-1.5 text-[11px] tabular-nums', isActive ? 'bg-royal-500 text-white' : 'bg-sunken text-ink-500')}>{t.count}</span>
             )}
           </button>
         );
@@ -116,10 +116,9 @@ export function AcuityBadge({ level, size = 'sm' }) {
   const color = acuityColor(level);
   return (
     <span
-      className={clsx('inline-flex items-center gap-1 rounded-full border font-semibold whitespace-nowrap', size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-[11px]')}
+      className={clsx('inline-flex items-center gap-1 rounded-full border font-semibold whitespace-nowrap', size === 'xs' ? 'px-1.5 py-0.5 text-[11px]' : 'px-2 py-0.5 text-xs')}
       style={{ color: acuityTextColor(level), borderColor: `${color}55`, backgroundColor: `${color}14` }}
     >
-      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
       Acuity {level}
     </span>
   );
@@ -133,7 +132,7 @@ export function AcuityDot({ level }) {
 export function Avatar({ name, color = '#014BAA', size = 'md' }) {
   return (
     <span
-      className={clsx('rounded-full text-white font-bold flex items-center justify-center shrink-0', size === 'sm' ? 'w-7 h-7 text-[10px]' : size === 'lg' ? 'w-11 h-11 text-sm' : 'w-9 h-9 text-xs')}
+      className={clsx('rounded-full text-white font-bold flex items-center justify-center shrink-0', size === 'sm' ? 'w-7 h-7 text-[11px]' : size === 'lg' ? 'w-11 h-11 text-sm' : 'w-9 h-9 text-xs')}
       style={{ backgroundColor: color }}
       aria-hidden="true"
     >
@@ -192,13 +191,13 @@ export function TimelineList({ items, emptyText = 'Nothing scheduled', showStatu
           )}
         >
           {showStatus ? <StatusIcon status={e.status} className="w-4 h-4 mt-px shrink-0" /> : <EventIcon type={e.type} className="w-4 h-4 mt-px shrink-0" />}
-          <span className="text-[11px] font-semibold tabular-nums text-ink-500 w-10 shrink-0 mt-px">{clock(e.at)}</span>
+          <span className="text-xs font-semibold tabular-nums text-ink-500 w-10 shrink-0 mt-px">{clock(e.at)}</span>
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-1.5 text-xs font-medium text-ink-900">
               {showStatus && <EventIcon type={e.type} />}
               <span className="truncate">{e.label || e.description}</span>
             </span>
-            {e.by && <span className="block text-[11px] text-ink-500 truncate">{e.by}</span>}
+            {e.by && <span className="block text-xs text-ink-500 truncate">{e.by}</span>}
           </span>
         </li>
       ))}
@@ -221,7 +220,7 @@ export function ProgressLine({ value, color = '#014BAA', label }) {
 export function Field({ label, children }) {
   return (
     <div className="flex items-start justify-between gap-3 py-1.5">
-      <span className="text-[11px] text-ink-500 shrink-0">{label}</span>
+      <span className="text-xs text-ink-500 shrink-0">{label}</span>
       <span className="text-xs font-medium text-ink-900 text-right min-w-0">{children ?? '—'}</span>
     </div>
   );
@@ -238,7 +237,7 @@ export function MiniEmpty({ text = 'Nothing to show', icon: Icon = Inbox }) {
 
 export function Chip({ children, color = '#014BAA', icon: Icon }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold" style={{ color, borderColor: `${color}55`, backgroundColor: `${color}14` }}>
+    <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold" style={{ color, borderColor: `${color}55`, backgroundColor: `${color}14` }}>
       {Icon && <Icon className="w-3 h-3" aria-hidden="true" />}
       {children}
     </span>
@@ -250,7 +249,7 @@ export function PanelTitle({ children, count, action }) {
     <div className="flex items-center justify-between gap-2 mb-2.5">
       <h3 className="label-xs flex items-center gap-1.5">
         {children}
-        {count !== undefined && <span className="rounded-full bg-sunken px-1.5 text-[10px] tabular-nums text-ink-900">{count}</span>}
+        {count !== undefined && <span className="rounded-full bg-sunken px-1.5 text-[11px] tabular-nums text-ink-900">{count}</span>}
       </h3>
       {action}
     </div>
@@ -271,7 +270,7 @@ export function IcuRiskBadge({ risk, size = 'sm', showLabel = false }) {
   const why = (risk.factors || []).map((f) => `${f.factor} ${f.direction === 'up' ? 'raises' : 'lowers'} risk`).join(' · ');
   return (
     <span
-      className={clsx('inline-flex items-center gap-1 rounded-full border font-semibold whitespace-nowrap tabular-nums', size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-[11px]')}
+      className={clsx('inline-flex items-center gap-1 rounded-full border font-semibold whitespace-nowrap tabular-nums', size === 'xs' ? 'px-1.5 py-0.5 text-[11px]' : 'px-2 py-0.5 text-xs')}
       style={{ color: s.text, backgroundColor: s.bg, borderColor: s.border }}
       title={`ICU need predicted by model: ${Math.round(risk.probability * 100)}%${why ? ` (${why})` : ''}`}
     >

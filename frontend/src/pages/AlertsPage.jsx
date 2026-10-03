@@ -135,7 +135,7 @@ export function AlertsPage() {
       render: (v, r) => (
         <div className="flex flex-col">
           <span className="font-bold text-surface-foreground text-xs">{v}</span>
-          <span className="text-[11px] text-surface-muted line-clamp-1">{r.description}</span>
+          <span className="text-xs text-surface-muted line-clamp-1">{r.description}</span>
         </div>
       ),
     },
@@ -153,7 +153,7 @@ export function AlertsPage() {
               }`}
             />
           ))}
-          <span className="text-[11px] font-mono ml-1 text-surface-muted">Tier {v || 1}</span>
+          <span className="text-xs font-mono ml-1 text-surface-muted">Tier {v || 1}</span>
         </div>
       ),
     },
@@ -161,7 +161,7 @@ export function AlertsPage() {
       key: 'createdAt',
       label: 'Triggered',
       render: (v) => (
-        <span className="text-surface-muted font-mono text-[11px]">
+        <span className="text-surface-muted font-mono text-xs">
           {formatRelativeTime(v)}
         </span>
       ),
@@ -193,7 +193,7 @@ export function AlertsPage() {
             </Button>
           )}
           {r.status === 'resolved' && (
-            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
               Resolved
             </span>
           )}

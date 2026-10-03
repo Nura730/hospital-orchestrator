@@ -25,7 +25,7 @@ export function printReport() {
 function Section({ title, children }) {
   return (
     <section className="border-t border-slate-300 px-5 py-3">
-      <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">{title}</h4>
+      <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">{title}</h4>
       <div className="text-xs text-slate-900 space-y-1">{children}</div>
     </section>
   );
@@ -38,7 +38,7 @@ export function PatientReportSheet({ report }) {
     <article className="print-area rounded-lg border border-slate-300 bg-white text-slate-900 font-sans overflow-hidden" aria-label="Patient medical report">
       <header className="px-5 py-4">
         <h3 className="text-sm font-extrabold tracking-wide">PATIENT MEDICAL REPORT</h3>
-        <p className="text-[11px] text-slate-500">MediOrchestra Hospital System · Generated {shortDate(report.createdAt)} · {report.doctorName}</p>
+        <p className="text-xs text-slate-500">MediOrchestra Hospital System · Generated {shortDate(report.createdAt)} · {report.doctorName}</p>
       </header>
       <Section title="Patient">
         <p>

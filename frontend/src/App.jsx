@@ -33,6 +33,10 @@ const NurseManagementPage   = lazy(() => import('./pages/admin/NurseManagementPa
 const PatientJourneyPage    = lazy(() => import('./pages/admin/PatientJourneyPage'));
 const NurseDashboard        = lazy(() => import('./pages/nurse/NurseDashboard'));
 const PatientDashboard      = lazy(() => import('./pages/patient/PatientDashboard'));
+const DoctorRequestsPage    = lazy(() => import('./pages/doctor/DoctorRequestsPage'));
+const OtRequestsPage        = lazy(() => import('./pages/ot/OtRequestsPage'));
+const OtSurgeonsPage        = lazy(() => import('./pages/ot/OtSurgeonsPage'));
+const RequestCenterPage     = lazy(() => import('./pages/admin/RequestCenterPage'));
 
 /** Page-level loading fallback */
 function PageLoader() {
@@ -96,6 +100,7 @@ export default function App() {
             <Route path="admin/flow/housekeeping" element={<HousekeepingBoardPage />} />
             <Route path="admin/flow/audit" element={<FlowAuditLogPage />} />
             <Route path="admin/patients" element={<PatientsPage />} />
+            <Route path="admin/requests" element={<RequestCenterPage />} />
             <Route path="admin/nurses" element={<NurseManagementPage />} />
             <Route path="admin/patient-journey" element={<PatientJourneyPage />} />
             <Route path="admin/patient-journey/:patientId" element={<PatientJourneyPage />} />
@@ -108,10 +113,13 @@ export default function App() {
             <Route path="doctor/ot-cases" element={<DoctorDashboard />} />
             <Route path="doctor/calendar" element={<DoctorDashboard />} />
             <Route path="doctor/notifications" element={<DoctorDashboard />} />
+            <Route path="doctor/requests" element={<DoctorRequestsPage />} />
             <Route path="doctor/flow/predictions" element={<DoctorPredictionsPage />} />
 
             {/* OT Manager */}
             <Route path="ot/dashboard" element={<OtDashboard />} />
+            <Route path="ot/requests" element={<OtRequestsPage />} />
+            <Route path="ot/surgeons" element={<OtSurgeonsPage />} />
             <Route path="ot/flow/impact" element={<OtFlowImpactPage />} />
 
             {/* Nurse */}

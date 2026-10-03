@@ -7,7 +7,8 @@
 import React from 'react';
 import clsx from 'clsx';
 import { Bell, AlertTriangle, Scissors, CheckCheck } from 'lucide-react';
-import flowApi from '../../api/flowApi.js';
+import flowApi, { isFlowMock } from '../../api/flowApi.js';
+import { useAuthStore } from '../../store/authStore.js';
 import careApi from '../../api/careApi.js';
 import { useFlowPolling } from '../../hooks/useFlowPolling.js';
 import { FlowSkeleton, FlowError } from './FlowUi.jsx';
@@ -29,7 +30,9 @@ function normalise(list) {
 }
 
 export function NotificationsList({ source = 'flow', max }) {
-  const api = source === 'care' ? { list: careApi.getNotifications, all: careApi.markAllRead } : { list: flowApi.getNotifications, all: flowApi.markAllNotificationsRead };
+  const role = useAuthStore((s) => s.role);
+  const local = source === 'care' || isFlowMock;
+  const api = local ? { list: () => careApi.getNotifications(role), all: () => careApi.markAllRead(role) } : { list: flowApi.getNotifications, all: flowApi.markAllNotificationsRead };
   const q = useFlowPolling(() => api.list(), { intervalMs: 30000, refreshOn: ['notification.new'], toastOnError: false });
   const rows = normalise(q.data);
   const unread = rows.filter((n) => !n.isRead).length;
@@ -43,7 +46,7 @@ export function NotificationsList({ source = 'flow', max }) {
   return (
     <section className="flow-card">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-cream-200">
-        <h3 className="label-xs">Notifications {unread > 0 && <span className="ml-1 rounded-full bg-royal-500 px-1.5 text-[10px] text-white">{unread}</span>}</h3>
+        <h3 className="label-xs">Notifications {unread > 0 && <span className="ml-1 rounded-full bg-royal-500 px-1.5 text-[11px] text-white">{unread}</span>}</h3>
         <button type="button" className="flow-btn-ghost !py-1" onClick={markAll} disabled={!unread}>
           <CheckCheck className="w-3.5 h-3.5" aria-hidden="true" /> Mark all read
         </button>
@@ -67,9 +70,9 @@ export function NotificationsList({ source = 'flow', max }) {
               <Icon className="w-4 h-4 mt-0.5 shrink-0" style={{ color }} aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <p className={clsx('text-xs truncate', n.isRead ? 'text-ink-500' : 'text-ink-900 font-semibold')}>{n.title}</p>
-                {n.message && <p className="text-[11px] text-ink-500 truncate">{n.message}</p>}
+                {n.message && <p className="text-xs text-ink-500 truncate">{n.message}</p>}
               </div>
-              <span className="text-[10px] text-ink-500 whitespace-nowrap">{timeAgo(n.createdAt)}</span>
+              <span className="text-[11px] text-ink-500 whitespace-nowrap">{timeAgo(n.createdAt)}</span>
             </li>
           );
         })}

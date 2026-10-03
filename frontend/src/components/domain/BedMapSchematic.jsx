@@ -33,7 +33,7 @@ function InfoTile({ icon: Icon, label, value, sub }) {
       <Icon className="w-4 h-4 text-ink-500 shrink-0" aria-hidden="true" />
       <div className="min-w-0">
         <div className="text-sm font-bold text-ink-900 tabular-nums">{value}</div>
-        <div className="text-[10px] text-ink-500 truncate">
+        <div className="text-[11px] text-ink-500 truncate">
           {label}
           {sub ? ` · ${sub}` : ''}
         </div>
@@ -96,7 +96,7 @@ export function BedMapSchematic({ data, loading = false, statusFilter = 'all', s
         {showLegend && (
         <div className="flex flex-wrap gap-3" aria-label="Legend">
           {legend.map((l) => (
-            <span key={l.status} className="inline-flex items-center gap-1.5 text-[11px] text-ink-500">
+            <span key={l.status} className="inline-flex items-center gap-1.5 text-xs text-ink-500">
               <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: BED_STATUS_COLORS[l.status] }} aria-hidden="true" />
               {BED_STATUS_LABELS[l.status]} <b className="text-ink-900 tabular-nums">{l.count}</b>
             </span>
@@ -111,7 +111,7 @@ export function BedMapSchematic({ data, loading = false, statusFilter = 'all', s
           <section key={z.zone} className="break-inside-avoid mb-3 rounded-lg border border-cream-200 p-3" aria-label={ZONE_LABELS[z.zone] || z.zone}>
             <div className="flex items-center justify-between gap-2 mb-2">
               <h4 className="label-xs">{ZONE_LABELS[z.zone] || z.zone}</h4>
-              <span className="text-[10px] text-ink-500 tabular-nums">
+              <span className="text-[11px] text-ink-500 tabular-nums">
                 {z.counts?.occupied ?? 0}/{(z.counts?.total ?? 0) - (z.counts?.blocked ?? 0)}
                 {z.counts?.cleaning > 0 && <span className="text-fg-warn"> · {z.counts.cleaning} cleaning</span>}
               </span>

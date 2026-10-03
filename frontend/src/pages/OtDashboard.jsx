@@ -51,7 +51,7 @@ function RoomCard({ room, onAction, busy }) {
           </dl>
           <div className="mt-3 flex items-center gap-2">
             <ProgressLine value={c.progress} color="#8B5CF6" label="Surgery progress" />
-            <span className="text-[11px] font-semibold tabular-nums text-ink-500 w-9 text-right">{c.progress}%</span>
+            <span className="text-xs font-semibold tabular-nums text-ink-500 w-9 text-right">{c.progress}%</span>
           </div>
           <div className="mt-auto pt-3 flex gap-2">
             <button type="button" className="flow-btn-success flex-1" disabled={busy} onClick={() => onAction('complete', room)}>
@@ -69,10 +69,12 @@ function RoomCard({ room, onAction, busy }) {
           <div className="flex-1 flex flex-col items-center justify-center text-center gap-0.5 py-2">
             {room.nextCase ? (
               <>
-                <p className="text-[11px] text-ink-500">Next case</p>
+                <p className="text-xs text-ink-500">Next case</p>
                 <p className="text-lg font-bold tabular-nums text-ink-900">{clock(room.nextCase.start)}</p>
-                <p className="text-xs text-ink-900">{room.nextCase.surgeon}</p>
-                <p className="text-[11px] text-ink-500 truncate max-w-full">{room.nextCase.procedure}</p>
+                <p className="text-xs text-ink-900">
+                  {room.nextCase.alias} with {room.nextCase.surgeon}
+                </p>
+                <p className="text-xs text-ink-500 truncate max-w-full">{room.nextCase.procedure}</p>
               </>
             ) : (
               <p className="text-xs text-ink-500">No case booked</p>
@@ -122,7 +124,7 @@ function MiniGantt({ rooms, cases, expanded }) {
   const rowH = expanded ? 'h-9' : 'h-6';
   return (
     <div className="relative">
-      <div className="ml-12 relative h-4 text-[9px] text-ink-500">
+      <div className="ml-12 relative h-4 text-[10px] text-ink-500">
         {hours.map((h, i) => (
           <span key={h} className="absolute -translate-x-1/2 tabular-nums" style={{ left: `${(i / (hours.length - 1)) * 100}%` }}>
             {clock(h)}
@@ -132,7 +134,7 @@ function MiniGantt({ rooms, cases, expanded }) {
       <div className="space-y-1.5 mt-1">
         {rooms.map((r) => (
           <div key={r.roomId} className="flex items-center gap-2">
-            <span className="w-10 text-[10px] font-semibold text-ink-500">{r.name}</span>
+            <span className="w-10 text-[11px] font-semibold text-ink-500">{r.name}</span>
             <div className={clsx('relative flex-1 rounded bg-sunken', rowH)}>
               {cases
                 .filter((c) => c.roomId === r.roomId)
@@ -142,7 +144,7 @@ function MiniGantt({ rooms, cases, expanded }) {
                   return (
                     <span
                       key={c.id}
-                      className="absolute top-0.5 bottom-0.5 rounded overflow-hidden px-1 text-[9px] leading-[1.6] text-white"
+                      className="absolute top-0.5 bottom-0.5 rounded overflow-hidden px-1 text-[10px] leading-[1.6] text-white"
                       style={{ left: `${Math.max(0, left)}%`, width: `${Math.max(1, width)}%`, backgroundColor: CASE_COLORS[c.status] || '#94A3B8' }}
                       title={`${c.caseNumber} · ${c.procedure} · ${c.surgeon} · ${clock(c.start)}-${clock(c.end)} · ${c.status.replace('_', ' ')}`}
                     >
@@ -280,7 +282,7 @@ export default function OtDashboard() {
       <section className="flow-card p-4">
         <PanelTitle
           action={
-            <button type="button" className="text-[11px] font-semibold text-royal-500 hover:underline inline-flex items-center gap-1" onClick={() => setExpanded((v) => !v)}>
+            <button type="button" className="text-xs font-semibold text-royal-500 hover:underline inline-flex items-center gap-1" onClick={() => setExpanded((v) => !v)}>
               {expanded ? 'Compact view' : 'View Full Timeline'} <ChevronDown className={clsx('w-3 h-3 transition-transform', expanded && 'rotate-180')} aria-hidden="true" />
             </button>
           }

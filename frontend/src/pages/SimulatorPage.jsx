@@ -139,7 +139,7 @@ export function SimulatorPage() {
                   >
                     <div>
                       <span className="font-semibold text-surface-foreground block">{h.scenarioName}</span>
-                      <span className="text-[10px] text-surface-muted">
+                      <span className="text-[11px] text-surface-muted">
                         +{h.inputs.arrivalIncreasePct}% Arr, {h.inputs.nursesAbsent} Absent, {h.inputs.icuBedsClosed} Closed
                       </span>
                     </div>
@@ -164,7 +164,7 @@ export function SimulatorPage() {
                   <span className="text-2xl font-bold font-mono text-danger-500">
                     {currentResult.results.after.avgWaitTimeMins}m
                   </span>
-                  <span className="text-[10px] text-surface-muted block">
+                  <span className="text-[11px] text-surface-muted block">
                     (+{currentResult.results.shortageSummary.edWaitDeltaMins}m delta)
                   </span>
                 </div>
@@ -174,7 +174,7 @@ export function SimulatorPage() {
                   <span className="text-2xl font-bold font-mono text-amber-500">
                     {currentResult.results.shortageSummary.bedDeficit}
                   </span>
-                  <span className="text-[10px] text-surface-muted block">Unplaced beds</span>
+                  <span className="text-[11px] text-surface-muted block">Unplaced beds</span>
                 </div>
 
                 <div className="p-3.5 bg-surface-elevated border border-surface-border rounded-xl">
@@ -182,7 +182,7 @@ export function SimulatorPage() {
                   <span className="text-2xl font-bold font-mono text-amber-500">
                     {currentResult.results.shortageSummary.nurseDeficit}
                   </span>
-                  <span className="text-[10px] text-surface-muted block">Nurses needed</span>
+                  <span className="text-[11px] text-surface-muted block">Nurses needed</span>
                 </div>
 
                 <div className="p-3.5 bg-surface-elevated border border-surface-border rounded-xl">

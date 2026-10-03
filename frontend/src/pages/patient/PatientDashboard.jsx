@@ -33,6 +33,7 @@ import StatusPill from '../../components/domain/StatusPill.jsx';
 import PatientReportSheet, { printReport } from '../../components/domain/PatientReportSheet.jsx';
 import { JourneyDays } from '../../components/domain/PatientDetailPopup.jsx';
 import { FlowModal, FlowError, FlowSkeleton } from '../../components/domain/FlowUi.jsx';
+import { RequestSteps, RequestHistory } from '../../components/domain/RequestThread.jsx';
 import { StatTile, TabBar, AcuityDots, Avatar, Field, TimelineList, MiniEmpty, PanelTitle } from '../../components/domain/CareUi.jsx';
 import careApi from '../../api/careApi.js';
 import { useFlowPolling, errorText } from '../../hooks/useFlowPolling.js';
@@ -71,7 +72,7 @@ function HeaderCard({ p, name }) {
           ['Floor', p.bed?.floor ? `Floor ${p.bed.floor}` : null],
         ].map(([l, v]) => (
           <div key={l}>
-            <p className="text-[10px] text-ink-500">{l}</p>
+            <p className="text-[11px] text-ink-500">{l}</p>
             <p className="text-xs font-semibold text-ink-900">{v || '—'}</p>
           </div>
         ))}
@@ -96,20 +97,20 @@ function StatusTab({ data }) {
           <Avatar name={p.doctor.name} />
           <div className="min-w-0">
             <p className="text-xs font-semibold text-ink-900">{p.doctor.name}</p>
-            <p className="text-[11px] text-ink-500">{p.doctor.specialty || 'Attending doctor'}</p>
+            <p className="text-xs text-ink-500">{p.doctor.specialty || 'Attending doctor'}</p>
           </div>
         </div>
         <div className="flex items-center gap-2.5 py-2 border-t border-cream-200">
           <Avatar name={p.nurse?.name || 'Nurse'} color="#BE185D" />
           <div className="min-w-0">
             <p className="text-xs font-semibold text-ink-900">{p.nurse?.name || 'Ward nurse'}</p>
-            <p className="text-[11px] text-ink-500">Your nurse{p.nurse ? ` · ${p.nurse.shift}` : ''}</p>
+            <p className="text-xs text-ink-500">Your nurse{p.nurse ? ` · ${p.nurse.shift}` : ''}</p>
           </div>
         </div>
         <div className="mt-2 rounded-lg bg-royal-500/10 px-3 py-2.5 flex items-center gap-2.5">
           <Clock3 className="w-4 h-4 text-royal-500 shrink-0" aria-hidden="true" />
           <div className="min-w-0">
-            <p className="text-[10px] text-ink-500">Next scheduled</p>
+            <p className="text-[11px] text-ink-500">Next scheduled</p>
             <p className="text-xs font-semibold text-ink-900">{data.nextEvent ? `${data.nextEvent.label} · ${clock(data.nextEvent.at)}` : 'Nothing else today'}</p>
           </div>
         </div>
@@ -174,16 +175,18 @@ function ReportsTab({ reports }) {
   );
 }
 
-function RequestsTab({ requests, onSent }) {
+function RequestsTab({ requests, profile, onSent }) {
   const [type, setType] = useState(REQUEST_OPTIONS[0][0]);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [openId, setOpenId] = useState(null);
+  const goesTo = (k) => (['nurse_assistance', 'dietary'].includes(k) ? profile.nurse?.name || 'Your nurse' : profile.doctor.name);
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
     try {
       await careApi.submitPortalRequest({ type, message: message.trim() });
-      toast.success('Request sent to your care team');
+      toast.success(`Sent to ${goesTo(type)}. You can follow it below.`);
       setMessage('');
       onSent();
     } catch (err) {
@@ -193,9 +196,9 @@ function RequestsTab({ requests, onSent }) {
     }
   };
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-      <form onSubmit={submit} className="flow-card p-4 space-y-3">
-        <PanelTitle>New request</PanelTitle>
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] gap-4 items-start">
+      <form onSubmit={submit} className="flow-card p-5 space-y-4">
+        <h2 className="text-base font-bold text-ink-900">New request</h2>
         <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Request type">
           {REQUEST_OPTIONS.map(([k, l, Icon, c]) => (
             <button
@@ -204,38 +207,71 @@ function RequestsTab({ requests, onSent }) {
               role="radio"
               aria-checked={type === k}
               onClick={() => setType(k)}
-              className={clsx('flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-xs font-semibold transition-colors', type === k ? 'text-ink-900' : 'border-cream-200 text-ink-500 hover:bg-sunken')}
-              style={type === k ? { borderColor: c, backgroundColor: `${c}1A` } : undefined}
+              className={clsx('flex flex-col items-start gap-1.5 rounded-xl border-2 px-3 py-3 text-left transition-colors', type === k ? 'text-ink-900' : 'border-cream-200 text-ink-900 hover:bg-sunken')}
+              style={type === k ? { borderColor: c, backgroundColor: `${c}12` } : undefined}
             >
-              <Icon className="w-4 h-4 shrink-0" style={{ color: c }} aria-hidden="true" /> {l}
+              <Icon className="w-5 h-5" style={{ color: c }} aria-hidden="true" />
+              <span className="text-sm font-semibold">{l}</span>
             </button>
           ))}
         </div>
+        <p className="text-sm text-ink-500">
+          Goes to <b className="text-ink-900">{goesTo(type)}</b>
+        </p>
         <label className="block">
-          <span className="label-xs flex justify-between mb-1">
-            Message <span className="normal-case tracking-normal font-normal tabular-nums">{message.length}/{MAX}</span>
+          <span className="flex justify-between text-xs font-semibold text-ink-900 mb-1">
+            Message <span className="font-normal text-ink-500 tabular-nums">{message.length}/{MAX}</span>
           </span>
-          <textarea className="flow-input min-h-[90px]" maxLength={MAX} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="How can we help?" required />
+          <textarea className="flow-input !text-sm min-h-[110px]" maxLength={MAX} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="How can we help?" required />
         </label>
-        <button type="submit" className="flow-btn-primary w-full" disabled={busy}>
-          <Send className="w-3.5 h-3.5" aria-hidden="true" /> Submit
+        <button type="submit" className="flow-btn-primary w-full !py-2.5 !text-sm" disabled={busy}>
+          <Send className="w-4 h-4" aria-hidden="true" /> Send request
         </button>
       </form>
-      <section className="flow-card p-4">
-        <PanelTitle count={requests.length}>My requests</PanelTitle>
-        {!requests.length && <MiniEmpty text="No requests yet" />}
-        <ul>
-          {requests.map((r) => (
-            <li key={r.id} className="flex items-start gap-3 py-2.5 border-b border-cream-200 last:border-0">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-ink-900">{r.typeLabel}</p>
-                <p className="text-[11px] text-ink-500">{r.note || 'No message'}</p>
-                <p className="text-[10px] text-ink-500 mt-0.5">{timeAgo(r.createdAt)}</p>
+      <section className="space-y-3" aria-label="My requests">
+        <h2 className="text-base font-bold text-ink-900">My requests</h2>
+        {!requests.length && (
+          <div className="flow-card">
+            <MiniEmpty text="No requests yet" />
+          </div>
+        )}
+        {requests.map((r) => {
+          const expanded = openId === r.id;
+          const last = r.history?.[r.history.length - 1];
+          return (
+            <article key={r.id} className="flow-card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-ink-900">{r.typeLabel}</p>
+                  <p className="text-sm text-ink-500 mt-0.5">{r.note || 'No message'}</p>
+                </div>
+                <span className="text-xs text-ink-500 shrink-0">{timeAgo(r.createdAt)}</span>
               </div>
-              <StatusPill status={r.status} size="xs" />
-            </li>
-          ))}
-        </ul>
+              <div className="mt-4">
+                <RequestSteps status={r.status} compact />
+              </div>
+              {last && (
+                <p className="text-sm text-ink-900 mt-3">
+                  <span className="font-semibold">Latest:</span> {last.text} <span className="text-ink-500">({last.by})</span>
+                </p>
+              )}
+              {r.response && (
+                <p className="mt-2 rounded-lg bg-[#10B981]/5 border border-[#10B981]/30 px-3 py-2 text-sm text-ink-900">
+                  <span className="font-semibold text-fg-ok">Reply: </span>
+                  {r.response}
+                </p>
+              )}
+              <button type="button" className="text-xs font-semibold text-royal-500 hover:underline mt-3" onClick={() => setOpenId(expanded ? null : r.id)} aria-expanded={expanded}>
+                {expanded ? 'Hide history' : 'Show full history'}
+              </button>
+              {expanded && (
+                <div className="mt-3">
+                  <RequestHistory history={r.history} />
+                </div>
+              )}
+            </article>
+          );
+        })}
       </section>
     </div>
   );
@@ -291,7 +327,7 @@ export default function PatientDashboard() {
       {tab === 'status' && <StatusTab data={d} />}
       {tab === 'treatment' && <JourneyDays profile={d.profile} journey={d.journey} />}
       {tab === 'reports' && <ReportsTab reports={d.reports} />}
-      {tab === 'requests' && <RequestsTab requests={d.requests} onSent={() => q.refresh({ silent: true })} />}
+      {tab === 'requests' && <RequestsTab requests={d.requests} profile={d.profile} onSent={() => q.refresh({ silent: true })} />}
       {tab === 'help' && <HelpTab data={d} />}
     </div>
   );

@@ -77,7 +77,7 @@ export default function OtFlowImpactPage() {
                 <MiniEmpty text="No upcoming cases" />
               </div>
             ) : (
-              <div className="table-wrap">
+              <div className="table-wrap" tabIndex={0} role="region" aria-label="Theatre impact table">
                 <table className="mo-table">
                   <thead>
                     <tr>
@@ -95,7 +95,7 @@ export default function OtFlowImpactPage() {
                         <tr key={c.caseId} className={clsx(deferred[c.caseId] && 'opacity-50')}>
                           <td>
                             <span className="font-mono font-semibold">{c.caseNumber}</span>
-                            <span className="block text-[11px] text-ink-500">
+                            <span className="block text-xs text-ink-500">
                               {c.room} · {c.alias}
                             </span>
                           </td>

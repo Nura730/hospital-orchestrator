@@ -22,7 +22,7 @@ export function HealthBadge({ dark = false }) {
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold tabular-nums',
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold tabular-nums',
         dark ? 'border-white/20 text-white bg-white/5' : stale ? 'border-[#F59E0B]/50 bg-[#F59E0B]/15 text-fg-warn' : 'border-[#10B981]/40 bg-[#10B981]/10 text-fg-ok'
       )}
       role="status"

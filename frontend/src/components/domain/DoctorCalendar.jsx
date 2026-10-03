@@ -60,7 +60,7 @@ function DayPanel({ date, events, onClose, onAdded }) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-cream-200">
         <div>
           <p className="text-sm font-bold text-ink-900">{date.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' })}</p>
-          <p className="text-[11px] text-ink-500">{events.length} {events.length === 1 ? 'event' : 'events'}</p>
+          <p className="text-xs text-ink-500">{events.length} {events.length === 1 ? 'event' : 'events'}</p>
         </div>
         <button type="button" className="flow-btn-ghost !p-1.5" onClick={onClose} aria-label="Close day panel">
           <X className="w-4 h-4" />
@@ -73,12 +73,12 @@ function DayPanel({ date, events, onClose, onAdded }) {
             <EventIcon type={e.type} className="w-4 h-4 mt-0.5 shrink-0" />
             <div className="min-w-0">
               <p className="text-xs font-semibold text-ink-900 truncate">{e.title}</p>
-              <p className="text-[11px] text-ink-500">
+              <p className="text-xs text-ink-500">
                 {clock(e.start)} - {clock(e.end)}
                 {e.alias ? ` · ${e.alias}` : ''}
               </p>
               {e.location && (
-                <p className="text-[11px] text-ink-500 inline-flex items-center gap-1">
+                <p className="text-xs text-ink-500 inline-flex items-center gap-1">
                   <MapPin className="w-3 h-3" aria-hidden="true" /> {e.location}
                 </p>
               )}
@@ -141,13 +141,13 @@ function MonthGrid({ cursor, byDay, selected, onSelect }) {
               )}
               aria-label={`${d.toDateString()}, ${evs.length} events`}
             >
-              <span className={clsx('inline-flex w-6 h-6 items-center justify-center rounded-full text-[11px] font-semibold', isToday ? 'bg-royal-500 text-white' : inMonth ? 'text-ink-900' : 'text-ink-500')}>{d.getDate()}</span>
+              <span className={clsx('inline-flex w-6 h-6 items-center justify-center rounded-full text-xs font-semibold', isToday ? 'bg-royal-500 text-white' : inMonth ? 'text-ink-900' : 'text-ink-500')}>{d.getDate()}</span>
               <span className="flex flex-wrap gap-1 mt-1">
                 {types.map((t) => (
                   <span key={t} className="w-2 h-2 rounded-full" style={{ backgroundColor: EVENT_COLORS[t] }} title={TYPE_LABEL[t]} />
                 ))}
               </span>
-              {evs.length > 0 && <span className={clsx('hidden sm:block text-[10px] mt-0.5', 'text-ink-500')}>{evs.length} {evs.length === 1 ? 'event' : 'events'}</span>}
+              {evs.length > 0 && <span className={clsx('hidden sm:block text-[11px] mt-0.5', 'text-ink-500')}>{evs.length} {evs.length === 1 ? 'event' : 'events'}</span>}
             </button>
           );
         })}
@@ -173,7 +173,7 @@ function WeekGrid({ cursor, byDay, onSelect }) {
         ))}
         <div className="relative">
           {HOURS.map((h) => (
-            <div key={h} className="text-[10px] text-ink-500 text-right pr-2 tabular-nums" style={{ height: SLOT_PX }}>
+            <div key={h} className="text-[11px] text-ink-500 text-right pr-2 tabular-nums" style={{ height: SLOT_PX }}>
               {String(h).padStart(2, '0')}:00
             </div>
           ))}
@@ -197,7 +197,7 @@ function WeekGrid({ cursor, byDay, onSelect }) {
                     key={e.id}
                     type="button"
                     onClick={() => onSelect(dayStart(d))}
-                    className="absolute left-1 right-1 rounded-md px-1.5 py-1 text-left overflow-hidden text-[10px] leading-tight border-l-2"
+                    className="absolute left-1 right-1 rounded-md px-1.5 py-1 text-left overflow-hidden text-[11px] leading-tight border-l-2"
                     style={{ top, height, backgroundColor: `${color}26`, borderLeftColor: color, color: 'rgb(var(--ink-900))' }}
                     title={`${e.title} · ${clock(e.start)}-${clock(e.end)}`}
                   >
@@ -262,14 +262,14 @@ export function DoctorCalendar() {
         <div className="flex items-center gap-3">
           <div className="hidden md:flex items-center gap-3">
             {Object.entries(TYPE_LABEL).map(([k, l]) => (
-              <span key={k} className="inline-flex items-center gap-1 text-[11px] text-ink-500">
+              <span key={k} className="inline-flex items-center gap-1 text-xs text-ink-500">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: EVENT_COLORS[k] }} /> {l}
               </span>
             ))}
           </div>
           <div className="inline-flex rounded-lg border border-cream-200 p-0.5">
             {['month', 'week'].map((v) => (
-              <button key={v} type="button" onClick={() => setView(v)} aria-pressed={view === v} className={clsx('px-3 py-1 rounded-md text-[11px] font-semibold capitalize', view === v ? 'bg-royal-500 text-white' : 'text-ink-500 hover:text-ink-900')}>
+              <button key={v} type="button" onClick={() => setView(v)} aria-pressed={view === v} className={clsx('px-3 py-1 rounded-md text-xs font-semibold capitalize', view === v ? 'bg-royal-500 text-white' : 'text-ink-500 hover:text-ink-900')}>
                 {v}
               </button>
             ))}

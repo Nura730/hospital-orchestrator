@@ -95,9 +95,9 @@ export default function FlowAuditLogPage() {
                   <React.Fragment key={e.id}>
                     <tr>
                       <td className="tabular-nums text-ink-500">{dateTime(e.createdAt)}</td>
-                      <td className="font-mono text-[11px] font-bold text-royal-700">{e.eventType}</td>
+                      <td className="font-mono text-xs font-bold text-royal-700">{e.eventType}</td>
                       <td>
-                        {e.user} <span className="text-[10px] text-ink-500">({e.userType})</span>
+                        {e.user} <span className="text-[11px] text-ink-500">({e.userType})</span>
                       </td>
                       <td className="!whitespace-normal max-w-[420px]">{summarize(e)}</td>
                       <td>{e.error ? <StatusPill status="rejected" label="Failed" size="xs" /> : <StatusPill status="approved" label="Processed" size="xs" />}</td>
@@ -110,7 +110,7 @@ export default function FlowAuditLogPage() {
                     {open === e.id && (
                       <tr>
                         <td colSpan={6}>
-                          <pre className="text-[11px] bg-[#0B1220] text-[#CBD5E1] rounded-xl p-3 overflow-auto max-h-60 whitespace-pre-wrap">{JSON.stringify({ payload: e.payload, result: e.result }, null, 2)}</pre>
+                          <pre className="text-xs bg-[#0B1220] text-[#CBD5E1] rounded-xl p-3 overflow-auto max-h-60 whitespace-pre-wrap">{JSON.stringify({ payload: e.payload, result: e.result }, null, 2)}</pre>
                         </td>
                       </tr>
                     )}

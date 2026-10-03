@@ -35,7 +35,7 @@ export function CalendarStrip({ marks = {} }) {
         const n = marks[d.toDateString()] || 0;
         return (
           <div key={d.toISOString()} className={clsx('rounded-xl px-3 py-2 text-center min-w-[52px]', isToday ? 'bg-royal-500 text-white' : 'bg-cream-100 text-ink-900')} aria-current={isToday ? 'date' : undefined}>
-            <div className={clsx('text-[10px] uppercase', isToday ? 'text-white/80' : 'text-ink-500')}>{d.toLocaleDateString([], { weekday: 'short' })}</div>
+            <div className={clsx('text-[11px] uppercase', isToday ? 'text-white/80' : 'text-ink-500')}>{d.toLocaleDateString([], { weekday: 'short' })}</div>
             <div className="text-base font-extrabold tabular-nums">{d.getDate()}</div>
             <div className={clsx('h-1.5 w-1.5 rounded-full mx-auto mt-0.5', n ? (isToday ? 'bg-white' : 'bg-royal-500') : 'bg-transparent')} aria-hidden="true" />
           </div>
@@ -131,7 +131,7 @@ export default function DoctorPredictionsPage() {
                   <tr key={p.patientId} onClick={() => { setActive(p.patientId); setPopup(p.patientId); }} className={clsx('cursor-pointer', active === p.patientId && '!bg-highlight')}>
                     <td>
                       <div className="font-bold text-royal-900">{p.alias}</div>
-                      <div className="text-[10px] text-ink-500">
+                      <div className="text-[11px] text-ink-500">
                         {p.bedId || 'no bed'} · {p.ward || p.department}
                       </div>
                     </td>
@@ -144,10 +144,10 @@ export default function DoctorPredictionsPage() {
                     <td>
                       <span className={clsx('text-2xl font-extrabold tabular-nums', probColor(p.admissionProbability))}>{Math.round(p.admissionProbability * 100)}%</span>
                     </td>
-                    <td>{p.bedId?.startsWith('ICU') ? <span className="text-[11px] text-ink-500">In ICU</span> : <IcuRiskBadge risk={p.icuRisk} />}</td>
+                    <td>{p.bedId?.startsWith('ICU') ? <span className="text-xs text-ink-500">In ICU</span> : <IcuRiskBadge risk={p.icuRisk} />}</td>
                     <td>
                       <div>{dateTime(p.expectedDischarge)}</div>
-                      <div className="text-[10px] text-ink-500">{timeUntil(p.expectedDischarge)}</div>
+                      <div className="text-[11px] text-ink-500">{timeUntil(p.expectedDischarge)}</div>
                     </td>
                     <td>
                       <ReadinessBar score={p.readiness.score} />
@@ -155,7 +155,7 @@ export default function DoctorPredictionsPage() {
                     <td className="!whitespace-normal">
                       <ul className="space-y-0.5">
                         {p.factors.map((f) => (
-                          <li key={f.factor} className="text-[10px] text-ink-900">
+                          <li key={f.factor} className="text-[11px] text-ink-900">
                             {f.factor} <span className="text-ink-500">(+{Math.round(f.impact * 100)}%)</span>
                           </li>
                         ))}

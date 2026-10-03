@@ -34,7 +34,7 @@ export function AlertItem({ alert, onAcknowledge = null, compact = false }) {
           </span>
         </div>
 
-        <span className="text-[11px] text-surface-muted flex items-center gap-1 font-mono shrink-0">
+        <span className="text-xs text-surface-muted flex items-center gap-1 font-mono shrink-0">
           <Clock className="w-3 h-3" />
           {formatRelativeTime(alert.createdAt)}
         </span>
@@ -72,7 +72,7 @@ export function AlertItem({ alert, onAcknowledge = null, compact = false }) {
         )}
 
         {isAcked && (
-          <span className="text-[11px] text-surface-muted italic">
+          <span className="text-xs text-surface-muted italic">
             Acknowledged
           </span>
         )}

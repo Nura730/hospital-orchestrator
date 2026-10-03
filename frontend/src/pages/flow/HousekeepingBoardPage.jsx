@@ -45,7 +45,7 @@ export default function HousekeepingBoardPage() {
             ['Available now', d.counts.available, '#014BAA'],
           ].map(([l, v, c]) => (
             <div key={l} className="flow-card px-4 py-3 border-t-4" style={{ borderTopColor: c }}>
-              <div className="text-[11px] uppercase font-semibold text-ink-500">{l}</div>
+              <div className="text-xs uppercase font-semibold text-ink-500">{l}</div>
               <div className="text-3xl font-extrabold tabular-nums text-royal-900">{v}</div>
             </div>
           ))}
@@ -67,7 +67,7 @@ export default function HousekeepingBoardPage() {
                     <span className="block text-xs truncate">
                       {b.ward} · {b.zone}
                     </span>
-                    <span className={clsx('block text-[11px] font-semibold', b.waitingMinutes > 45 ? 'text-fg-bad' : 'text-fg-warn')}>
+                    <span className={clsx('block text-xs font-semibold', b.waitingMinutes > 45 ? 'text-fg-bad' : 'text-fg-warn')}>
                       {b.waitingMinutes > 45 && <AlertTriangle className="inline w-3 h-3 mr-0.5" aria-hidden="true" />}
                       waiting {b.waitingMinutes} min
                     </span>
@@ -89,7 +89,7 @@ export default function HousekeepingBoardPage() {
               {d.ready.map((b) => (
                 <li key={b.id} className="rounded-xl bg-[#10B981]/10 border border-[#10B981]/40 px-3 py-2">
                   <div className="font-mono font-bold text-xs text-fg-ok">{b.id}</div>
-                  <div className="text-[10px] text-ink-500">{b.cleanedMinutesAgo} min ago</div>
+                  <div className="text-[11px] text-ink-500">{b.cleanedMinutesAgo} min ago</div>
                 </li>
               ))}
             </ul>

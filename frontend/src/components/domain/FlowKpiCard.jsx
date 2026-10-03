@@ -34,7 +34,7 @@ export function FlowKpiCard({ kpi, series, endpoint, icon: Icon, loading = false
   return (
     <div className={clsx('flow-card-pad relative flex flex-col gap-1 border-l-4', className)} style={{ borderLeftColor: band.hex }}>
       <div className="flex items-start justify-between gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-500 flex items-center gap-1.5">
+        <span className="text-xs font-semibold uppercase tracking-wide text-ink-500 flex items-center gap-1.5">
           {Icon && <Icon className="w-3.5 h-3.5 text-royal-500" aria-hidden="true" />}
           {kpi.label}
         </span>
@@ -48,7 +48,7 @@ export function FlowKpiCard({ kpi, series, endpoint, icon: Icon, loading = false
         <span className={clsx('text-3xl font-extrabold tabular-nums tracking-tight', kpi.status === 'neutral' ? 'text-royal-900' : band.text)}>{num(kpi.value, 1)}</span>
         {kpi.unit && <span className="text-sm font-semibold text-ink-500">{kpi.unit.trim()}</span>}
       </div>
-      <div className="flex items-center justify-between gap-2 text-[11px]">
+      <div className="flex items-center justify-between gap-2 text-xs">
         <span className="text-ink-500 truncate">{kpi.sub}</span>
         {hasDelta && (
           <span className={clsx('inline-flex items-center gap-0.5 font-semibold tabular-nums shrink-0', good === null || kpi.delta === 0 ? 'text-ink-500' : good ? 'text-fg-ok' : 'text-fg-bad')}>

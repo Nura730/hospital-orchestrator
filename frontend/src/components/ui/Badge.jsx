@@ -37,7 +37,7 @@ export function Badge({
       className={clsx(
         'inline-flex items-center font-medium border rounded-full select-none shrink-0 tracking-wide',
         BADGE_COLORS[color] || BADGE_COLORS.neutral,
-        size === 'xs' ? 'text-[10px] px-1.5 py-0.5 gap-1' : 'text-xs px-2.5 py-0.5 gap-1.5',
+        size === 'xs' ? 'text-[11px] px-1.5 py-0.5 gap-1' : 'text-xs px-2.5 py-0.5 gap-1.5',
         className
       )}
     >

@@ -27,6 +27,8 @@ const SHORT = {
   'My Status': 'Status',
   "Today's Schedule": 'Schedule',
   'OT Cases': 'OT',
+  'OT Requests': 'Requests',
+  'Request Center': 'Requests',
   'My Treatment': 'Treatment',
 };
 
@@ -46,7 +48,7 @@ export function MobileBottomNav() {
             key={item.path}
             to={item.path}
             aria-current={isActive ? 'page' : undefined}
-            className={clsx('flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 rounded-lg text-[10px] font-medium', isActive ? 'bg-white text-[#014BAA] font-semibold' : 'text-white/80')}
+            className={clsx('flex flex-col items-center justify-center gap-1 min-w-[56px] py-1 rounded-lg text-[11px] font-medium', isActive ? 'bg-white text-[#014BAA] font-semibold' : 'text-white/80')}
           >
             <Icon className="w-5 h-5" aria-hidden="true" />
             <span>{SHORT[item.label] || item.label}</span>

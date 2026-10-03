@@ -204,13 +204,13 @@ function Journey({ patientId, backTo }) {
                   style={{ borderColor: current ? '#014BAA' : s.status === 'done' ? '#10B98166' : 'rgb(var(--cream-200))' }}
                 >
                   <p className="text-xs font-bold text-ink-900 truncate">{s.label}</p>
-                  <p className="inline-flex items-center gap-1 text-[11px] font-semibold mt-0.5" style={{ color }}>
+                  <p className="inline-flex items-center gap-1 text-xs font-semibold mt-0.5" style={{ color }}>
                     <Icon className="w-3.5 h-3.5" aria-hidden="true" /> {label}
                   </p>
-                  {s.durationMin != null && s.status === 'done' && <p className="text-[10px] text-ink-500 mt-0.5">{duration(s.durationMin)}</p>}
-                  {s.at && <p className="text-[10px] text-ink-500">{dateTime(s.at)}</p>}
-                  {s.by && <p className="text-[10px] text-ink-500 truncate" title={s.by}>{s.by}</p>}
-                  {s.detail && <p className="text-[10px] text-fg-violet truncate" title={s.detail}>{s.detail}</p>}
+                  {s.durationMin != null && s.status === 'done' && <p className="text-[11px] text-ink-500 mt-0.5">{duration(s.durationMin)}</p>}
+                  {s.at && <p className="text-[11px] text-ink-500">{dateTime(s.at)}</p>}
+                  {s.by && <p className="text-[11px] text-ink-500 truncate" title={s.by}>{s.by}</p>}
+                  {s.detail && <p className="text-[11px] text-fg-violet truncate" title={s.detail}>{s.detail}</p>}
                 </li>
                 {i < d.steps.length - 1 && (
                   <span className="flex items-center justify-center lg:px-0.5 lg:w-4 shrink-0 text-ink-500/60" aria-hidden="true">
@@ -227,7 +227,7 @@ function Journey({ patientId, backTo }) {
           <div className="mt-4 rounded-xl border border-[#014BAA]/40 bg-[#014BAA]/5 p-4">
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <h3 className="text-sm font-semibold text-ink-900">OT needed: {d.ot?.procedure}</h3>
-              <span className="text-[11px] text-ink-500">requested {clock(d.ot?.requestedAt)}</span>
+              <span className="text-xs text-ink-500">requested {clock(d.ot?.requestedAt)}</span>
             </div>
             <DoctorAvailability doctors={d.doctors} onAssign={canAssign ? setAssigning : undefined} assignLabel="Assign to patient" />
           </div>

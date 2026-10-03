@@ -44,7 +44,7 @@ export function Toggle({
       {(label || description) && (
         <div className="flex flex-col text-xs">
           {label && <span className="font-medium text-surface-foreground">{label}</span>}
-          {description && <span className="text-surface-muted text-[11px]">{description}</span>}
+          {description && <span className="text-surface-muted text-xs">{description}</span>}
         </div>
       )}
     </label>

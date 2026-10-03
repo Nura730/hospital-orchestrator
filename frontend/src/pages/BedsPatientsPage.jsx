@@ -271,7 +271,7 @@ export function BedsPatientsPage() {
                     </div>
                     <ul className="mt-1 space-y-0.5">
                       {cand.reasons.map((r, i) => (
-                        <li key={i} className="text-[11px] text-surface-muted flex items-center gap-1.5">
+                        <li key={i} className="text-xs text-surface-muted flex items-center gap-1.5">
                           <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
                           <span>{r}</span>
                         </li>
@@ -285,7 +285,7 @@ export function BedsPatientsPage() {
                     <span className="text-xs font-mono font-bold text-primary-600 dark:text-primary-400">
                       {cand.score}% Fit
                     </span>
-                    <span className="text-[10px] text-surface-muted">Match Score</span>
+                    <span className="text-[11px] text-surface-muted">Match Score</span>
                   </div>
                   <Button
                     variant="primary"

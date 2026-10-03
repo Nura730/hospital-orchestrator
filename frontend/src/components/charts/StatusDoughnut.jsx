@@ -65,7 +65,7 @@ export function StatusDoughnut({
         <span className="text-2xl font-bold font-mono tracking-tight text-surface-foreground">
           {total}
         </span>
-        <span className="text-[10px] uppercase font-mono text-surface-muted">
+        <span className="text-[11px] uppercase font-mono text-surface-muted">
           {title}
         </span>
       </div>

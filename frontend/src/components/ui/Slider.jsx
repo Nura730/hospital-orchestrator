@@ -38,7 +38,7 @@ export function Slider({
         className="w-full h-2 bg-surface-sunken rounded-lg appearance-none cursor-pointer accent-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
       />
 
-      <div className="flex justify-between text-[10px] font-mono text-surface-muted">
+      <div className="flex justify-between text-[11px] font-mono text-surface-muted">
         <span>{min}{unit}</span>
         <span>{Math.round((min + max) / 2)}{unit}</span>
         <span>{max}{unit}</span>

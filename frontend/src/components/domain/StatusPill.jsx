@@ -71,13 +71,13 @@ const STYLES = {
   skipped: s(GREY, 'Skipped'),
 };
 
-export function StatusPill({ status, label, size = 'sm', dot = true, className = '' }) {
+export function StatusPill({ status, label, size = 'sm', dot = false, className = '' }) {
   const [cls, defaultLabel, dotColor] = STYLES[status] || [GREY[0], String(status || '—').replace(/_/g, ' '), GREY[1]];
   return (
     <span
       className={clsx(
         'inline-flex items-center gap-1.5 rounded-full border font-semibold whitespace-nowrap',
-        size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : size === 'lg' ? 'px-3 py-1 text-xs' : 'px-2.5 py-0.5 text-[11px]',
+        size === 'xs' ? 'px-1.5 py-0.5 text-[11px]' : size === 'lg' ? 'px-3 py-1 text-xs' : 'px-2.5 py-0.5 text-xs',
         cls,
         className
       )}

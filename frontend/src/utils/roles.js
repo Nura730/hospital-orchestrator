@@ -23,6 +23,7 @@ export const FLOW_ROUTES = {
     '/admin/flow/discharge-planner',
     '/admin/beds-overview',
     '/admin/patients',
+    '/admin/requests',
     '/admin/nurses',
     '/admin/flow/staff',
     '/admin/flow/housekeeping',
@@ -31,8 +32,8 @@ export const FLOW_ROUTES = {
     '/admin/patient-journey/*',
     '/patient-journey/*',
   ],
-  doctor: ['/doctor/dashboard', '/doctor/schedule', '/doctor/patients', '/doctor/ot-cases', '/doctor/calendar', '/doctor/notifications', '/doctor/flow/predictions', '/patient-journey/*'],
-  ot_manager: ['/ot/dashboard', '/ot/flow/impact', '/patient-journey/*'],
+  doctor: ['/doctor/dashboard', '/doctor/schedule', '/doctor/patients', '/doctor/requests', '/doctor/ot-cases', '/doctor/calendar', '/doctor/notifications', '/doctor/flow/predictions', '/patient-journey/*'],
+  ot_manager: ['/ot/dashboard', '/ot/requests', '/ot/surgeons', '/ot/flow/impact', '/patient-journey/*'],
   nurse: ['/nurse/dashboard', '/nurse/patients', '/nurse/tasks', '/nurse/beds', '/nurse/notifications'],
   patient: ['/patient/dashboard', '/patient/treatment', '/patient/reports', '/patient/requests', '/patient/help'],
 };

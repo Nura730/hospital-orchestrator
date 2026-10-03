@@ -45,7 +45,7 @@ export function Tabs({
               {tab.count !== undefined && (
                 <span
                   className={clsx(
-                    'text-[10px] font-mono px-1.5 py-0.5 rounded-full',
+                    'text-[11px] font-mono px-1.5 py-0.5 rounded-full',
                     isActive
                       ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
                       : 'bg-surface-sunken text-surface-muted'
@@ -75,7 +75,7 @@ export function Tabs({
             {tab.count !== undefined && (
               <span
                 className={clsx(
-                  'text-[10px] font-mono px-1.5 py-0.2 rounded-full',
+                  'text-[11px] font-mono px-1.5 py-0.2 rounded-full',
                   isActive
                     ? 'bg-primary-500 text-white font-bold'
                     : 'bg-surface-elevated text-surface-muted'

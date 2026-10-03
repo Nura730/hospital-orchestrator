@@ -69,7 +69,7 @@ export function Topbar() {
 
       <div className="flex items-center gap-2">
         <span
-          className={clsx('inline-flex items-center gap-1.5 text-[11px] font-semibold px-2', isConnected ? 'text-fg-ok' : 'text-ink-500')}
+          className={clsx('inline-flex items-center gap-1.5 text-xs font-semibold px-2', isConnected ? 'text-fg-ok' : 'text-ink-500')}
           role="status"
           title={isConnected ? 'Real-time updates connected' : 'Real-time updates disconnected'}
         >
@@ -77,7 +77,7 @@ export function Topbar() {
           <span className="hidden sm:inline">{isConnected ? 'Live' : 'Offline'}</span>
         </span>
 
-        {['admin', 'doctor', 'ot_manager'].includes(role) && <NotificationCenter />}
+        {role && <NotificationCenter />}
 
         <button
           type="button"
@@ -97,12 +97,12 @@ export function Topbar() {
             aria-haspopup="menu"
             className="flex items-center gap-2 pl-1.5 pr-2 py-1 rounded-lg hover:bg-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500"
           >
-            <span className="w-8 h-8 rounded-full text-white flex items-center justify-center text-[11px] font-bold" style={{ backgroundColor: ROLE_ACCENT[role] || '#014BAA' }}>
+            <span className="w-8 h-8 rounded-full text-white flex items-center justify-center text-xs font-bold" style={{ backgroundColor: ROLE_ACCENT[role] || '#014BAA' }}>
               {initials(name)}
             </span>
             <span className="hidden md:flex flex-col text-left leading-tight">
               <span className="text-xs font-semibold text-ink-900">{name}</span>
-              <span className="text-[10px] text-ink-500">{ROLE_LABELS[role] || role}</span>
+              <span className="text-[11px] text-ink-500">{ROLE_LABELS[role] || role}</span>
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-ink-500" aria-hidden="true" />
           </button>
@@ -110,7 +110,7 @@ export function Topbar() {
             <div role="menu" className="absolute right-0 mt-2 w-56 flow-card p-1.5 z-50 animate-fade-in">
               <div className="px-3 py-2 border-b border-cream-200">
                 <p className="text-xs font-semibold text-ink-900 truncate">{name}</p>
-                <p className="text-[11px] text-ink-500 truncate">{user?.email}</p>
+                <p className="text-xs text-ink-500 truncate">{user?.email}</p>
               </div>
               <button type="button" role="menuitem" onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 mt-1 text-xs text-fg-bad hover:bg-[#EF4444]/10 rounded-lg">
                 <LogOut className="w-4 h-4" aria-hidden="true" /> Sign out

@@ -15,17 +15,16 @@ export function DoctorAvailability({ doctors = [], onAssign, assignLabel = 'Assi
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       <section className="rounded-xl border border-cream-200 overflow-hidden">
-        <h4 className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-fg-ok bg-[#10B981]/10 border-b border-cream-200">Available · {available.length}</h4>
+        <h4 className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-fg-ok bg-[#10B981]/10 border-b border-cream-200">Available ({available.length})</h4>
         {!available.length && <MiniEmpty text="No doctor free right now" />}
         <ul>
           {available.map((d) => (
             <li key={d.id} className="flex items-center gap-3 px-3 py-2 border-b border-cream-200 last:border-0">
-              <span className="w-2 h-2 rounded-full bg-[#10B981] shrink-0" aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <span className="block text-xs font-semibold text-ink-900 truncate">{d.name}</span>
-                <span className="block text-[11px] text-ink-500 truncate">{d.specialty}</span>
+                <span className="block text-sm font-semibold text-ink-900 truncate">{d.name}</span>
+                <span className="block text-xs text-ink-500 truncate">{d.specialty}</span>
               </span>
-              <span className="text-[11px] tabular-nums text-ink-500 whitespace-nowrap">
+              <span className="text-xs tabular-nums text-ink-500 whitespace-nowrap">
                 {d.surgeriesToday}/{d.maxPerDay} today
               </span>
               {onAssign && (
@@ -38,17 +37,16 @@ export function DoctorAvailability({ doctors = [], onAssign, assignLabel = 'Assi
         </ul>
       </section>
       <section className="rounded-xl border border-cream-200 overflow-hidden">
-        <h4 className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-fg-bad bg-[#EF4444]/10 border-b border-cream-200">Busy · {busy.length}</h4>
+        <h4 className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-fg-bad bg-[#EF4444]/10 border-b border-cream-200">Busy ({busy.length})</h4>
         {!busy.length && <MiniEmpty text="Nobody is busy" />}
         <ul>
           {busy.map((d) => (
             <li key={d.id} className="flex items-center gap-3 px-3 py-2 border-b border-cream-200 last:border-0">
-              <span className="w-2 h-2 rounded-full bg-[#EF4444] shrink-0" aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <span className="block text-xs font-semibold text-ink-900 truncate">{d.name}</span>
-                <span className="block text-[11px] text-ink-500 truncate">{d.activity}</span>
+                <span className="block text-sm font-semibold text-ink-900 truncate">{d.name}</span>
+                <span className="block text-xs text-ink-500 truncate">{d.activity}</span>
               </span>
-              <span className="text-[11px] text-ink-500 whitespace-nowrap">{d.freeAt ? `Free ~${clock(d.freeAt)}` : '—'}</span>
+              <span className="text-xs text-ink-500 whitespace-nowrap">{d.freeAt ? `Free ~${clock(d.freeAt)}` : '—'}</span>
             </li>
           ))}
         </ul>

@@ -71,7 +71,7 @@ export function AnalyticsPage() {
               <p className="text-2xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
                 0 Unsafe Actions
               </p>
-              <span className="text-[10px] text-surface-muted">100% strict clinical protocol compliance</span>
+              <span className="text-[11px] text-surface-muted">100% strict clinical protocol compliance</span>
             </div>
           </div>
         </Card>
@@ -86,7 +86,7 @@ export function AnalyticsPage() {
               <p className="text-2xl font-extrabold font-mono text-surface-foreground">
                 {analytics?.safety?.overrideRatePct || 4.8}%
               </p>
-              <span className="text-[10px] text-surface-muted">95.2% recommendation alignment</span>
+              <span className="text-[11px] text-surface-muted">95.2% recommendation alignment</span>
             </div>
           </div>
         </Card>
@@ -101,7 +101,7 @@ export function AnalyticsPage() {
               <p className="text-2xl font-extrabold font-mono text-surface-foreground">
                 {analytics?.safety?.totalRecommendationsExecuted || 142}
               </p>
-              <span className="text-[10px] text-surface-muted">Beds, staff and surgical slots</span>
+              <span className="text-[11px] text-surface-muted">Beds, staff and surgical slots</span>
             </div>
           </div>
         </Card>

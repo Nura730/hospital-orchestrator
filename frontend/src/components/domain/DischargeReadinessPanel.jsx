@@ -14,15 +14,15 @@ import { useFlowPolling, errorText } from '../../hooks/useFlowPolling.js';
 import { dateTime, timeUntil } from '../../utils/flowFormat.js';
 
 export function BlockingChips({ factors = [], max = 3 }) {
-  if (!factors.length) return <span className="text-[11px] text-fg-ok font-semibold">No blockers</span>;
+  if (!factors.length) return <span className="text-xs text-fg-ok font-semibold">No blockers</span>;
   return (
     <div className="flex flex-wrap gap-1 max-w-[280px]">
       {factors.slice(0, max).map((f) => (
-        <span key={f} className="text-[10px] rounded-full bg-[#F59E0B]/15 text-fg-warn border border-[#F59E0B]/40 px-2 py-0.5 whitespace-nowrap">
+        <span key={f} className="text-[11px] rounded-full bg-[#F59E0B]/15 text-fg-warn border border-[#F59E0B]/40 px-2 py-0.5 whitespace-nowrap">
           {f}
         </span>
       ))}
-      {factors.length > max && <span className="text-[10px] text-ink-500">+{factors.length - max}</span>}
+      {factors.length > max && <span className="text-[11px] text-ink-500">+{factors.length - max}</span>}
     </div>
   );
 }

@@ -85,15 +85,15 @@ export default function AdminDashboard() {
                     </span>
                     <span className="min-w-0">
                       <span className="block text-xs font-bold text-ink-900 truncate">{d.name}</span>
-                      <span className="block text-[11px] text-ink-500 truncate">{d.specialization}</span>
+                      <span className="block text-xs text-ink-500 truncate">{d.specialization}</span>
                     </span>
                   </div>
                   <div className="flex items-center justify-between mt-2.5">
                     <StatusPill status={d.presence} size="xs" />
-                    <span className="text-[10px] text-ink-500 truncate ml-2">{d.department}</span>
+                    <span className="text-[11px] text-ink-500 truncate ml-2">{d.department}</span>
                   </div>
                   {selectedDoctor === d.id && (
-                    <p className="text-[11px] text-ink-500 mt-2 border-t border-cream-200 pt-2">
+                    <p className="text-xs text-ink-500 mt-2 border-t border-cream-200 pt-2">
                       Status: {d.status.replace(/_/g, ' ')}
                       {d.location ? ` · ${d.location}` : ''}
                       {d.surgeriesToday ? ` · ${d.surgeriesToday} surgeries today` : ''}
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
                     ].map(([l, n]) => (
                       <div key={l}>
                         <div className="text-sm font-extrabold tabular-nums text-ink-900">{n}</div>
-                        <div className="text-[9px] uppercase text-ink-500">{l}</div>
+                        <div className="text-[10px] uppercase text-ink-500">{l}</div>
                       </div>
                     ))}
                   </div>

@@ -23,11 +23,11 @@ export function StaffRow({ staffMember }) {
             <span className="font-semibold text-xs text-surface-foreground truncate">
               {staffMember.name}
             </span>
-            <span className="text-[11px] font-mono text-surface-muted">
+            <span className="text-xs font-mono text-surface-muted">
               {staffMember.employeeId}
             </span>
           </div>
-          <span className="text-[11px] text-surface-muted truncate">
+          <span className="text-xs text-surface-muted truncate">
             {staffMember.title} • {staffMember.department}
           </span>
         </div>

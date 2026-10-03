@@ -23,7 +23,7 @@ async function localLogin({ email, password, role }) {
 
 function loadInitialState() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = sessionStorage.getItem(STORAGE_KEY);
     if (raw) {
       const data = JSON.parse(raw);
       if (data.token && data.user) {
@@ -84,7 +84,7 @@ export const useAuthStore = create((set, get) => ({
       };
 
       try {
-        localStorage.setItem(
+        sessionStorage.setItem(
           STORAGE_KEY,
           JSON.stringify({ user, token, role: stateToSave.role })
         );
@@ -122,7 +122,7 @@ export const useAuthStore = create((set, get) => ({
     } catch {
       // Ignore network errors on logout
     }
-    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
     set({
       user: null,
       token: null,

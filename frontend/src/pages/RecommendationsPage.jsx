@@ -174,7 +174,7 @@ export function RecommendationsPage() {
                       Target: {act.patientName || act.staffName || act.caseId || 'System entity'}
                     </span>
                     {act.from && (
-                      <span className="text-[11px] text-primary-600 dark:text-primary-400 font-mono mt-1 block">
+                      <span className="text-xs text-primary-600 dark:text-primary-400 font-mono mt-1 block">
                         Source: {act.from} · Destination: {act.to}
                       </span>
                     )}

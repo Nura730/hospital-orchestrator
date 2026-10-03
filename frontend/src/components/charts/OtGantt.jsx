@@ -28,7 +28,7 @@ export function OtGantt({ otRooms = [], onSelectCase = null }) {
   return (
     <div className="w-full flex flex-col space-y-4">
       {/* Time Header Ruler */}
-      <div className="flex border-b border-surface-border pb-2 text-[11px] font-mono text-surface-muted pl-40">
+      <div className="flex border-b border-surface-border pb-2 text-xs font-mono text-surface-muted pl-40">
         {hoursMarks.map((hr, idx) => (
           <div key={idx} className="flex-1 text-left relative">
             <span className="-ml-3">{hr}</span>
@@ -49,7 +49,7 @@ export function OtGantt({ otRooms = [], onSelectCase = null }) {
               <span className="font-semibold text-xs text-surface-foreground truncate">
                 {room.name.split('(')[0].trim()}
               </span>
-              <span className="text-[10px] text-surface-muted truncate">
+              <span className="text-[11px] text-surface-muted truncate">
                 {room.name.includes('(') ? room.name.split('(')[1].replace(')', '') : ''}
               </span>
               <div className="mt-1">
@@ -86,7 +86,7 @@ export function OtGantt({ otRooms = [], onSelectCase = null }) {
                     }}
                     title={`${slot.title} (${slot.start} - ${slot.end})`}
                     className={clsx(
-                      'absolute top-1.5 bottom-1.5 rounded-md px-2 flex items-center justify-between text-[11px] font-medium transition-all shadow-xs cursor-pointer overflow-hidden border',
+                      'absolute top-1.5 bottom-1.5 rounded-md px-2 flex items-center justify-between text-xs font-medium transition-all shadow-xs cursor-pointer overflow-hidden border',
                       isCleaning
                         ? 'bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700'
                         : isEmergency
@@ -106,7 +106,7 @@ export function OtGantt({ otRooms = [], onSelectCase = null }) {
                       )}
                       <span className="truncate">{slot.title}</span>
                     </span>
-                    <span className="text-[10px] opacity-80 shrink-0 font-mono ml-1 hidden sm:inline">
+                    <span className="text-[11px] opacity-80 shrink-0 font-mono ml-1 hidden sm:inline">
                       {slot.start}
                     </span>
                   </div>

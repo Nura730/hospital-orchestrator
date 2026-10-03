@@ -39,7 +39,7 @@ export function AmbulanceIncomingAlert() {
           <p className="text-sm font-bold">
             Ambulance incoming: ETA {etaLeft} min | Acuity {amb.acuity} | {bedText}
           </p>
-          <p className="text-[11px] text-white/85">
+          <p className="text-xs text-white/85">
             {amb.injuryType}
             {amb.probability != null && ` · admission probability ${Math.round(amb.probability * 100)}%`}
             {amb.icuProbability != null && ` · ICU need ${Math.round(amb.icuProbability * 100)}% (model)${amb.requiresIcu ? ', ICU bed prioritised' : ''}`}
@@ -47,9 +47,9 @@ export function AmbulanceIncomingAlert() {
           </p>
         </div>
         {amb.acknowledged ? (
-          <span className="text-[11px] font-semibold bg-white/15 rounded-full px-2.5 py-1">Acknowledged</span>
+          <span className="text-xs font-semibold bg-white/15 rounded-full px-2.5 py-1">Acknowledged</span>
         ) : (
-          <span className="text-[11px] text-white/80 tabular-nums">auto-dismiss {remaining}s</span>
+          <span className="text-xs text-white/80 tabular-nums">auto-dismiss {remaining}s</span>
         )}
         {!amb.acknowledged && (
           <button type="button" onClick={() => setFlowState({ ambulanceIncoming: { ...amb, acknowledged: true } })} className="flow-btn bg-white text-fg-bad hover:bg-white/90">

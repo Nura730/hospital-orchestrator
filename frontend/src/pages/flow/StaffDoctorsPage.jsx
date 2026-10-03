@@ -47,7 +47,7 @@ export default function StaffDoctorsPage() {
             ['Nurses on shift', r.totals.nursesOnShift, '#014BAA'],
           ].map(([l, v, c]) => (
             <div key={l} className="flow-card px-4 py-3 flex-1 min-w-[160px] border-l-4" style={{ borderLeftColor: c }}>
-              <div className="text-[11px] uppercase font-semibold text-ink-500">{l}</div>
+              <div className="text-xs uppercase font-semibold text-ink-500">{l}</div>
               <div className="text-2xl font-extrabold tabular-nums text-royal-900">{v}</div>
             </div>
           ))}
@@ -103,14 +103,14 @@ export default function StaffDoctorsPage() {
                   </span>
                   <span className="min-w-0">
                     <span className="block text-xs font-bold truncate">{d.name}</span>
-                    <span className="block text-[11px] text-ink-500 truncate">{d.specialization}</span>
+                    <span className="block text-xs text-ink-500 truncate">{d.specialization}</span>
                   </span>
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <StatusPill status={d.presence} size="xs" />
-                  <span className="text-[10px] text-ink-500">{d.status.replace(/_/g, ' ')}</span>
+                  <span className="text-[11px] text-ink-500">{d.status.replace(/_/g, ' ')}</span>
                 </div>
-                <p className="text-[10px] text-ink-500 mt-1 truncate">
+                <p className="text-[11px] text-ink-500 mt-1 truncate">
                   {d.department}
                   {d.location ? ` · ${d.location}` : ''}
                   {d.onCall ? ' · on call' : ''}

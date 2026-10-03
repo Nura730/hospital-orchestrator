@@ -70,7 +70,7 @@ export default function NurseManagementPage() {
                     </td>
                     <td>
                       {n.ward}
-                      <span className="block text-[11px] text-ink-500">{n.department}</span>
+                      <span className="block text-xs text-ink-500">{n.department}</span>
                     </td>
                     <td className="max-w-[220px] truncate text-ink-500">{n.bedRange}</td>
                     <td className="tabular-nums">{n.shift}</td>
@@ -79,7 +79,7 @@ export default function NurseManagementPage() {
                     </td>
                     <td className="tabular-nums">
                       <span className={clsx('font-semibold', ratio > 8 && 'text-fg-warn')}>{n.patients}</span>
-                      {n.critical > 0 && <span className="ml-1.5 text-[11px] text-fg-bad">{n.critical} critical</span>}
+                      {n.critical > 0 && <span className="ml-1.5 text-xs text-fg-bad">{n.critical} critical</span>}
                     </td>
                     <td className="tabular-nums">{n.tasksPending}</td>
                   </tr>

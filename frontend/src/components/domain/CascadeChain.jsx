@@ -20,7 +20,7 @@ export function CascadeChain({ chain = [] }) {
 
   return (
     <div className="flex flex-col gap-2 pt-2">
-      <span className="text-[11px] font-semibold text-surface-muted uppercase tracking-wider">
+      <span className="text-xs font-semibold text-surface-muted uppercase tracking-wider">
         Propagation Cascade Chain
       </span>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
@@ -32,7 +32,7 @@ export function CascadeChain({ chain = [] }) {
             <React.Fragment key={idx}>
               <div className="flex-1 min-w-[170px] p-2.5 rounded-xl bg-surface-sunken/60 border border-surface-border flex flex-col justify-between gap-1 shadow-2xs">
                 <div className="flex items-center justify-between gap-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-surface-muted flex items-center gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-surface-muted flex items-center gap-1">
                     <Icon className="w-3 h-3 text-amber-500" />
                     {step.stage}
                   </span>

@@ -128,6 +128,8 @@ export const TASK_TYPES = {
   transport: 'Patient transport',
   document: 'Document update',
   notify_doctor: 'Doctor notification',
+  pre_op: 'Pre-op preparation',
+  post_op: 'Settle post-op patient',
 };
 
 function range(prefix, from, to) {
@@ -143,6 +145,7 @@ function care() {
   if (C && C.flowRef === S) return C;
   C = buildCare(S);
   seedPortal(S, C);
+  seedOtQueue(S, C);
   return C;
 }
 
@@ -155,6 +158,12 @@ function buildCare(S) {
     p.admittedAt = iso(Math.min(now - (5 + i * 5) * MIN, Math.max(startOfDay(now) + (10 + i * 25) * MIN, now - (2.5 + i * 3) * H)));
   });
   const portal = S.patients.find((p) => p.bedId === PORTAL_BED);
+  // The demo patient is looked after by the demo doctor, so requests flow between the two logins
+  if (portal) {
+    const me = FLOW_DOCTORS.find((d) => d.id === FLOW_ME_DOCTOR);
+    portal.doctorId = me.id;
+    portal.doctorName = me.name;
+  }
   const otNeeded = {};
   for (const bedId of ['GW-05', 'HDU-02']) {
     const p = S.patients.find((x) => x.bedId === bedId);
@@ -173,6 +182,7 @@ function buildCare(S) {
     tasks: [],
     roomCleaningSince: { 3: iso(now - 12 * MIN) },
     portalPatientId: portal?.id || null,
+    otRequests: [],
   };
 
   // Seed nurse tasks for every nurse
@@ -182,6 +192,21 @@ function buildCare(S) {
 }
 
 /** Past requests and a shared report for the portal patient (runs after C is set). */
+function seedOtQueue(S, c) {
+  const seeds = [
+    ['GW-05', 'Laparoscopic appendectomy', 'urgent', 75],
+    ['HDU-02', 'Coronary angiography', 'emergency', 60],
+  ];
+  for (const [bedId, procedure, urgency, durationMin] of seeds) {
+    const p = S.patients.find((x) => x.bedId === bedId);
+    if (!p) continue;
+    const d = doctorById(p.doctorId) || doctorByName(p.doctorName);
+    const at = iso(Date.now() - 50 * MIN);
+    c.otRequests.push({ id: uid('otr'), patientId: p.id, alias: p.alias, bedId: p.bedId, procedure, urgency, requestedBy: { id: d?.id || null, name: d?.name || p.doctorName }, preferredStart: null, durationMin, notes: '', status: 'pending', createdAt: at, linkedRequestId: null, history: [{ at, status: 'pending', by: d?.name || p.doctorName, text: `Requested by ${d?.name || p.doctorName}` }] });
+    syncOtNeeded(c, p.id);
+  }
+}
+
 function seedPortal(S, c) {
   const now = Date.now();
   const portal = S.patients.find((p) => p.id === c.portalPatientId);
@@ -295,6 +320,7 @@ function buildProfile(S, p) {
     nurse: nurse ? { id: nurse.id, name: nurse.name, shift: `${nurse.shift[0]} - ${nurse.shift[1]}` } : null,
     otSurgeon: requiresOt ? (zone === 'PACU' ? 'Dr. Nathan Hughes' : otPending?.surgeon || 'To be assigned') : null,
     readiness: p.bedId ? patientReadiness(p).score : null,
+    location: p.location || null,
     icuRisk: bed?.type === 'icu' ? null : predictIcuNeed({ age: p.age, gender: p.gender, acuity: p.acuity, requiresOt: requiresOt, arrivalTime: admittedAt }),
   };
 }
@@ -365,7 +391,7 @@ function scheduleFor(S, p, prof) {
 }
 
 function requestsFor(patientId) {
-  return care().requests.filter((r) => r.patientId === patientId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return care().requests.map(normaliseRequest).filter((r) => r.patientId === patientId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
 function patientById(S, patientId) {
@@ -436,32 +462,152 @@ export function shareReport(reportId) {
 
 /* ───────────────────────── requests ───────────────────────── */
 
+/** Who handles each request type. */
+const REQUEST_ROUTES = {
+  nurse_assistance: 'nurse',
+  dietary: 'nurse',
+  family_notification: 'nurse',
+  medication_query: 'doctor',
+  general_query: 'doctor',
+  doctor_review: 'doctor',
+  diagnostic_test: 'doctor',
+  discharge_approval: 'doctor',
+  bed_transfer: 'admin',
+  equipment: 'admin',
+};
+export const OPEN_REQUEST = ['new', 'acknowledged', 'in_progress', 'scheduled'];
+const STATUS_TEXT = { new: 'Sent', acknowledged: 'Seen', in_progress: 'In progress', scheduled: 'Scheduled', done: 'Resolved', declined: 'Declined' };
+
+function routeFor(p, type) {
+  const role = REQUEST_ROUTES[type] || 'admin';
+  if (role === 'doctor') {
+    const d = doctorById(p.doctorId) || doctorByName(p.doctorName);
+    return { role, id: d?.id || p.doctorId, name: d?.name || p.doctorName || 'Attending doctor' };
+  }
+  if (role === 'nurse') {
+    const n = p.bedId ? nurseForBed(p.bedId) : null;
+    if (n) return { role, id: n.id, name: n.name };
+  }
+  return { role: 'admin', id: null, name: type === 'equipment' ? 'Equipment desk' : 'Bed management' };
+}
+
+/** Notification for specific people: audience = { roles, doctorIds?, nurseIds?, patientId? }. */
+function notifyTo(audience, title, message, type = 'general', link = null) {
+  const n = pushNotification(title, message, type);
+  n.audience = audience;
+  if (link) n.link = link;
+  return n;
+}
+
+/** Tell whoever is responsible for a routed request. */
+function notifyRoute(route, title, message, type) {
+  if (route.role === 'doctor') return notifyTo({ roles: ['doctor'], doctorIds: [route.id] }, title, message, type, '/doctor/requests');
+  if (route.role === 'nurse') return notifyTo({ roles: ['nurse'], nurseIds: [route.id] }, title, message, type, '/nurse/tasks');
+  return notifyTo({ roles: ['admin'] }, title, message, type, '/admin/requests');
+}
+
+function normaliseRequest(r) {
+  if (r.status === 'pending') r.status = 'new';
+  if (r.status === 'addressed') r.status = 'done';
+  if (!r.history) r.history = [{ at: r.createdAt, status: 'new', by: r.createdBy, text: 'Request sent' }];
+  if (!r.routedTo) {
+    const p = getFlowState().patients.find((x) => x.id === r.patientId);
+    r.routedTo = p ? routeFor(p, r.type) : { role: 'admin', id: null, name: 'Bed management' };
+  }
+  return r;
+}
+
 export function createRequest({ patientId, type, priority = 'medium', note = '', source = 'admin', createdBy = 'Staff' }) {
   const S = getFlowState();
   const c = care();
   const p = patientById(S, patientId);
   if (!REQUEST_TYPES[type]) throw new Error('Unknown request type');
-  const r = { id: uid('req'), patientId, alias: p.alias, bedId: p.bedId, type, typeLabel: REQUEST_TYPES[type], priority, note: String(note).slice(0, 200), status: 'pending', source, createdBy, createdAt: new Date().toISOString() };
+  const route = routeFor(p, type);
+  const now = new Date().toISOString();
+  const r = {
+    id: uid('req'),
+    patientId,
+    alias: p.alias,
+    bedId: p.bedId,
+    type,
+    typeLabel: REQUEST_TYPES[type],
+    priority,
+    note: String(note).slice(0, 200),
+    status: 'new',
+    source,
+    createdBy,
+    createdAt: now,
+    routedTo: route,
+    response: null,
+    history: [{ at: now, status: 'new', by: createdBy, text: `Sent to ${route.name}` }],
+  };
   c.requests.unshift(r);
-  const urgent = priority === 'urgent';
-  pushNotification(`${urgent ? 'URGENT: ' : ''}${r.typeLabel} for ${p.alias}${p.bedId ? ` (${p.bedId})` : ''}`, r.note || `Raised by ${createdBy}`, urgent ? 'alert' : 'general');
-  if (urgent) emitLive('alert.created', { alertId: uid('alt'), severity: 'critical', title: `${r.typeLabel}: ${p.alias}`, description: r.note || `Raised by ${createdBy}` });
-  // Patient-side requests become a task for the bedside nurse
-  const nurse = p.bedId ? nurseForBed(p.bedId) : null;
-  if (nurse && ['nurse_assistance', 'medication_query', 'dietary', 'general_query'].includes(type)) {
-    c.tasks.push(task(nurse.id, type === 'medication_query' ? 'medication' : 'notify_doctor', p, p.bedId, Date.now() + 15 * MIN, 'pending', type === 'nurse_assistance' ? 'urgent' : 'normal', `${r.typeLabel}: ${r.note || 'no message'}`));
+  const urgent = priority === 'urgent' || type === 'nurse_assistance';
+  notifyRoute(route, `${urgent ? 'Urgent: ' : ''}${r.typeLabel} from ${source === 'patient' ? `patient ${p.alias}` : createdBy}`, `${p.alias}${p.bedId ? ` in ${p.bedId}` : ''}: ${r.note || 'no message'}`, urgent ? 'alert' : 'request');
+  if (urgent) emitLive('alert.created', { alertId: uid('alt'), severity: priority === 'urgent' ? 'critical' : 'high', title: `${r.typeLabel}: ${p.alias}`, description: r.note || `Raised by ${createdBy}` });
+  // Nurse-handled requests become a task on the bedside nurse's list
+  if (route.role === 'nurse') {
+    const t = task(route.id, type === 'family_notification' ? 'document' : 'notify_doctor', p, p.bedId, Date.now() + 10 * MIN, 'pending', urgent ? 'urgent' : 'normal', `${r.typeLabel}: ${r.note || 'no message'}`);
+    t.title = r.typeLabel;
+    t.requestId = r.id;
+    c.tasks.push(t);
   }
-  addPatientEvent(p.id, 'doctor_note', `Request raised: ${r.typeLabel}`, createdBy);
-  recordEvent('REQUEST_CREATED', { patientId, type, priority }, { requestId: r.id });
+  addPatientEvent(p.id, 'doctor_note', `Request sent to ${route.name}: ${r.typeLabel}`, createdBy);
+  recordEvent('REQUEST_CREATED', { patientId, type, priority, routedTo: route.name }, { requestId: r.id });
   return r;
 }
 
-export function updateRequest(requestId, status) {
-  const r = care().requests.find((x) => x.id === requestId);
+/**
+ * Move a request along: acknowledged, in_progress, scheduled, done or declined, with an optional reply.
+ * @param {string} requestId
+ * @param {string|{status: string, response?: string, by?: string, text?: string}} update
+ */
+export function updateRequest(requestId, update) {
+  const c = care();
+  const S = getFlowState();
+  const r = c.requests.find((x) => x.id === requestId);
   if (!r) throw new Error('Request not found');
-  r.status = status;
-  if (status === 'addressed') r.addressedAt = new Date().toISOString();
+  normaliseRequest(r);
+  const { status, response = null, by = r.routedTo?.name || 'Staff', text = null } = typeof update === 'string' ? { status: update } : update;
+  const value = status === 'addressed' ? 'done' : status;
+  if (!STATUS_TEXT[value]) throw new Error(`Unknown request status '${status}'`);
+  r.status = value;
+  if (response) r.response = String(response).slice(0, 300);
+  if (value === 'done') r.addressedAt = new Date().toISOString();
+  r.history.push({ at: new Date().toISOString(), status: value, by, text: text || (response ? `${STATUS_TEXT[value]}: ${response}` : STATUS_TEXT[value]) });
+  const p = S.patients.find((x) => x.id === r.patientId);
+  if (r.source === 'patient') notifyTo({ roles: ['patient'], patientId: r.patientId }, `${r.typeLabel}: ${STATUS_TEXT[value].toLowerCase()}`, text || response || `${by} updated your request`, 'request', '/patient/requests');
+  else notifyTo({ roles: ['admin'] }, `${r.typeLabel} ${STATUS_TEXT[value].toLowerCase()} for ${r.alias}`, `${by}${response ? `: ${response}` : ''}`, 'request', '/admin/requests');
+  if (p && value === 'done') addPatientEvent(p.id, 'doctor_note', `${r.typeLabel} resolved by ${by}`, by);
+  // close the linked nurse task too
+  if (['done', 'declined'].includes(value)) {
+    for (const t of c.tasks.filter((x) => x.requestId === r.id && x.status !== 'done')) {
+      t.status = 'done';
+      t.completedAt = new Date().toISOString();
+    }
+  }
   return r;
+}
+
+/** Requests visible to a viewer: routed to them, or everything (admin). */
+export function listRequests(role) {
+  const c = care();
+  const v = viewerFor(role);
+  c.requests.forEach(normaliseRequest);
+  const mine = c.requests.filter((r) => {
+    if (role === 'admin') return true;
+    if (role === 'doctor') return r.routedTo?.role === 'doctor' && r.routedTo.id === v.doctorId;
+    if (role === 'nurse') return r.routedTo?.role === 'nurse' && r.routedTo.id === v.nurseId;
+    if (role === 'patient') return r.patientId === v.patientId;
+    return false;
+  });
+  const S = getFlowState();
+  return mine
+    .map((r) => {
+      const p = S.patients.find((x) => x.id === r.patientId);
+      return { ...r, bedId: p?.bedId ?? r.bedId, acuity: p?.acuity ?? null, patientStatus: p?.status ?? null, otRequest: (c.otRequests || []).find((o) => o.linkedRequestId === r.id) || null };
+    })
+    .sort((a, b) => Number(OPEN_REQUEST.includes(b.status)) - Number(OPEN_REQUEST.includes(a.status)) || new Date(b.createdAt) - new Date(a.createdAt));
 }
 
 /* ───────────────────────── admin lists ───────────────────────── */
@@ -486,7 +632,7 @@ export function listPatients() {
         daysAdmitted: prof.daysAdmitted,
         diagnosis: prof.diagnosis,
         requires: prof.requires,
-        openRequests: c.requests.filter((r) => r.patientId === p.id && r.status === 'pending').length,
+        openRequests: c.requests.filter((r) => r.patientId === p.id && OPEN_REQUEST.includes(normaliseRequest(r).status)).length,
       };
     })
     .sort((a, b) => a.acuity - b.acuity || String(a.bedId).localeCompare(String(b.bedId)));
@@ -722,7 +868,7 @@ export function getDoctorDashboard() {
   ];
   const todayEvents = getDoctorEvents(today, today + DAY - 1);
   const surgeries = todayEvents.filter((e) => e.type === 'surgery');
-  const pendingRequests = c.requests.filter((r) => r.status === 'pending' && active.some((p) => p.id === r.patientId) && ['doctor_review', 'discharge_approval', 'diagnostic_test'].includes(r.type));
+  const pendingRequests = listRequests('doctor').filter((r) => ['new', 'acknowledged'].includes(r.status));
   return {
     doctor: { id: me.id, name: me.name, specialty: me.specialization, department: me.department, status: c.doctorStatus, shiftEnd: '20:00' },
     stats: {
@@ -742,12 +888,7 @@ export function getDoctorDashboard() {
 }
 
 export function requestOtForPatient(patientId, procedure, by) {
-  const S = getFlowState();
-  const p = patientById(S, patientId);
-  care().otNeeded[p.id] = { procedure: procedure || 'Procedure to be confirmed', requestedAt: new Date().toISOString(), status: 'pending' };
-  pushNotification(`OT request: ${p.alias}`, `${procedure || 'Procedure'} requested by ${by || 'doctor'}`, 'ot_assigned');
-  addPatientEvent(p.id, 'test_ordered', `OT requested: ${procedure || 'procedure'}`, by);
-  return care().otNeeded[p.id];
+  return escalateToOt(null, patientId, { procedure, urgency: 'urgent' }, by);
 }
 
 export function updatePatientStatus(patientId, { acuity, note }, by) {
@@ -858,6 +999,7 @@ export function assignCase(roomId, caseId) {
   r.status = 'in_surgery';
   const surgeon = FLOW_DOCTORS.find((d) => d.name === x.surgeon);
   if (surgeon) surgeon.status = 'in_surgery';
+  onCaseStarted(S, care(), x);
   pushNotification(`${x.caseNumber} started in ${r.name}`, `${x.procedure} · ${x.surgeon}`);
   emitLive('ot.roomUpdated', { roomId: r.id, status: 'in_surgery' });
   recordEvent('OT_STARTED', { caseId: x.id, roomId: r.id }, {});
@@ -865,21 +1007,10 @@ export function assignCase(roomId, caseId) {
 }
 
 export function assignOtDoctor(patientId, doctorId, { roomId, start } = {}) {
-  const S = getFlowState();
-  const p = patientById(S, patientId);
-  const d = FLOW_DOCTORS.find((x) => x.id === doctorId);
-  if (!d) throw new Error('Doctor not found');
   const c = care();
-  const need = c.otNeeded[p.id] || { procedure: 'Procedure to be confirmed', requestedAt: new Date().toISOString() };
-  const startMs = start ? new Date(start).getTime() : Date.now() + 2 * H;
-  const room = Number(roomId) || 4;
-  const n = S.cases.length + 1;
-  S.cases.push({ id: `case-${n}-${Date.now()}`, caseNumber: `OTC-2024-${String(n).padStart(3, '0')}`, procedure: need.procedure, roomId: room, surgeon: d.name, status: 'scheduled', urgency: 'urgent', start: startMs, end: startMs + 90 * MIN, postOpRequired: true, postOpWard: 'Post-Operative Recovery Ward', patientAlias: p.alias });
-  c.otNeeded[p.id] = { ...need, status: 'scheduled', surgeon: d.name, room: `OT-${room}`, start: iso(startMs) };
-  pushNotification(`OT scheduled: ${p.alias}`, `${need.procedure} with ${d.name} in OT-${room} at ${new Date(startMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}`, 'ot_assigned');
-  addPatientEvent(p.id, 'procedure', `OT scheduled with ${d.name} (OT-${room})`, 'OT coordinator');
-  recordEvent('OT_DOCTOR_ASSIGNED', { patientId, doctorId, roomId: room }, {});
-  return c.otNeeded[p.id];
+  let o = (c.otRequests || []).find((x) => x.patientId === patientId && x.status === 'pending');
+  if (!o) o = escalateToOt(null, patientId, { procedure: c.otNeeded[patientId]?.procedure }, 'OT coordinator');
+  return scheduleOtRequest(o.id, { surgeonId: doctorId, roomId: Number(roomId) || 4, start: start || iso(Date.now() + 2 * H), durationMin: o.durationMin }, 'OT coordinator');
 }
 
 export function assignSurgeon(caseId, doctorId) {
@@ -892,6 +1023,346 @@ export function assignSurgeon(caseId, doctorId) {
   pushNotification(`${x.caseNumber} assigned to ${d.name}`, `${x.procedure} · OT-${x.roomId} at ${new Date(x.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}`, 'ot_assigned');
   recordEvent('OT_SURGEON_ASSIGNED', { caseId, doctorId }, {});
   return { caseId, surgeon: d.name };
+}
+
+/* ───────────────────────── OT request queue ───────────────────────── */
+
+const URGENCY_RANK = { emergency: 0, urgent: 1, elective: 2 };
+const SURGICAL = /surg|ortho|anesth|trauma|cardio/i;
+const hhmm = (ms) => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
+function syncOtNeeded(c, patientId) {
+  const active = (c.otRequests || [])
+    .filter((o) => o.patientId === patientId && ['pending', 'scheduled', 'in_progress'].includes(o.status))
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+  if (!active) {
+    delete c.otNeeded[patientId];
+    return;
+  }
+  c.otNeeded[patientId] = {
+    procedure: active.procedure,
+    requestedAt: active.createdAt,
+    status: active.status === 'pending' ? 'pending' : 'scheduled',
+    surgeon: active.surgeon || null,
+    room: active.roomId ? `OT-${active.roomId}` : null,
+    start: active.start || null,
+    otRequestId: active.id,
+  };
+}
+
+/**
+ * Doctor sends a patient for surgery scheduling, optionally answering a patient request.
+ * @returns the OT request
+ */
+export function escalateToOt(requestId, patientId, { procedure, urgency = 'urgent', preferredStart = null, durationMin = 90, notes = '' } = {}, by = 'Doctor') {
+  const S = getFlowState();
+  const c = care();
+  const p = patientById(S, patientId);
+  const doctor = FLOW_DOCTORS.find((d) => d.name === by) || doctorById(p.doctorId) || FLOW_DOCTORS.find((d) => d.id === FLOW_ME_DOCTOR);
+  const now = new Date().toISOString();
+  const o = {
+    id: uid('otr'),
+    patientId: p.id,
+    alias: p.alias,
+    bedId: p.bedId,
+    procedure: procedure || 'Procedure to be confirmed',
+    urgency,
+    requestedBy: { id: doctor?.id || null, name: by },
+    preferredStart: preferredStart ? iso(new Date(preferredStart).getTime()) : null,
+    durationMin: Number(durationMin) || 90,
+    notes: String(notes || '').slice(0, 200),
+    status: 'pending',
+    createdAt: now,
+    linkedRequestId: requestId || null,
+    history: [{ at: now, status: 'pending', by, text: `Requested by ${by}` }],
+  };
+  (c.otRequests = c.otRequests || []).unshift(o);
+  syncOtNeeded(c, p.id);
+  if (requestId) updateRequest(requestId, { status: 'in_progress', by, text: `Sent to the theatre team for scheduling: ${o.procedure}` });
+  notifyTo({ roles: ['ot_manager'] }, `New OT request: ${o.procedure}`, `${p.alias}${p.bedId ? ` (${p.bedId})` : ''}, ${urgency}, from ${by}`, urgency === 'emergency' ? 'alert' : 'ot_assigned', '/ot/requests');
+  notifyTo({ roles: ['admin'] }, `OT requested for ${p.alias}`, `${o.procedure} (${urgency}) by ${by}`, 'ot_assigned', '/admin/requests');
+  if (p.id === c.portalPatientId && !requestId) notifyTo({ roles: ['patient'], patientId: p.id }, 'Surgery being scheduled', `${by} asked the theatre team to schedule: ${o.procedure}`, 'request', '/patient/requests');
+  addPatientEvent(p.id, 'test_ordered', `OT requested: ${o.procedure}`, by);
+  recordEvent('OT_REQUESTED', { patientId: p.id, urgency }, { otRequestId: o.id });
+  return o;
+}
+
+function overlaps(aStart, aEnd, bStart, bEnd) {
+  return aStart < bEnd && bStart < aEnd;
+}
+
+/** Earliest time (15-minute steps, next 24 h) when a surgical surgeon and a theatre are both free. */
+function nextFreeSlot(fromMs, durationMin) {
+  const step = 15 * MIN;
+  let t = Math.ceil(fromMs / step) * step;
+  for (let i = 0; i < 96; i++, t += step) {
+    const a = otAvailabilityAt(t, durationMin);
+    if (a.rooms.some((r) => r.free) && a.surgeons.some((s) => s.free && s.surgical)) return iso(t);
+  }
+  return null;
+}
+
+/** Which surgeons and theatres are free for [start, start + duration), plus the next fully free slot. */
+export function otAvailability(start, durationMin = 90) {
+  const startMs = start ? new Date(start).getTime() : Date.now() + H;
+  const a = otAvailabilityAt(startMs, durationMin);
+  const ok = a.rooms.some((r) => r.free) && a.surgeons.some((s) => s.free && s.surgical);
+  return { ...a, nextFree: ok ? null : nextFreeSlot(startMs + 15 * MIN, durationMin) };
+}
+
+function otAvailabilityAt(start, durationMin = 90) {
+  const S = getFlowState();
+  const now = Date.now();
+  const startMs = start ? new Date(start).getTime() : now + H;
+  const endMs = startMs + (Number(durationMin) || 90) * MIN;
+  const active = S.cases.filter((x) => ['scheduled', 'in_progress'].includes(x.status));
+  const soon = startMs - now < 60 * MIN;
+  const surgeons = FLOW_DOCTORS.map((d) => {
+    const mine = active.filter((x) => x.surgeon === d.name);
+    const clash = mine.find((x) => overlaps(startMs, endMs, x.start, x.end));
+    let reason = null;
+    if (d.status === 'off_duty') reason = 'Off duty';
+    else if (clash) reason = `Booked for ${clash.procedure} in OT-${clash.roomId} until ${hhmm(clash.end)}`;
+    else if (soon && ['in_surgery', 'emergency'].includes(d.status)) reason = d.status === 'emergency' ? 'Handling an emergency' : 'In surgery now';
+    const next = mine.filter((x) => x.end > now).sort((a, b) => a.start - b.start);
+    return {
+      id: d.id,
+      name: d.name,
+      specialty: d.specialization,
+      status: d.status,
+      surgical: SURGICAL.test(d.specialization),
+      free: !reason,
+      reason,
+      casesToday: S.cases.filter((x) => x.surgeon === d.name).length,
+      nextCase: next[0] ? { procedure: next[0].procedure, start: iso(next[0].start), end: iso(next[0].end), room: `OT-${next[0].roomId}` } : null,
+    };
+  }).sort((a, b) => Number(b.free) - Number(a.free) || Number(b.surgical) - Number(a.surgical) || a.casesToday - b.casesToday);
+  const rooms = S.otRooms.map((r) => {
+    const clash = active.find((x) => x.roomId === r.id && overlaps(startMs, endMs, x.start, x.end));
+    let reason = null;
+    if (r.status === 'maintenance') reason = 'Maintenance';
+    else if (clash) reason = `${clash.procedure} until ${hhmm(clash.end)}`;
+    else if (soon && r.status === 'cleaning') reason = 'Being cleaned';
+    return { roomId: r.id, name: r.name, free: !reason, reason };
+  });
+  return { start: iso(startMs), end: iso(endMs), surgeons, rooms };
+}
+
+export function listOtRequests() {
+  const S = getFlowState();
+  const c = care();
+  return (c.otRequests || [])
+    .map((o) => {
+      const p = S.patients.find((x) => x.id === o.patientId);
+      const prof = p ? buildProfile(S, p) : null;
+      return { ...o, bedId: p?.bedId ?? o.bedId, ward: prof?.bed?.ward || null, acuity: p?.acuity ?? null, age: prof?.age ?? null, doctorName: prof?.doctor.name || null, diagnosis: prof?.diagnosis || null, icuRisk: prof?.icuRisk || null, patientStatus: p?.status || null, location: p?.location || null };
+    })
+    .sort((a, b) => Number(b.status === 'pending') - Number(a.status === 'pending') || URGENCY_RANK[a.urgency] - URGENCY_RANK[b.urgency] || new Date(a.createdAt) - new Date(b.createdAt));
+}
+
+/** OT manager books a pending request: surgeon + theatre + time. Updates everyone involved. */
+export function scheduleOtRequest(otRequestId, { surgeonId, roomId, start, durationMin } = {}, by = 'OT Manager') {
+  const S = getFlowState();
+  const c = care();
+  const o = (c.otRequests || []).find((x) => x.id === otRequestId);
+  if (!o) throw new Error('OT request not found');
+  if (o.status !== 'pending') throw new Error('This request is already handled');
+  const dur = Number(durationMin) || o.durationMin || 90;
+  const avail = otAvailability(start, dur);
+  const surgeon = avail.surgeons.find((x) => x.id === surgeonId);
+  const room = avail.rooms.find((x) => x.roomId === Number(roomId));
+  if (!surgeon) throw new Error('Choose a surgeon');
+  if (!surgeon.free) throw new Error(`${surgeon.name} is not free: ${surgeon.reason}`);
+  if (!room) throw new Error('Choose a theatre');
+  if (!room.free) throw new Error(`${room.name} is not free: ${room.reason}`);
+  const p = patientById(S, o.patientId);
+  const startMs = new Date(avail.start).getTime();
+  const n = S.cases.length + 1;
+  const caseRow = {
+    id: `case-${n}-${Date.now()}`,
+    caseNumber: `OTC-2026-${String(n).padStart(3, '0')}`,
+    procedure: o.procedure,
+    roomId: room.roomId,
+    surgeon: surgeon.name,
+    surgeonId: surgeon.id,
+    status: 'scheduled',
+    urgency: o.urgency,
+    start: startMs,
+    end: startMs + dur * MIN,
+    postOpRequired: true,
+    postOpWard: 'Post-Operative Recovery Ward',
+    patientAlias: p.alias,
+    patientId: p.id,
+    otRequestId: o.id,
+  };
+  S.cases.push(caseRow);
+  const t = hhmm(startMs);
+  Object.assign(o, { status: 'scheduled', caseId: caseRow.id, surgeon: surgeon.name, surgeonId: surgeon.id, roomId: room.roomId, start: iso(startMs), end: iso(caseRow.end) });
+  o.history.push({ at: new Date().toISOString(), status: 'scheduled', by, text: `Booked ${room.name} at ${t} with ${surgeon.name}` });
+  syncOtNeeded(c, p.id);
+  if (o.linkedRequestId) updateRequest(o.linkedRequestId, { status: 'scheduled', by, text: `Surgery booked: ${room.name} at ${t} with ${surgeon.name}` });
+
+  // Bedside nurse: preparation and transport tasks
+  const nurse = p.bedId ? nurseForBed(p.bedId) : null;
+  if (nurse) {
+    const prep = task(nurse.id, 'pre_op', p, p.bedId, Math.max(Date.now() + 10 * MIN, startMs - 60 * MIN), 'pending', o.urgency === 'emergency' ? 'urgent' : 'normal', `${o.procedure} at ${t} in ${room.name}`);
+    const move = task(nurse.id, 'transport', p, p.bedId, Math.max(Date.now() + 15 * MIN, startMs - 15 * MIN), 'pending', 'normal', `Take to ${room.name} for ${o.procedure}`);
+    prep.otRequestId = o.id;
+    move.otRequestId = o.id;
+    c.tasks.push(prep, move);
+    notifyTo({ roles: ['nurse'], nurseIds: [nurse.id] }, `Pre-op: ${p.alias} to ${room.name} at ${t}`, `${o.procedure} with ${surgeon.name}`, 'ot_assigned', '/nurse/tasks');
+  }
+  const ids = [...new Set([o.requestedBy.id, surgeon.id, p.doctorId].filter(Boolean))];
+  notifyTo({ roles: ['doctor'], doctorIds: ids }, `Surgery booked: ${p.alias} at ${t}`, `${o.procedure} in ${room.name} with ${surgeon.name}`, 'ot_assigned', '/doctor/ot-cases');
+  notifyTo({ roles: ['admin'] }, `Surgery booked: ${p.alias}`, `${o.procedure} in ${room.name} at ${t}`, 'ot_assigned', '/admin/requests');
+  if (p.id === c.portalPatientId && !o.linkedRequestId) notifyTo({ roles: ['patient'], patientId: p.id }, `Your surgery is booked for ${t}`, `${o.procedure} with ${surgeon.name} in ${room.name}`, 'request', '/patient/dashboard');
+  addPatientEvent(p.id, 'procedure', `Surgery booked: ${o.procedure} with ${surgeon.name}, ${room.name} at ${t}`, by);
+  emitLive('ot.roomUpdated', { roomId: room.roomId });
+  recordEvent('OT_SCHEDULED', { otRequestId: o.id, surgeon: surgeon.name, room: room.name }, { caseId: caseRow.id });
+  return o;
+}
+
+export function declineOtRequest(otRequestId, reason = '', by = 'OT Manager') {
+  const c = care();
+  const o = (c.otRequests || []).find((x) => x.id === otRequestId);
+  if (!o) throw new Error('OT request not found');
+  if (o.status !== 'pending') throw new Error('Only pending requests can be declined');
+  o.status = 'declined';
+  o.history.push({ at: new Date().toISOString(), status: 'declined', by, text: reason ? `Declined: ${reason}` : 'Declined' });
+  syncOtNeeded(c, o.patientId);
+  if (o.linkedRequestId) updateRequest(o.linkedRequestId, { status: 'declined', by, response: reason || 'The theatre team could not take this request' });
+  notifyTo({ roles: ['doctor'], doctorIds: [o.requestedBy.id].filter(Boolean) }, `OT request declined: ${o.alias}`, reason || o.procedure, 'alert', '/doctor/ot-cases');
+  return o;
+}
+
+/** Surgery starts: the patient leaves their ward bed, which goes to housekeeping. */
+function onCaseStarted(S, c, x) {
+  const p = x.patientId ? S.patients.find((pp) => pp.id === x.patientId) : null;
+  const o = x.otRequestId ? (c.otRequests || []).find((r) => r.id === x.otRequestId) : null;
+  if (o) {
+    o.status = 'in_progress';
+    o.history.push({ at: new Date().toISOString(), status: 'in_progress', by: x.surgeon, text: `Surgery started in OT-${x.roomId}` });
+  }
+  if (!p || !p.bedId) return;
+  const bed = S.beds.find((b) => b.id === p.bedId);
+  const nurse = nurseForBed(p.bedId);
+  p.preOpBedId = p.bedId;
+  p.bedId = null;
+  p.location = `OT-${x.roomId}`;
+  if (bed) {
+    Object.assign(bed, { status: 'cleaning', patientId: null, expectedRelease: null, cleaningSince: new Date().toISOString() });
+    emitLive('bed.updated', { bedId: bed.id, status: 'cleaning', patientId: null });
+  }
+  for (const tk of c.tasks.filter((tt) => tt.patientId === p.id && tt.status !== 'done' && tt.otRequestId === x.otRequestId)) {
+    tk.status = 'done';
+    tk.completedAt = new Date().toISOString();
+  }
+  if (nurse && bed) c.tasks.push(task(nurse.id, 'clean_bed', null, bed.id, Date.now(), 'pending', 'urgent', `${p.alias} went to OT-${x.roomId}; prepare the bed for the next admission`));
+  syncOtNeeded(c, p.id);
+  notifyTo({ roles: ['doctor'], doctorIds: [p.doctorId, x.surgeonId].filter(Boolean) }, `${p.alias} is in surgery`, `${x.procedure} started in OT-${x.roomId}`, 'ot_assigned', '/doctor/ot-cases');
+  notifyTo({ roles: ['admin'] }, `Housekeeping: clean ${bed?.id}`, `${p.alias} moved to OT-${x.roomId}`, 'general', '/admin/flow/housekeeping');
+  if (p.id === c.portalPatientId) notifyTo({ roles: ['patient'], patientId: p.id }, 'Your surgery has started', `${x.procedure} in OT-${x.roomId}`, 'request', '/patient/dashboard');
+  addPatientEvent(p.id, 'procedure', `Surgery started: ${x.procedure} (OT-${x.roomId})`, x.surgeon);
+}
+
+/** After OT_COMPLETE (flowMock moves the patient into a recovery bed): close the loop for everyone. */
+export function onCaseCompleted(caseId) {
+  const S = getFlowState();
+  const c = care();
+  const x = S.cases.find((cs) => cs.id === caseId);
+  if (!x || !x.patientId) return { ok: true };
+  const p = S.patients.find((pp) => pp.id === x.patientId);
+  const where = p?.bedId ? `recovering in ${p.bedId}` : 'in recovery';
+  const o = x.otRequestId ? (c.otRequests || []).find((r) => r.id === x.otRequestId) : null;
+  if (o) {
+    o.status = 'completed';
+    o.history.push({ at: new Date().toISOString(), status: 'completed', by: x.surgeon, text: `Surgery completed, ${where}` });
+    if (o.linkedRequestId) updateRequest(o.linkedRequestId, { status: 'done', by: x.surgeon, text: `Surgery completed, ${where}` });
+  }
+  if (p) {
+    syncOtNeeded(c, p.id);
+    const nurse = p.bedId ? nurseForBed(p.bedId) : null;
+    if (nurse) {
+      c.tasks.push(task(nurse.id, 'post_op', p, p.bedId, Date.now() + 5 * MIN, 'pending', 'urgent', `Back from ${x.procedure}`));
+      notifyTo({ roles: ['nurse'], nurseIds: [nurse.id] }, `Post-op arrival: ${p.alias} in ${p.bedId}`, x.procedure, 'alert', '/nurse/tasks');
+    }
+    notifyTo({ roles: ['doctor'], doctorIds: [p.doctorId, x.surgeonId].filter(Boolean) }, `Surgery completed: ${p.alias}`, `${x.procedure}, ${where}`, 'ot_assigned', '/doctor/patients');
+    if (p.id === c.portalPatientId && !o?.linkedRequestId) notifyTo({ roles: ['patient'], patientId: p.id }, 'Surgery completed', `You are ${where}`, 'request', '/patient/dashboard');
+    addPatientEvent(p.id, 'procedure', `Surgery completed; ${where}`, x.surgeon);
+  }
+  return { ok: true };
+}
+
+/** Move a patient to another bed type (e.g. recovery to general ward). The old bed goes to cleaning. */
+export function transferPatient(patientId, toType = 'general', by = 'Doctor') {
+  const S = getFlowState();
+  const c = care();
+  const p = patientById(S, patientId);
+  const from = S.beds.find((b) => b.id === p.bedId);
+  // Ward beds only (radiology bays share the 'general' type but are not ward beds)
+  const WARD_ZONE = { general: 'General Ward', icu: 'ICU', hdu: 'HDU', post_op: 'PACU', isolation: 'General Ward' };
+  const to = S.beds.find((b) => b.type === toType && b.zone === (WARD_ZONE[toType] || b.zone) && b.status === 'available');
+  if (!to) throw new Error(`No free ${toType === 'general' ? 'general ward' : toType} bed right now`);
+  if (from) {
+    Object.assign(from, { status: 'cleaning', patientId: null, expectedRelease: null, cleaningSince: new Date().toISOString() });
+    const n = nurseForBed(from.id);
+    if (n) c.tasks.push(task(n.id, 'clean_bed', null, from.id, Date.now(), 'pending', 'urgent', `${p.alias} moved to ${to.id}`));
+    emitLive('bed.updated', { bedId: from.id, status: 'cleaning', patientId: null });
+  }
+  Object.assign(to, { status: 'occupied', patientId: p.id, expectedRelease: iso(Date.now() + 24 * H), releaseConfidence: 0.7 });
+  Object.assign(p, { bedId: to.id, department: to.department, status: p.acuity <= 2 ? 'critical' : 'admitted', location: null });
+  emitLive('bed.updated', { bedId: to.id, status: 'occupied', patientId: p.id });
+  const nn = nurseForBed(to.id);
+  if (nn) {
+    c.tasks.push(task(nn.id, 'transport', p, to.id, Date.now() + 10 * MIN, 'pending', 'normal', `Receive ${p.alias} from ${from?.id || 'recovery'}`));
+    notifyTo({ roles: ['nurse'], nurseIds: [nn.id] }, `Incoming: ${p.alias} to ${to.id}`, `From ${from?.id || 'recovery'}`, 'general', '/nurse/beds');
+  }
+  notifyTo({ roles: ['admin'] }, `${p.alias} moved to ${to.id}`, `${from?.id || 'Previous bed'} needs cleaning`, 'general', '/admin/flow/housekeeping');
+  if (p.id === c.portalPatientId) notifyTo({ roles: ['patient'], patientId: p.id }, `You moved to ${to.id}`, `${to.ward}, floor ${to.floor}`, 'request', '/patient/dashboard');
+  addPatientEvent(p.id, 'status_change', `Moved from ${from?.id || 'recovery'} to ${to.id} (${to.ward})`, by);
+  recordEvent('PATIENT_TRANSFERRED', { patientId: p.id, from: from?.id, to: to.id }, {});
+  return { patientId: p.id, from: from?.id || null, to: to.id };
+}
+
+/* ───────────────────────── who is looking (demo identities) ───────────────────────── */
+
+export function viewerFor(role) {
+  const c = care();
+  return { role, doctorId: role === 'doctor' ? FLOW_ME_DOCTOR : null, nurseId: role === 'nurse' ? ME_NURSE : null, patientId: role === 'patient' ? c.portalPatientId : null };
+}
+
+function viewerKey(v) {
+  return `${v.role}:${v.doctorId || v.nurseId || v.patientId || ''}`;
+}
+
+/** Notifications without an audience are staff broadcasts (admin, doctors, OT). */
+function canSee(n, v) {
+  const a = n.audience;
+  if (!a) return ['admin', 'doctor', 'ot_manager'].includes(v.role);
+  if (!a.roles.includes(v.role)) return false;
+  if (v.role === 'doctor' && a.doctorIds && !a.doctorIds.includes(v.doctorId)) return false;
+  if (v.role === 'nurse' && a.nurseIds && !a.nurseIds.includes(v.nurseId)) return false;
+  if (v.role === 'patient' && a.patientId !== v.patientId) return false;
+  return true;
+}
+
+const isReadFor = (n, v) => Boolean(n.readBy?.[viewerKey(v)] || (!n.audience && n.isRead));
+
+/** Live counts for the sidebar. */
+export function getBadgeCounts(role) {
+  const c = care();
+  const v = viewerFor(role);
+  const out = { notifications: getFlowState().notifications.filter((n) => canSee(n, v) && !isReadFor(n, v)).length };
+  if (role === 'doctor') out.requests = listRequests('doctor').filter((r) => ['new', 'acknowledged'].includes(r.status)).length;
+  if (role === 'ot_manager') out.otRequests = (c.otRequests || []).filter((o) => o.status === 'pending').length;
+  if (role === 'admin') {
+    c.requests.forEach(normaliseRequest);
+    out.requests = c.requests.filter((r) => OPEN_REQUEST.includes(r.status)).length + (c.otRequests || []).filter((o) => o.status === 'pending').length;
+    out.cleaning = getFlowState().beds.filter((b) => b.status === 'cleaning').length;
+  }
+  if (role === 'nurse') out.tasks = c.tasks.filter((t) => t.nurseId === v.nurseId && t.status !== 'done').length;
+  if (role === 'patient') out.requests = listRequests('patient').filter((r) => OPEN_REQUEST.includes(r.status)).length;
+  return out;
 }
 
 /* ───────────────────────── patient journey page ───────────────────────── */
@@ -960,21 +1431,40 @@ export function submitPortalRequest({ type, message }) {
 
 /* ───────────────────────── notifications ───────────────────────── */
 
-export function getNotifications() {
-  return getFlowState().notifications;
+export function getNotifications(role = 'admin') {
+  const v = viewerFor(role);
+  return getFlowState()
+    .notifications.filter((n) => canSee(n, v))
+    .map((n) => ({ ...n, isRead: isReadFor(n, v) }));
 }
 
-export function markAllRead() {
+export function markAllRead(role = 'admin') {
+  const v = viewerFor(role);
+  const key = viewerKey(v);
   getFlowState().notifications.forEach((n) => {
-    n.isRead = true;
+    if (!canSee(n, v)) return;
+    n.readBy = { ...(n.readBy || {}), [key]: true };
   });
   return { ok: true };
 }
 
-export function markRead(id) {
+export function markRead(id, role = 'admin') {
+  const v = viewerFor(role);
   const n = getFlowState().notifications.find((x) => x.id === id);
-  if (n) n.isRead = true;
+  if (n) n.readBy = { ...(n.readBy || {}), [viewerKey(v)]: true };
   return n;
+}
+
+/* ───────────────────────── shared state (hospitalSync) ───────────────────────── */
+
+export function exportCareState() {
+  const { flowRef, ...rest } = care(); // eslint-disable-line no-unused-vars
+  return rest;
+}
+
+/** Call after importFlowState so the care data points at the new hospital. */
+export function importCareState(data) {
+  C = { ...data, flowRef: getFlowState() };
 }
 
 export { clone };

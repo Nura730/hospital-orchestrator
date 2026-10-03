@@ -76,14 +76,14 @@ export function FlowForecastPanel({ defaultDepartment = 'Emergency' }) {
         <>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div className="rounded-xl bg-royal-100 p-3">
-              <div className="text-[10px] uppercase font-semibold text-royal-700 tracking-wide">Arrivals next 6h</div>
+              <div className="text-[11px] uppercase font-semibold text-royal-700 tracking-wide">Arrivals next 6h</div>
               <div className="text-2xl font-extrabold text-royal-900 tabular-nums">{total.toFixed(1)}</div>
               <PredictionConfidenceBadge confidence={f.confidence} />
             </div>
             <div className="rounded-xl bg-cream-100 p-3">
-              <div className="text-[10px] uppercase font-semibold text-ink-500 tracking-wide">Admission rate</div>
+              <div className="text-[11px] uppercase font-semibold text-ink-500 tracking-wide">Admission rate</div>
               <div className="text-2xl font-extrabold text-royal-900 tabular-nums">{Math.round((demand[0]?.admissionRate ?? f.historicalAdmissionRate) * 100)}%</div>
-              <span className="text-[10px] text-ink-500">{f.historyRows} history hours</span>
+              <span className="text-[11px] text-ink-500">{f.historyRows} history hours</span>
             </div>
           </div>
 
@@ -108,15 +108,15 @@ export function FlowForecastPanel({ defaultDepartment = 'Emergency' }) {
             </tbody>
           </table>
 
-          <h4 className="text-[11px] font-bold uppercase tracking-wide text-ink-500 mb-1.5">Demand vs capacity</h4>
+          <h4 className="text-xs font-bold uppercase tracking-wide text-ink-500 mb-1.5">Demand vs capacity</h4>
           <div className="grid grid-cols-4 gap-1.5">
             {demand.map((d) => (
               <div key={d.horizon} className={clsx('rounded-lg border px-2 py-1.5 text-center', d.shortage ? 'border-[#EF4444] bg-[#EF4444]/10' : 'border-cream-200 bg-cream-50')}>
-                <div className="text-[10px] text-ink-500">+{d.horizon}h</div>
+                <div className="text-[11px] text-ink-500">+{d.horizon}h</div>
                 <div className={clsx('text-sm font-extrabold tabular-nums', d.shortage ? 'text-fg-bad' : 'text-royal-900')}>
                   {Math.round(d.demand)}/{d.capacity}
                 </div>
-                <div className={clsx('text-[10px] font-semibold tabular-nums', d.gap > 0 ? 'text-fg-bad' : 'text-fg-ok')}>{d.gap > 0 ? `short ${d.gap}` : `${Math.abs(d.gap)} spare`}</div>
+                <div className={clsx('text-[11px] font-semibold tabular-nums', d.gap > 0 ? 'text-fg-bad' : 'text-fg-ok')}>{d.gap > 0 ? `short ${d.gap}` : `${Math.abs(d.gap)} spare`}</div>
               </div>
             ))}
           </div>

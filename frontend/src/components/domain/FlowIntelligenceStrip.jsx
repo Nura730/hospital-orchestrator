@@ -48,19 +48,19 @@ export function FlowIntelligenceStrip() {
       <div className="flex items-center gap-2 mb-3">
         <Brain className="w-4 h-4 text-royal-500" aria-hidden="true" />
         <h2 className="label-xs">Flow Intelligence</h2>
-        <Link to="/admin/flow/command-center" className="ml-auto text-[11px] font-semibold text-royal-500 hover:underline inline-flex items-center gap-1">
+        <Link to="/admin/flow/command-center" className="ml-auto text-xs font-semibold text-royal-500 hover:underline inline-flex items-center gap-1">
           Command Center <ArrowRight className="w-3 h-3" aria-hidden="true" />
         </Link>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="rounded-lg bg-sunken p-3">
-          <div className="text-[10px] uppercase tracking-wide text-ink-500 flex items-center gap-1">
+          <div className="text-[11px] uppercase tracking-wide text-ink-500 flex items-center gap-1">
             <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Top bottleneck
           </div>
           {root ? (
             <>
               <div className="text-lg font-extrabold">{root.department}</div>
-              <div className="text-[11px] text-ink-500 tabular-nums">
+              <div className="text-xs text-ink-500 tabular-nums">
                 {root.utilizationPct}% now, {root.predicted2hPct}% in 2h {s.cascade.length > 0 && `· cascade: ${s.cascade.join(', ')}`}
               </div>
             </>
@@ -69,7 +69,7 @@ export function FlowIntelligenceStrip() {
           )}
         </div>
         <div className="rounded-lg bg-sunken p-3">
-          <div className="text-[10px] uppercase tracking-wide text-ink-500 flex items-center gap-1">
+          <div className="text-[11px] uppercase tracking-wide text-ink-500 flex items-center gap-1">
             <BedDouble className="w-3 h-3" aria-hidden="true" /> 2h bed outlook
           </div>
           {s.shortage2h ? (
@@ -84,13 +84,13 @@ export function FlowIntelligenceStrip() {
           )}
         </div>
         <div className="rounded-lg bg-sunken p-3 flex flex-col">
-          <div className="text-[10px] uppercase tracking-wide text-ink-500 flex items-center gap-1">
+          <div className="text-[11px] uppercase tracking-wide text-ink-500 flex items-center gap-1">
             <Zap className="w-3 h-3" aria-hidden="true" /> Top action
           </div>
           <div className="text-xs font-semibold flex-1">{s.topAction ? s.topAction.text : 'No action needed'}</div>
           {s.topAction && (
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-[10px] text-fg-ok">{s.topAction.impact}</span>
+              <span className="text-[11px] text-fg-ok">{s.topAction.impact}</span>
               <button type="button" onClick={applyTop} disabled={busy} className="flow-btn-primary ml-auto !py-1">
                 {busy ? 'Applying…' : 'Apply'}
               </button>

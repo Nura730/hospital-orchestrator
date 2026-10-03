@@ -3,11 +3,15 @@
   "task": "regression",
   "target_transform": null,
   "features": {
-    "hour": "int32",
-    "day_of_week": "int32",
-    "is_weekend": "int64",
-    "arrivals_prev_1h": "int64",
-    "arrivals_prev_3h": "int64",
+    "priority": "category",
+    "acuity_level": "int64",
+    "department": "category",
+    "age": "int64",
+    "gender": "category",
+    "requires_icu": "int64",
+    "requires_ot": "int64",
+    "requires_diagnostic": "int64",
+    "diagnostic_type": "category",
     "load_queue_length": "float64",
     "load_utilization_percent": "float64",
     "load_pressure_score": "float64",
@@ -15,9 +19,37 @@
     "load_available_capacity": "float64",
     "load_staff_gap": "float64",
     "load_resource_gap": "float64",
-    "acuity_level": "int64",
-    "priority": "category",
-    "department": "category"
+    "hour": "int32",
+    "day_of_week": "int32",
+    "is_weekend": "int64",
+    "hour_sin": "float64",
+    "hour_cos": "float64",
+    "dow_sin": "float64",
+    "dow_cos": "float64",
+    "triage_delay_min": "float64",
+    "arrivals_prev_1h": "int64",
+    "arrivals_prev_2h": "int64",
+    "arrivals_prev_4h": "int64",
+    "arrivals_prev_8h": "int64",
+    "arrivals_prev_24h": "int64",
+    "prio_weighted_arrivals_1h": "int64",
+    "prio_weighted_arrivals_3h": "int64",
+    "prio_weighted_arrivals_6h": "int64",
+    "arrivals_CRITICAL_1h": "int64",
+    "arrivals_CRITICAL_3h": "int64",
+    "arrivals_CRITICAL_6h": "int64",
+    "arrivals_HIGH_1h": "int64",
+    "arrivals_HIGH_3h": "int64",
+    "arrivals_HIGH_6h": "int64",
+    "arrivals_MEDIUM_1h": "int64",
+    "arrivals_MEDIUM_3h": "int64",
+    "arrivals_MEDIUM_6h": "int64",
+    "arrivals_LOW_1h": "int64",
+    "arrivals_LOW_3h": "int64",
+    "arrivals_LOW_6h": "int64",
+    "high_acuity_ratio_3h": "float64",
+    "load_pressure_per_arrival": "float64",
+    "load_queue_to_staff": "float64"
   },
   "categories": {
     "priority": [
@@ -28,6 +60,18 @@
     ],
     "department": [
       "ED"
+    ],
+    "gender": [
+      "F",
+      "M"
+    ],
+    "diagnostic_type": [
+      "CT",
+      "LAB",
+      "MRI",
+      "ULTRASOUND",
+      "XRAY",
+      "nan"
     ]
   }
 }

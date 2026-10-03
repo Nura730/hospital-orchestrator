@@ -1,131 +1,129 @@
 # Medi-Orchestrator — Training Report
 
-Generated 2026-10-04 01:26 · 12 models · 182s total
+Generated 2026-10-04 02:38 · 12 models · 67s total
 
 ## Summary
 
 | Model | Target | Train/Val/Test | Key metric | LightGBM | Best baseline | Improvement |
 |---|---|---|---|---|---|---|
-| `pressure_pressure_t1h` | pressure_score_t1h | 2944/628/636 | MAE | 9.719 | 12.907 | ✅ +24.7% |
-| `pressure_pressure_t4h` | pressure_score_t4h | 2945/634/633 | MAE | 9.397 | 12.475 | ✅ +24.7% |
-| `pressure_pressure_t24h` | pressure_score_t24h | 2928/633/629 | MAE | 10.021 | 13.363 | ✅ +25.0% |
-| `pressure_utilization_t1h` | utilization_percent_t1h | 2944/628/636 | MAE | 15.682 | 20.655 | ✅ +24.1% |
-| `pressure_utilization_t4h` | utilization_percent_t4h | 2945/634/633 | MAE | 15.226 | 19.758 | ✅ +22.9% |
-| `pressure_utilization_t24h` | utilization_percent_t24h | 2928/633/629 | MAE | 15.372 | 20.769 | ✅ +26.0% |
-| `resource_demand` | actual_demand | 5213/1124/1123 | MAE | 1.898 | 1.722 | ❌ -10.3% |
-| `resource_demand_stacked` | actual_demand | 5213/1124/1123 | MAE | 1.437 | 1.722 | ✅ +16.5% |
-| `length_of_stay` | length_of_stay_hours | 6347/1360/1361 | MAE | 4.530 | 6.318 | ✅ +28.3% |
-| `icu_need` | requires_icu | 7000/1500/1500 | ROC_AUC | 0.974 | 0.939 | ✅ +3.7% |
-| `ed_wait_time` | waiting_time_minutes | 7000/1498/1502 | MAE | 66.925 | 67.006 | ✅ +0.1% |
-| `diagnostic_wait_time` | waiting_time_minutes | 6994/1506/1500 | MAE | 130.227 | 133.542 | ✅ +2.5% |
+| `pressure_pressure_t1h` | pressure_score_t1h | 2944/628/636 | MAE | 9.620 | 12.907 | ✅ +25.5% |
+| `pressure_pressure_t4h` | pressure_score_t4h | 2945/634/633 | MAE | 9.258 | 12.475 | ✅ +25.8% |
+| `pressure_pressure_t24h` | pressure_score_t24h | 2928/633/629 | MAE | 9.992 | 13.363 | ✅ +25.2% |
+| `pressure_utilization_t1h` | utilization_percent_t1h | 2944/628/636 | MAE | 15.591 | 20.655 | ✅ +24.5% |
+| `pressure_utilization_t4h` | utilization_percent_t4h | 2945/634/633 | MAE | 15.268 | 19.758 | ✅ +22.7% |
+| `pressure_utilization_t24h` | utilization_percent_t24h | 2928/633/629 | MAE | 15.410 | 20.769 | ✅ +25.8% |
+| `resource_demand` | actual_demand | 5213/1124/1123 | MAE | 1.891 | 1.886 | ❌ -0.3% |
+| `resource_demand_stacked` | actual_demand | 5213/1124/1123 | MAE | 1.435 | 1.722 | ✅ +16.6% |
+| `length_of_stay` | length_of_stay_hours | 6347/1360/1361 | MAE | 4.571 | 6.318 | ✅ +27.7% |
+| `icu_need` | requires_icu | 7000/1500/1500 | ROC_AUC | 0.975 | 0.939 | ✅ +3.7% |
+| `ed_wait_time` | waiting_time_minutes | 7000/1498/1502 | MAE | 66.326 | 67.006 | ✅ +1.0% |
+| `diagnostic_wait_time` | waiting_time_minutes | 6994/1506/1500 | MAE | 128.768 | 133.542 | ✅ +3.6% |
 
 > Splits are chronological (70/15/15). ED and diagnostic test sets exclude patients seen in training. Data in `data/` is partly synthetic (up-sampled), so treat absolute scores as optimistic.
 
 ## pressure_pressure_t1h
 
-Forecast department pressure_score 1h ahead · best iteration 88
+Forecast department pressure_score 1h ahead · best iteration 74
 
 | Model | MAE | RMSE | MAPE | R2 |
 |---|---|---|---|---|
 | Persistence (current value) | 12.907 | 19.208 | 53.0% | -0.405 |
-| LightGBM | 9.719 | 14.398 | 43.4% | 0.210 |
+| LightGBM | 9.620 | 14.239 | 43.0% | 0.228 |
 
-Top features: `pressure_score_rmean24`, `queue_length_rmean3`, `pressure_score_rmean3`, `queue_length_rmean6`, `utilization_percent_rmean24`, `pressure_score_rmean6`, `utilization_percent_rmean6`, `utilization_percent_rmean3`
+Top features: `pressure_score_rmean24`, `queue_length_rmean3`, `pressure_score_rmean3`, `queue_length_rmean6`, `utilization_percent_rmean24`, `pressure_score_rmean6`, `utilization_percent_rmean3`, `utilization_percent_rmean6`
 
 ![pressure_pressure_t1h](figures/pressure_pressure_t1h.png)
 
 ## pressure_pressure_t4h
 
-Forecast department pressure_score 4h ahead · best iteration 104
+Forecast department pressure_score 4h ahead · best iteration 119
 
 | Model | MAE | RMSE | MAPE | R2 |
 |---|---|---|---|---|
 | Persistence (current value) | 12.475 | 18.115 | 55.8% | -0.228 |
-| LightGBM | 9.397 | 13.185 | 42.8% | 0.349 |
+| LightGBM | 9.258 | 12.987 | 42.6% | 0.369 |
 
-Top features: `queue_length_rmean6`, `pressure_score_rmean24`, `average_waiting_time_rmean24`, `queue_length_rmean24`, `utilization_percent_rmean24`, `utilization_percent_rmean6`, `occupied_capacity`, `average_waiting_time_rstd24`
+Top features: `queue_length_rmean6`, `pressure_score_rmean24`, `average_waiting_time_rmean24`, `utilization_percent_rmean24`, `queue_length_rmean24`, `utilization_percent_rmean6`, `occupied_capacity`, `utilization_percent_rstd24`
 
 ![pressure_pressure_t4h](figures/pressure_pressure_t4h.png)
 
 ## pressure_pressure_t24h
 
-Forecast department pressure_score 24h ahead · best iteration 61
+Forecast department pressure_score 24h ahead · best iteration 70
 
 | Model | MAE | RMSE | MAPE | R2 |
 |---|---|---|---|---|
 | Persistence (current value) | 13.363 | 19.385 | 60.7% | -0.340 |
-| LightGBM | 10.021 | 14.313 | 46.2% | 0.269 |
+| LightGBM | 9.992 | 14.123 | 46.0% | 0.289 |
 
-Top features: `queue_length_rmean24`, `queue_length_rstd24`, `utilization_percent_rmean3`, `queue_length_rmean6`, `department`, `utilization_percent_rmean24`, `average_waiting_time_rstd24`, `pressure_score_rstd24`
+Top features: `queue_length_rmean24`, `queue_length_rstd24`, `department`, `utilization_percent_rmean3`, `utilization_percent_rmean24`, `utilization_percent_rstd24`, `pressure_score_rstd24`, `total_capacity`
 
 ![pressure_pressure_t24h](figures/pressure_pressure_t24h.png)
 
 ## pressure_utilization_t1h
 
-Forecast department utilization_percent 1h ahead · best iteration 68
+Forecast department utilization_percent 1h ahead · best iteration 78
 
 | Model | MAE | RMSE | MAPE | R2 |
 |---|---|---|---|---|
 | Persistence (current value) | 20.655 | 26.465 | 46.6% | -0.066 |
-| LightGBM | 15.682 | 19.980 | 35.5% | 0.393 |
+| LightGBM | 15.591 | 19.918 | 35.5% | 0.396 |
 
-Top features: `utilization_percent_rmean24`, `utilization_percent_rmean6`, `utilization_percent_rmean3`, `occupied_capacity`, `total_capacity`, `pressure_score_rmean6`, `department`, `pressure_score_rmean3`
+Top features: `utilization_percent_rmean24`, `utilization_percent_rmean6`, `total_capacity`, `utilization_percent_rmean3`, `pressure_score_rmean3`, `pressure_score_rmean6`, `department`, `pressure_score_lag12`
 
 ![pressure_utilization_t1h](figures/pressure_utilization_t1h.png)
 
 ## pressure_utilization_t4h
 
-Forecast department utilization_percent 4h ahead · best iteration 66
+Forecast department utilization_percent 4h ahead · best iteration 73
 
 | Model | MAE | RMSE | MAPE | R2 |
 |---|---|---|---|---|
 | Persistence (current value) | 19.758 | 25.407 | 45.5% | -0.020 |
-| LightGBM | 15.226 | 19.050 | 35.9% | 0.426 |
+| LightGBM | 15.268 | 19.071 | 35.6% | 0.425 |
 
-Top features: `utilization_percent_rmean24`, `occupied_capacity`, `utilization_percent_rmean6`, `department`, `average_waiting_time_rmean24`, `pressure_score_rmean24`, `pressure_score_rmean3`, `pressure_score_lag6`
+Top features: `utilization_percent_rmean24`, `utilization_percent_rmean6`, `occupied_capacity`, `department`, `patient_count`, `total_capacity`, `average_waiting_time_rmean24`, `pressure_score_rmean6`
 
 ![pressure_utilization_t4h](figures/pressure_utilization_t4h.png)
 
 ## pressure_utilization_t24h
 
-Forecast department utilization_percent 24h ahead · best iteration 63
+Forecast department utilization_percent 24h ahead · best iteration 49
 
 | Model | MAE | RMSE | MAPE | R2 |
 |---|---|---|---|---|
 | Persistence (current value) | 20.769 | 26.513 | 50.1% | -0.049 |
-| LightGBM | 15.372 | 19.308 | 35.8% | 0.443 |
+| LightGBM | 15.410 | 19.330 | 36.2% | 0.442 |
 
-Top features: `department`, `patient_count`, `utilization_percent_rmean24`, `utilization_percent_rmean3`, `utilization_percent_rmean6`, `day_of_week`, `occupied_capacity`, `pressure_score_rstd24`
+Top features: `department`, `patient_count`, `occupied_capacity`, `utilization_percent_rmean24`, `utilization_percent_rmean3`, `day_of_week`, `average_waiting_time_rmean24`, `average_waiting_time_rstd24`
 
 ![pressure_utilization_t24h](figures/pressure_utilization_t24h.png)
 
 ## resource_demand
 
-Forecast actual resource demand from history only (no external forecasts) · best iteration 698
+Forecast actual resource demand from history only (no external forecasts) · best iteration 498
 
 | Model | MAE | RMSE | MAPE | R2 |
 |---|---|---|---|---|
 | Persistence (current_demand) | 1.886 | 2.824 | 21.4% | 0.877 |
-| Existing forecaster (predicted_demand_30m) | 1.801 | 2.754 | 18.9% | 0.883 |
-| Existing forecaster (predicted_demand_1h) | 1.722 | 2.784 | 16.1% | 0.881 |
-| LightGBM | 1.898 | 2.705 | 22.9% | 0.887 |
+| LightGBM | 1.891 | 2.716 | 22.8% | 0.886 |
 
-Top features: `current_demand`, `actual_demand_rmean6`, `actual_demand_rmean24`, `actual_demand_rstd24`, `actual_demand_rstd6`, `current_demand_diff1`, `actual_demand_lag24`, `actual_demand_rstd3`
+Top features: `current_demand`, `actual_demand_rmean6`, `dept_total_current_demand`, `actual_demand_rmean24`, `actual_demand_rstd24`, `current_demand_diff3`, `actual_demand_rmean4`, `current_demand_diff2`
 
 ![resource_demand](figures/resource_demand.png)
 
 ## resource_demand_stacked
 
-Correct the existing demand forecaster using history (stacked model) · best iteration 656
+Correct the existing demand forecaster using history (stacked model) · best iteration 438
 
 | Model | MAE | RMSE | MAPE | R2 |
 |---|---|---|---|---|
 | Persistence (current_demand) | 1.886 | 2.824 | 21.4% | 0.877 |
 | Existing forecaster (predicted_demand_30m) | 1.801 | 2.754 | 18.9% | 0.883 |
 | Existing forecaster (predicted_demand_1h) | 1.722 | 2.784 | 16.1% | 0.881 |
-| LightGBM | 1.437 | 2.206 | 14.7% | 0.925 |
+| LightGBM | 1.435 | 2.202 | 14.7% | 0.925 |
 
-Top features: `predicted_demand_1h`, `predicted_demand_30m`, `predicted_demand_2h`, `current_demand`, `actual_demand_rstd6`, `actual_demand_rstd3`, `predicted_demand_4h`, `actual_demand_rstd24`
+Top features: `predicted_demand_1h`, `predicted_demand_30m`, `predicted_demand_2h`, `current_demand`, `predicted_demand_4h`, `current_demand_diff1`, `actual_demand_rstd12`, `actual_demand_rstd4`
 
 ![resource_demand_stacked](figures/resource_demand_stacked.png)
 
@@ -136,47 +134,47 @@ Predict inpatient length of stay (hours) at admission · best iteration 485
 | Model | MAE | RMSE | MAPE | R2 |
 |---|---|---|---|---|
 | Median LOS per department | 6.318 | 12.001 | 57.5% | 0.703 |
-| LightGBM | 4.530 | 8.256 | 44.1% | 0.860 |
+| LightGBM | 4.571 | 8.337 | 44.3% | 0.857 |
 
-Top features: `admit_delay_hours`, `department`, `age`, `acuity_level`, `diagnostic_type`, `arrival_hour`, `arrival_day_of_week`, `gender`
+Top features: `admit_delay_hours`, `delay_x_acuity`, `department`, `age_x_acuity`, `acuity_level`, `age`, `diagnostic_type`, `required_bed_type`
 
 ![length_of_stay](figures/length_of_stay.png)
 
 ## icu_need
 
-Classify whether an arriving patient will need an ICU bed · best iteration 170
+Classify whether an arriving patient will need an ICU bed · best iteration 256
 
 | Model | ROC_AUC | PR_AUC | F1_best | Recall_at_90_precision |
 |---|---|---|---|---|
 | ICU rate per acuity level | 0.939 | 0.425 | 0.596 | 0.000 |
-| LightGBM | 0.974 | 0.541 | 0.571 | 0.040 |
+| LightGBM | 0.975 | 0.558 | 0.581 | 0.060 |
 
-Top features: `acuity_level`, `age`, `priority`, `requires_ot`, `arrival_hour`, `arrival_day_of_week`, `gender`, `requires_diagnostic`
+Top features: `acuity_level`, `age`, `age_x_acuity`, `requires_ot`, `priority`, `arrival_hour_sin`, `arrival_day_of_week`, `arrival_hour_cos`
 
 ![icu_need](figures/icu_need.png)
 
 ## ed_wait_time
 
-Predict ED waiting time (minutes) at arrival · best iteration 80
+Predict ED waiting time (minutes) at arrival · best iteration 12
 
 | Model | MAE | RMSE | MAPE | R2 |
 |---|---|---|---|---|
 | Median wait per priority | 67.006 | 112.649 | 192.3% | -0.135 |
-| LightGBM | 66.925 | 111.171 | 204.1% | -0.105 |
+| LightGBM | 66.326 | 111.526 | 187.6% | -0.112 |
 
-Top features: `acuity_level`, `arrivals_prev_3h`, `load_utilization_percent`, `arrivals_prev_1h`, `load_average_waiting_time`, `load_pressure_score`, `load_queue_length`, `hour`
+Top features: `triage_delay_min`, `age`, `diagnostic_type`, `arrivals_LOW_3h`, `acuity_level`, `arrivals_MEDIUM_6h`, `arrivals_LOW_6h`, `priority`
 
 ![ed_wait_time](figures/ed_wait_time.png)
 
 ## diagnostic_wait_time
 
-Predict diagnostic test waiting time (minutes) at request · best iteration 470
+Predict diagnostic test waiting time (minutes) at request · best iteration 85
 
 | Model | MAE | RMSE | MAPE | R2 |
 |---|---|---|---|---|
 | Median wait per test & priority | 133.542 | 250.437 | 115.8% | -0.037 |
-| LightGBM | 130.227 | 245.019 | 130.8% | 0.007 |
+| LightGBM | 128.768 | 241.023 | 135.1% | 0.040 |
 
-Top features: `equipment_id`, `load_staff_gap`, `load_pressure_score`, `load_utilization_percent`, `load_average_waiting_time`, `department`, `arrivals_prev_3h`, `load_resource_gap`
+Top features: `age`, `equipment_id`, `technician_id`, `department`, `acuity_level`, `priority`, `test_type`, `gender`
 
 ![diagnostic_wait_time](figures/diagnostic_wait_time.png)

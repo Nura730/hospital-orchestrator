@@ -1,4 +1,5 @@
 """Model 1 — Department pressure forecast (t+1h, t+4h, t+24h)."""
+import numpy as np
 from .common import add_calendar, column, hourly_grid, load, run_model
 
 TARGETS = {"pressure_score": "pressure", "utilization_percent": "utilization"}
@@ -8,7 +9,8 @@ ROLLS = [3, 6, 24]
 LAG_COLS = ["pressure_score", "utilization_percent", "queue_length", "average_waiting_time"]
 CURRENT = ["total_capacity", "occupied_capacity", "available_capacity", "patient_count",
            "queue_length", "average_waiting_time", "utilization_percent", "pressure_score",
-           "staff_gap", "resource_gap"]
+           "staff_gap", "resource_gap", "occupancy_ratio",
+           "hosp_mean_pressure", "hosp_mean_util", "hosp_total_queue", "rel_pressure_to_hosp"]
 CATS = ["department"]
 
 
@@ -17,6 +19,14 @@ def build_features(hourly):
     df = hourly.sort_values(["department", "timestamp"]).reset_index(drop=True)
     df["staff_gap"] = df["staff_available"] - df["staff_required"]
     df["resource_gap"] = df["resource_available"] - df["resource_required"]
+    df["occupancy_ratio"] = df["occupied_capacity"] / np.clip(df["total_capacity"], 1, None)
+
+    # Hospital-wide aggregates across all departments at timestamp
+    df["hosp_mean_pressure"] = df.groupby("timestamp")["pressure_score"].transform("mean")
+    df["hosp_mean_util"] = df.groupby("timestamp")["utilization_percent"].transform("mean")
+    df["hosp_total_queue"] = df.groupby("timestamp")["queue_length"].transform("sum")
+    df["rel_pressure_to_hosp"] = df["pressure_score"] - df["hosp_mean_pressure"]
+
     g = df.groupby("department")
     feats = list(CURRENT)
     for c in LAG_COLS:
@@ -30,13 +40,20 @@ def build_features(hourly):
             feats += [f"{c}_rmean{w}", f"{c}_rstd{w}"]
         df[f"{c}_diff1"] = df[c] - df[f"{c}_lag1"]
         feats.append(f"{c}_diff1")
+        df[f"{c}_trend3"] = df[c] - df[f"{c}_rmean3"]
+        feats.append(f"{c}_trend3")
     add_calendar(df, "timestamp")
-    feats += ["hour", "day_of_week", "is_weekend"] + CATS
+    df["hour_sin"] = np.sin(2 * np.pi * df["hour"] / 24)
+    df["hour_cos"] = np.cos(2 * np.pi * df["hour"] / 24)
+    feats += ["hour", "day_of_week", "is_weekend", "hour_sin", "hour_cos"] + CATS
     return df, feats
 
 
 def train():
-    hourly = hourly_grid(load("department_state", ["timestamp"]), ["department"])
+    needed = ["department", "timestamp", "staff_available", "staff_required", "resource_available",
+              "resource_required", "total_capacity", "occupied_capacity", "available_capacity",
+              "patient_count", "queue_length", "average_waiting_time", "utilization_percent", "pressure_score"]
+    hourly = hourly_grid(load("department_state", ["timestamp"], usecols=needed), ["department"], cols=needed)
     df, feats = build_features(hourly)
     g = df.groupby("department")
     results = []

@@ -29,14 +29,15 @@ np.random.seed(SEED)
 
 
 # --------------------------------------------------------------------------- data
-def load(name, dates=()):
-    df = pd.read_csv(DATA / f"{name}.csv")
+def load(name, dates=(), usecols=None):
+    df = pd.read_csv(DATA / f"{name}.csv", usecols=usecols)
     for c in dates:
-        df[c] = pd.to_datetime(df[c], errors="coerce")
+        if c in df.columns:
+            df[c] = pd.to_datetime(df[c], errors="coerce")
     return df
 
 
-def hourly_grid(df, keys, time_col="timestamp", ffill_limit=2):
+def hourly_grid(df, keys, time_col="timestamp", cols=None, ffill_limit=2):
     """Aggregate to one row per (keys, hour) on a complete hourly grid.
 
     `_obs` marks hours that were really observed (not forward-filled), so
@@ -44,7 +45,10 @@ def hourly_grid(df, keys, time_col="timestamp", ffill_limit=2):
     """
     df = df.copy()
     df[time_col] = df[time_col].dt.floor("h")
-    num = [c for c in df.select_dtypes("number").columns if c not in keys]
+    if cols is not None:
+        num = [c for c in cols if c in df.columns and c not in keys and c != time_col]
+    else:
+        num = [c for c in df.select_dtypes("number").columns if c not in keys]
     g = df.groupby(keys + [time_col])[num].mean().reset_index()
     g["_obs"] = 1
     out = []

@@ -7,9 +7,9 @@
     "n_train": 2944,
     "n_val": 628,
     "n_test": 636,
-    "best_iteration": 88,
+    "best_iteration": 74,
     "key_metric": "MAE",
-    "improvement_pct": 24.69974370803092,
+    "improvement_pct": 25.466620712691608,
     "beats_baseline": true,
     "metrics": {
       "Persistence (current value)": {
@@ -19,52 +19,52 @@
         "R2": -0.4050557965159043
       },
       "LightGBM": {
-        "MAE": 9.719222718713388,
-        "RMSE": 14.398385156570539,
-        "MAPE": 43.38850995163091,
-        "R2": 0.21045680750900153
+        "MAE": 9.620239677045415,
+        "RMSE": 14.238993717470382,
+        "MAPE": 42.98688840076999,
+        "R2": 0.227840681965371
       }
     },
     "top_features": [
       [
         "pressure_score_rmean24",
-        837613.8487548828
+        933961.7551574707
       ],
       [
         "queue_length_rmean3",
-        740681.665802002
+        884682.4500732422
       ],
       [
         "pressure_score_rmean3",
-        435066.7229003906
+        365948.5281677246
       ],
       [
         "queue_length_rmean6",
-        385799.451171875
+        314839.8052368164
       ],
       [
         "utilization_percent_rmean24",
-        258047.9998474121
+        259368.45889282227
       ],
       [
         "pressure_score_rmean6",
-        200155.94229125977
-      ],
-      [
-        "utilization_percent_rmean6",
-        124363.67120361328
+        226985.57907104492
       ],
       [
         "utilization_percent_rmean3",
-        116095.65753173828
+        113560.72497558594
       ],
       [
-        "queue_length_rmean24",
-        96866.0767211914
+        "utilization_percent_rmean6",
+        99131.13806152344
       ],
       [
-        "utilization_percent",
-        90571.38784790039
+        "pressure_score_rstd24",
+        67283.84411621094
+      ],
+      [
+        "pressure_score",
+        67145.76782226562
       ]
     ]
   },
@@ -76,9 +76,9 @@
     "n_train": 2945,
     "n_val": 634,
     "n_test": 633,
-    "best_iteration": 104,
+    "best_iteration": 119,
     "key_metric": "MAE",
-    "improvement_pct": 24.673805432133182,
+    "improvement_pct": 25.78548482378476,
     "beats_baseline": true,
     "metrics": {
       "Persistence (current value)": {
@@ -88,52 +88,52 @@
         "R2": -0.2281635809325151
       },
       "LightGBM": {
-        "MAE": 9.396872761423317,
-        "RMSE": 13.185273837609238,
-        "MAPE": 42.84335782087959,
-        "R2": 0.34934571820120175
+        "MAE": 9.258191790550237,
+        "RMSE": 12.986535390742866,
+        "MAPE": 42.582276475413295,
+        "R2": 0.368812206897172
       }
     },
     "top_features": [
       [
         "queue_length_rmean6",
-        969443.3547668457
+        975037.0019226074
       ],
       [
         "pressure_score_rmean24",
-        513900.1080932617
+        534241.5830383301
       ],
       [
         "average_waiting_time_rmean24",
-        445405.990234375
-      ],
-      [
-        "queue_length_rmean24",
-        310529.4756164551
+        472721.83016967773
       ],
       [
         "utilization_percent_rmean24",
-        239801.9137878418
+        284048.6109161377
+      ],
+      [
+        "queue_length_rmean24",
+        224020.46942138672
       ],
       [
         "utilization_percent_rmean6",
-        191419.43591308594
+        223484.62762451172
       ],
       [
         "occupied_capacity",
-        122912.48956298828
-      ],
-      [
-        "average_waiting_time_rstd24",
-        119458.25299072266
-      ],
-      [
-        "hour",
-        104896.7025756836
+        139879.9324951172
       ],
       [
         "utilization_percent_rstd24",
-        99247.869140625
+        107069.4443359375
+      ],
+      [
+        "pressure_score_rstd24",
+        95986.11299133301
+      ],
+      [
+        "queue_length_rmean3",
+        86026.78771972656
       ]
     ]
   },
@@ -145,9 +145,9 @@
     "n_train": 2928,
     "n_val": 633,
     "n_test": 629,
-    "best_iteration": 61,
+    "best_iteration": 70,
     "key_metric": "MAE",
-    "improvement_pct": 25.01270731072525,
+    "improvement_pct": 25.231870764867338,
     "beats_baseline": true,
     "metrics": {
       "Persistence (current value)": {
@@ -157,52 +157,52 @@
         "R2": -0.34002486019179146
       },
       "LightGBM": {
-        "MAE": 10.02090619430643,
-        "RMSE": 14.313464296294722,
-        "MAPE": 46.16481212817804,
-        "R2": 0.2694050439222577
+        "MAE": 9.991618346506957,
+        "RMSE": 14.122920386927657,
+        "MAPE": 45.96359399123966,
+        "R2": 0.28872724527628557
       }
     },
     "top_features": [
       [
         "queue_length_rmean24",
-        1274624.1303100586
+        1278701.704284668
       ],
       [
         "queue_length_rstd24",
-        421064.7161254883
-      ],
-      [
-        "utilization_percent_rmean3",
-        234312.10705566406
-      ],
-      [
-        "queue_length_rmean6",
-        229551.6323852539
+        590808.8054199219
       ],
       [
         "department",
-        192830.56253051758
+        217329.2074584961
+      ],
+      [
+        "utilization_percent_rmean3",
+        214119.40704345703
       ],
       [
         "utilization_percent_rmean24",
-        140932.35021972656
-      ],
-      [
-        "average_waiting_time_rstd24",
-        100582.60241699219
-      ],
-      [
-        "pressure_score_rstd24",
-        98563.1420288086
-      ],
-      [
-        "hour",
-        89702.052734375
+        137865.7739868164
       ],
       [
         "utilization_percent_rstd24",
-        89071.82614135742
+        110407.55993652344
+      ],
+      [
+        "pressure_score_rstd24",
+        101377.52392578125
+      ],
+      [
+        "total_capacity",
+        99580.12756347656
+      ],
+      [
+        "average_waiting_time_rstd24",
+        86431.68127441406
+      ],
+      [
+        "utilization_percent_rmean6",
+        84247.56365966797
       ]
     ]
   },
@@ -214,9 +214,9 @@
     "n_train": 2944,
     "n_val": 628,
     "n_test": 636,
-    "best_iteration": 68,
+    "best_iteration": 78,
     "key_metric": "MAE",
-    "improvement_pct": 24.079441737545775,
+    "improvement_pct": 24.51864229373414,
     "beats_baseline": true,
     "metrics": {
       "Persistence (current value)": {
@@ -226,52 +226,52 @@
         "R2": -0.06567282404629893
       },
       "LightGBM": {
-        "MAE": 15.681764545397396,
-        "RMSE": 19.979518702975145,
-        "MAPE": 35.45457801308589,
-        "R2": 0.3926396693885945
+        "MAE": 15.591045511344143,
+        "RMSE": 19.91785980604013,
+        "MAPE": 35.50342789224123,
+        "R2": 0.39638264063299955
       }
     },
     "top_features": [
       [
         "utilization_percent_rmean24",
-        6343203.791931152
+        6495575.289978027
       ],
       [
         "utilization_percent_rmean6",
-        1695574.7497558594
-      ],
-      [
-        "utilization_percent_rmean3",
-        933691.2533569336
-      ],
-      [
-        "occupied_capacity",
-        747727.4354858398
+        2321620.2180786133
       ],
       [
         "total_capacity",
-        446254.9989013672
+        797466.3132324219
       ],
       [
-        "pressure_score_rmean6",
-        425066.40661621094
-      ],
-      [
-        "department",
-        388130.75158691406
+        "utilization_percent_rmean3",
+        680489.3179321289
       ],
       [
         "pressure_score_rmean3",
-        335014.57568359375
+        358055.06927490234
+      ],
+      [
+        "pressure_score_rmean6",
+        344163.40173339844
+      ],
+      [
+        "department",
+        233973.43884277344
       ],
       [
         "pressure_score_lag12",
-        169698.85595703125
+        187776.7589111328
       ],
       [
         "utilization_percent_rstd6",
-        151061.73864746094
+        160958.53491210938
+      ],
+      [
+        "utilization_percent_lag24",
+        144292.2235107422
       ]
     ]
   },
@@ -283,9 +283,9 @@
     "n_train": 2945,
     "n_val": 634,
     "n_test": 633,
-    "best_iteration": 66,
+    "best_iteration": 73,
     "key_metric": "MAE",
-    "improvement_pct": 22.93922718371172,
+    "improvement_pct": 22.72485145332766,
     "beats_baseline": true,
     "metrics": {
       "Persistence (current value)": {
@@ -295,52 +295,52 @@
         "R2": -0.020289966019136463
       },
       "LightGBM": {
-        "MAE": 15.22559810182501,
-        "RMSE": 19.04965043747601,
-        "MAPE": 35.85457740733772,
-        "R2": 0.42640369026193636
+        "MAE": 15.267954265594536,
+        "RMSE": 19.071243892518478,
+        "MAPE": 35.58066089446422,
+        "R2": 0.4251025696864157
       }
     },
     "top_features": [
       [
         "utilization_percent_rmean24",
-        7264886.02746582
-      ],
-      [
-        "occupied_capacity",
-        1927476.9389648438
+        7446742.33203125
       ],
       [
         "utilization_percent_rmean6",
-        563095.0074462891
+        1071199.3294067383
+      ],
+      [
+        "occupied_capacity",
+        955433.7087402344
       ],
       [
         "department",
-        307811.4587402344
+        383771.6082763672
       ],
       [
-        "average_waiting_time_rmean24",
-        276952.58435058594
-      ],
-      [
-        "pressure_score_rmean24",
-        210064.77124023438
-      ],
-      [
-        "pressure_score_rmean3",
-        177915.54064941406
-      ],
-      [
-        "pressure_score_lag6",
-        176888.61932373047
-      ],
-      [
-        "utilization_percent_rmean3",
-        169008.86853027344
+        "patient_count",
+        294507.99963378906
       ],
       [
         "total_capacity",
-        150565.72912597656
+        219363.16107177734
+      ],
+      [
+        "average_waiting_time_rmean24",
+        215313.28900146484
+      ],
+      [
+        "pressure_score_rmean6",
+        191651.65161132812
+      ],
+      [
+        "utilization_percent_rstd24",
+        146654.40600585938
+      ],
+      [
+        "utilization_percent_lag1",
+        139361.01440429688
       ]
     ]
   },
@@ -352,9 +352,9 @@
     "n_train": 2928,
     "n_val": 633,
     "n_test": 629,
-    "best_iteration": 63,
+    "best_iteration": 49,
     "key_metric": "MAE",
-    "improvement_pct": 25.98430626012536,
+    "improvement_pct": 25.801673578551465,
     "beats_baseline": true,
     "metrics": {
       "Persistence (current value)": {
@@ -364,52 +364,52 @@
         "R2": -0.049476086254657714
       },
       "LightGBM": {
-        "MAE": 15.372498882648483,
-        "RMSE": 19.30818072149982,
-        "MAPE": 35.80174691091412,
-        "R2": 0.4434013253775957
+        "MAE": 15.410430307074453,
+        "RMSE": 19.33040860379417,
+        "MAPE": 36.168513540443485,
+        "R2": 0.4421190573659468
       }
     },
     "top_features": [
       [
         "department",
-        6969150.174682617
+        7742243.367675781
       ],
       [
         "patient_count",
-        1560764.7781982422
-      ],
-      [
-        "utilization_percent_rmean24",
-        427093.6799316406
-      ],
-      [
-        "utilization_percent_rmean3",
-        371452.5372314453
-      ],
-      [
-        "utilization_percent_rmean6",
-        249701.17028808594
-      ],
-      [
-        "day_of_week",
-        230107.6795654297
+        688645.3690185547
       ],
       [
         "occupied_capacity",
-        181094.5604248047
+        372147.919921875
       ],
       [
-        "pressure_score_rstd24",
-        172208.7509765625
+        "utilization_percent_rmean24",
+        321021.05725097656
       ],
       [
-        "queue_length_rstd24",
-        169675.15814208984
+        "utilization_percent_rmean3",
+        315070.9678955078
+      ],
+      [
+        "day_of_week",
+        197863.42126464844
+      ],
+      [
+        "average_waiting_time_rmean24",
+        173248.009765625
       ],
       [
         "average_waiting_time_rstd24",
-        168645.08947753906
+        168105.16955566406
+      ],
+      [
+        "utilization_percent_rmean6",
+        150484.6600341797
+      ],
+      [
+        "queue_length_rmean24",
+        126385.8095703125
       ]
     ]
   },
@@ -421,9 +421,9 @@
     "n_train": 5213,
     "n_val": 1124,
     "n_test": 1123,
-    "best_iteration": 698,
+    "best_iteration": 498,
     "key_metric": "MAE",
-    "improvement_pct": -10.256853025803112,
+    "improvement_pct": -0.26818991360487326,
     "beats_baseline": false,
     "metrics": {
       "Persistence (current_demand)": {
@@ -432,65 +432,53 @@
         "MAPE": 21.42818515136236,
         "R2": 0.8772233726728893
       },
-      "Existing forecaster (predicted_demand_30m)": {
-        "MAE": 1.8010092015434847,
-        "RMSE": 2.7540387425503816,
-        "MAPE": 18.910173436615647,
-        "R2": 0.8832617362187758
-      },
-      "Existing forecaster (predicted_demand_1h)": {
-        "MAE": 1.7217868803799345,
-        "RMSE": 2.78446214643675,
-        "MAPE": 16.066678623177243,
-        "R2": 0.8806683143316341
-      },
       "LightGBM": {
-        "MAE": 1.898388030118065,
-        "RMSE": 2.7052365651803583,
-        "MAPE": 22.943251289926632,
-        "R2": 0.887362335527112
+        "MAE": 1.8906907986469506,
+        "RMSE": 2.7156243877112085,
+        "MAPE": 22.840322528325213,
+        "R2": 0.8864956412516972
       }
     },
     "top_features": [
       [
         "current_demand",
-        103920.48186957836
+        98681.39820945263
       ],
       [
         "actual_demand_rmean6",
-        15229.733991861343
+        11326.540755033493
+      ],
+      [
+        "dept_total_current_demand",
+        5365.475023508072
       ],
       [
         "actual_demand_rmean24",
-        10433.343517541885
+        4846.409127950668
       ],
       [
         "actual_demand_rstd24",
-        8983.639435887337
+        4770.396477222443
       ],
       [
-        "actual_demand_rstd6",
-        8366.689202547073
+        "current_demand_diff3",
+        4171.932283163071
+      ],
+      [
+        "actual_demand_rmean4",
+        4143.0162580013275
+      ],
+      [
+        "current_demand_diff2",
+        3997.1875569820404
+      ],
+      [
+        "actual_demand_rstd8",
+        3833.7442965507507
       ],
       [
         "current_demand_diff1",
-        8048.025418519974
-      ],
-      [
-        "actual_demand_lag24",
-        7186.945886731148
-      ],
-      [
-        "actual_demand_rstd3",
-        6996.672900676727
-      ],
-      [
-        "hour",
-        6537.5061728954315
-      ],
-      [
-        "actual_demand_rmean3",
-        6501.978743314743
+        3744.2894394397736
       ]
     ]
   },
@@ -502,9 +490,9 @@
     "n_train": 5213,
     "n_val": 1124,
     "n_test": 1123,
-    "best_iteration": 656,
+    "best_iteration": 438,
     "key_metric": "MAE",
-    "improvement_pct": 16.549991322937878,
+    "improvement_pct": 16.647967483808586,
     "beats_baseline": true,
     "metrics": {
       "Persistence (current_demand)": {
@@ -526,52 +514,52 @@
         "R2": 0.8806683143316341
       },
       "LightGBM": {
-        "MAE": 1.4368313010775726,
-        "RMSE": 2.206073921331616,
-        "MAPE": 14.692701473459865,
-        "R2": 0.9250945770663939
+        "MAE": 1.4351443603938008,
+        "RMSE": 2.2018528068347614,
+        "MAPE": 14.666806127000385,
+        "R2": 0.925380951760454
       }
     },
     "top_features": [
       [
         "predicted_demand_1h",
-        109772.82972729206
+        104582.25111711025
       ],
       [
         "predicted_demand_30m",
-        34896.185598909855
+        45148.04841041565
       ],
       [
         "predicted_demand_2h",
-        13364.262294054031
+        6488.2032063007355
       ],
       [
         "current_demand",
-        11643.191900730133
-      ],
-      [
-        "actual_demand_rstd6",
-        6470.615094661713
-      ],
-      [
-        "actual_demand_rstd3",
-        5868.016290903091
+        4493.253086864948
       ],
       [
         "predicted_demand_4h",
-        5761.001834988594
-      ],
-      [
-        "actual_demand_rstd24",
-        5760.793808221817
+        4299.263235569
       ],
       [
         "current_demand_diff1",
-        5187.084812402725
+        2848.04066157341
       ],
       [
-        "current_demand_lag6",
-        4836.790785074234
+        "actual_demand_rstd12",
+        2812.7847434282303
+      ],
+      [
+        "actual_demand_rstd4",
+        2767.0012637376785
+      ],
+      [
+        "actual_demand_rstd8",
+        2685.2801625728607
+      ],
+      [
+        "actual_demand_rstd3",
+        2678.0296008586884
       ]
     ]
   },
@@ -585,7 +573,7 @@
     "n_test": 1361,
     "best_iteration": 485,
     "key_metric": "MAE",
-    "improvement_pct": 28.29947932938765,
+    "improvement_pct": 27.653399827001618,
     "beats_baseline": true,
     "metrics": {
       "Median LOS per department": {
@@ -595,52 +583,52 @@
         "R2": 0.7031687290691881
       },
       "LightGBM": {
-        "MAE": 4.53029809256128,
-        "RMSE": 8.25601068483119,
-        "MAPE": 44.07499835193865,
-        "R2": 0.8595108382506917
+        "MAE": 4.57111973109231,
+        "RMSE": 8.336996678211323,
+        "MAPE": 44.281429335906196,
+        "R2": 0.8567411088052677
       }
     },
     "top_features": [
       [
         "admit_delay_hours",
-        64531.574771825224
+        66081.63245422393
+      ],
+      [
+        "delay_x_acuity",
+        5134.208450809121
       ],
       [
         "department",
-        10786.706866871566
+        3829.914348207414
       ],
       [
-        "age",
-        2463.5358342267573
+        "age_x_acuity",
+        1801.8274392262101
       ],
       [
         "acuity_level",
-        1984.1965097784996
+        1557.374792456627
+      ],
+      [
+        "age",
+        1535.5105696544051
       ],
       [
         "diagnostic_type",
-        1267.2718075476587
+        1197.239756345749
+      ],
+      [
+        "required_bed_type",
+        593.921013712883
       ],
       [
         "arrival_hour",
-        837.1102640926838
+        424.14031668007374
       ],
       [
         "arrival_day_of_week",
-        484.95888078957796
-      ],
-      [
-        "gender",
-        406.7478315010667
-      ],
-      [
-        "priority",
-        330.2002544179559
-      ],
-      [
-        "requires_icu",
-        320.87249954789877
+        418.29835771396756
       ]
     ]
   },
@@ -652,9 +640,9 @@
     "n_train": 7000,
     "n_val": 1500,
     "n_test": 1500,
-    "best_iteration": 170,
+    "best_iteration": 256,
     "key_metric": "ROC_AUC",
-    "improvement_pct": 3.6872820701046067,
+    "improvement_pct": 3.7445402826206635,
     "beats_baseline": true,
     "metrics": {
       "ICU rate per acuity level": {
@@ -664,52 +652,52 @@
         "Recall_at_90_precision": 0.0
       },
       "LightGBM": {
-        "ROC_AUC": 0.9741241379310345,
-        "PR_AUC": 0.5412467700442224,
-        "F1_best": 0.5714285714285714,
-        "Recall_at_90_precision": 0.04
+        "ROC_AUC": 0.9746620689655172,
+        "PR_AUC": 0.558080117689739,
+        "F1_best": 0.5806451612903226,
+        "Recall_at_90_precision": 0.06
       }
     },
     "top_features": [
       [
         "acuity_level",
-        48156.663055956364
+        51307.63313937187
       ],
       [
         "age",
-        13343.332076470368
+        10738.996896624565
       ],
       [
-        "priority",
-        10990.693331718445
+        "age_x_acuity",
+        8237.959481716156
       ],
       [
         "requires_ot",
-        7277.836032569408
+        7112.117080450058
       ],
       [
-        "arrival_hour",
-        5502.1162286400795
+        "priority",
+        6698.765506863594
+      ],
+      [
+        "arrival_hour_sin",
+        3138.877984136343
       ],
       [
         "arrival_day_of_week",
-        3173.3236059881747
+        3020.6612189412117
+      ],
+      [
+        "arrival_hour_cos",
+        2921.2065261006355
+      ],
+      [
+        "arrival_hour",
+        2753.0374453859404
       ],
       [
         "gender",
-        1149.8128026127815
-      ],
-      [
-        "requires_diagnostic",
-        1024.5032782256603
-      ],
-      [
-        "diagnostic_type",
-        886.2802048921585
-      ],
-      [
-        "arrival_is_weekend",
-        82.6122288107872
+        1198.3649181723595
       ]
     ]
   },
@@ -721,9 +709,9 @@
     "n_train": 7000,
     "n_val": 1498,
     "n_test": 1502,
-    "best_iteration": 80,
+    "best_iteration": 12,
     "key_metric": "MAE",
-    "improvement_pct": 0.12192714464534192,
+    "improvement_pct": 1.0147898844687853,
     "beats_baseline": true,
     "metrics": {
       "Median wait per priority": {
@@ -733,52 +721,52 @@
         "R2": -0.1348263183691969
       },
       "LightGBM": {
-        "MAE": 66.92469914784222,
-        "RMSE": 111.1712931089755,
-        "MAPE": 204.09808779903713,
-        "R2": -0.10523991217306716
+        "MAE": 66.32642398558974,
+        "RMSE": 111.526283347481,
+        "MAPE": 187.6004250676436,
+        "R2": -0.11230964736539106
       }
     },
     "top_features": [
       [
+        "triage_delay_min",
+        4677.433012962341
+      ],
+      [
+        "age",
+        3761.0995931625366
+      ],
+      [
+        "diagnostic_type",
+        622.9806957244873
+      ],
+      [
+        "arrivals_LOW_3h",
+        457.94469833374023
+      ],
+      [
         "acuity_level",
-        2035.124715089798
+        450.553897857666
       ],
       [
-        "arrivals_prev_3h",
-        1941.740559577942
+        "arrivals_MEDIUM_6h",
+        247.37390327453613
       ],
       [
-        "load_utilization_percent",
-        1448.2563517093658
+        "arrivals_LOW_6h",
+        240.0550022125244
       ],
       [
-        "arrivals_prev_1h",
-        1387.2718216180801
+        "priority",
+        205.3617000579834
       ],
       [
-        "load_average_waiting_time",
-        1292.4695811271667
+        "arrivals_CRITICAL_6h",
+        197.21630096435547
       ],
       [
-        "load_pressure_score",
-        1158.6462199687958
-      ],
-      [
-        "load_queue_length",
-        1088.0735350847244
-      ],
-      [
-        "hour",
-        1078.2159478664398
-      ],
-      [
-        "load_staff_gap",
-        976.5712785720825
-      ],
-      [
-        "load_resource_gap",
-        775.0449379682541
+        "requires_diagnostic",
+        172.65789890289307
       ]
     ]
   },
@@ -790,9 +778,9 @@
     "n_train": 6994,
     "n_val": 1506,
     "n_test": 1500,
-    "best_iteration": 470,
+    "best_iteration": 85,
     "key_metric": "MAE",
-    "improvement_pct": 2.4823993654196426,
+    "improvement_pct": 3.575236385128675,
     "beats_baseline": true,
     "metrics": {
       "Median wait per test & priority": {
@@ -802,52 +790,52 @@
         "R2": -0.036913296307370835
       },
       "LightGBM": {
-        "MAE": 130.22702575233842,
-        "RMSE": 245.01874601028914,
-        "MAPE": 130.84990573333837,
-        "R2": 0.007465714853908567
+        "MAE": 128.76762853806477,
+        "RMSE": 241.02309475175633,
+        "MAPE": 135.11889502362703,
+        "R2": 0.0395733356179192
       }
     },
     "top_features": [
       [
+        "age",
+        31860.289878368378
+      ],
+      [
         "equipment_id",
-        22776.322924375534
+        18666.034273147583
       ],
       [
-        "load_staff_gap",
-        12553.65094923973
-      ],
-      [
-        "load_pressure_score",
-        11083.436128854752
-      ],
-      [
-        "load_utilization_percent",
-        10897.671943426132
-      ],
-      [
-        "load_average_waiting_time",
-        10350.643664002419
+        "technician_id",
+        15410.821135520935
       ],
       [
         "department",
-        9232.834865093231
+        8081.494601249695
       ],
       [
-        "arrivals_prev_3h",
-        8681.45110988617
+        "acuity_level",
+        6446.638020992279
       ],
       [
-        "load_resource_gap",
-        7845.898982524872
+        "priority",
+        2879.1995239257812
       ],
       [
-        "load_queue_length",
-        7710.505171179771
+        "test_type",
+        2472.1911606788635
       ],
       [
-        "load_available_capacity",
-        7663.297185301781
+        "gender",
+        2427.9966955184937
+      ],
+      [
+        "requires_ot",
+        1922.7763314247131
+      ],
+      [
+        "requires_icu",
+        1620.4427962303162
       ]
     ]
   }

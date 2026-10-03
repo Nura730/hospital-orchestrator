@@ -1,0 +1,239 @@
+/* ================================================================
+   MediOrchestra — Global Styles
+   Tailwind layers + CSS custom properties + scrollbar + animations
+   ================================================================ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Light Theme (default) ──────────────────────────────────────── */
+:root {
+  /* Primary — Teal */
+  --color-primary-50:  #f0fdfa;
+  --color-primary-100: #ccfbf1;
+  --color-primary-200: #99f6e4;
+  --color-primary-300: #5eead4;
+  --color-primary-400: #2dd4bf;
+  --color-primary-500: #14b8a6;
+  --color-primary-600: #0d9488;
+  --color-primary-700: #0f766e;
+  --color-primary-800: #115e59;
+  --color-primary-900: #134e4a;
+  --color-primary-950: #042f2e;
+
+  /* Surface / Background */
+  --color-background:       #f8fafc;
+  --color-surface:           #ffffff;
+  --color-surface-alt:       #f1f5f9;
+  --color-surface-hover:     #e2e8f0;
+
+  /* Text */
+  --color-foreground:        #0f172a;
+  --color-muted:             #94a3b8;
+  --color-muted-foreground:  #64748b;
+
+  /* Border */
+  --color-border:            #e2e8f0;
+
+  /* Chart palette */
+  --chart-1: #0d9488;
+  --chart-2: #0ea5e9;
+  --chart-3: #8b5cf6;
+  --chart-4: #f59e0b;
+  --chart-5: #ec4899;
+  --chart-6: #22c55e;
+  --chart-7: #ef4444;
+  --chart-8: #6366f1;
+
+  /* Scrollbar */
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-track: transparent;
+}
+
+/* ── Dark Theme ─────────────────────────────────────────────────── */
+.dark {
+  --color-primary-50:  #042f2e;
+  --color-primary-100: #134e4a;
+  --color-primary-200: #115e59;
+  --color-primary-300: #0f766e;
+  --color-primary-400: #0d9488;
+  --color-primary-500: #14b8a6;
+  --color-primary-600: #2dd4bf;
+  --color-primary-700: #5eead4;
+  --color-primary-800: #99f6e4;
+  --color-primary-900: #ccfbf1;
+  --color-primary-950: #f0fdfa;
+
+  --color-background:       #0c1222;
+  --color-surface:           #131c31;
+  --color-surface-alt:       #1a2540;
+  --color-surface-hover:     #1e2d4a;
+
+  --color-foreground:        #f1f5f9;
+  --color-muted:             #475569;
+  --color-muted-foreground:  #94a3b8;
+
+  --color-border:            #1e293b;
+
+  --chart-1: #2dd4bf;
+  --chart-2: #38bdf8;
+  --chart-3: #a78bfa;
+  --chart-4: #fbbf24;
+  --chart-5: #f472b6;
+  --chart-6: #4ade80;
+  --chart-7: #f87171;
+  --chart-8: #818cf8;
+
+  --scrollbar-thumb: #334155;
+  --scrollbar-track: transparent;
+}
+
+/* ── Base Layer ─────────────────────────────────────────────────── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Focus rings — accessible and consistent */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-background;
+  }
+
+  /* Tabular numbers for KPIs and data */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ── Component Layer ────────────────────────────────────────────── */
+@layer components {
+  /* Card base */
+  .card {
+    @apply bg-surface rounded-xl border border-border shadow-card p-4;
+  }
+
+  .card-lg {
+    @apply bg-surface rounded-xl border border-border shadow-card-lg p-5;
+  }
+
+  /* Glass effect for overlays */
+  .glass {
+    @apply bg-surface/80 backdrop-blur-xl border border-border/50;
+  }
+
+  /* Status dot */
+  .status-dot {
+    @apply inline-block w-2 h-2 rounded-full;
+  }
+
+  /* Truncate text */
+  .text-truncate {
+    @apply truncate overflow-hidden whitespace-nowrap;
+  }
+
+  /* Scrollable container */
+  .scroll-container {
+    @apply overflow-auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  /* Data table row hover */
+  .table-row-hover {
+    @apply transition-colors duration-150 hover:bg-surface-alt;
+  }
+}
+
+/* ── Utility Layer ──────────────────────────────────────────────── */
+@layer utilities {
+  /* Hide scrollbar but keep scrolling */
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Custom scrollbar for Webkit */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--color-muted);
+  }
+
+  /* Animated gradient background */
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-500;
+  }
+
+  .gradient-dark {
+    @apply bg-gradient-to-br from-[#0c1222] via-[#131c31] to-[#1a2540];
+  }
+
+  /* Pulse for live updates on bed cells */
+  .pulse-update {
+    animation: pulse-update 600ms ease-out;
+  }
+
+  /* Skeleton shimmer */
+  .skeleton {
+    @apply bg-surface-alt rounded;
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-alt) 25%,
+      var(--color-surface-hover) 50%,
+      var(--color-surface-alt) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}
+
+/* ── Keyframes (non-tailwind) ───────────────────────────────────── */
+@keyframes pulse-update {
+  0%   { box-shadow: 0 0 0 0 rgb(20 184 166 / 0.5); }
+  70%  { box-shadow: 0 0 0 10px rgb(20 184 166 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(20 184 166 / 0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Transitions for route pages ────────────────────────────────── */
+.page-enter {
+  animation: fade-in 200ms ease-out;
+}
+
+@keyframes fade-in {
+  0%   { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Print styles ───────────────────────────────────────────────── */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

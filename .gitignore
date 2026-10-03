@@ -8,3 +8,5 @@ coverage/
 dist/
 .vscode/
 .idea/
+*.local
+.gemini/

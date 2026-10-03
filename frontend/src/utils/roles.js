@@ -186,3 +186,59 @@ export const ROLE_LABELS = {
   [ROLES.NURSE_MANAGER]: 'Nurse Manager',
   [ROLES.DOCTOR]:        'Doctor',
 };
+
+/* ── Default Users for Demo Authentication ──────────────────────── */
+export const DEFAULT_USERS = {
+  admin: {
+    id: 'usr-admin',
+    name: 'Admin Marcus Sterling',
+    email: 'admin@hospital.org',
+    role: ROLES.ADMIN,
+    department: 'Operations Command',
+  },
+  bed_manager: {
+    id: 'usr-bed-mgr',
+    name: 'Marcus Vance',
+    email: 'bedmgr@hospital.org',
+    role: ROLES.BED_MANAGER,
+    department: 'Bed Management & Admissions',
+  },
+  nurse_manager: {
+    id: 'usr-nurse-mgr',
+    name: 'Nurse Clara Barton, RN',
+    email: 'nursemgr@hospital.org',
+    role: ROLES.NURSE_MANAGER,
+    department: 'Emergency & Acute Nursing',
+  },
+  doctor: {
+    id: 'usr-doctor',
+    name: 'Dr. Sarah Lin, MD',
+    email: 'doctor@hospital.org',
+    role: ROLES.DOCTOR,
+    department: 'Emergency Medicine',
+  },
+};
+
+export const ROLE_CONFIG = {
+  [ROLES.ADMIN]: { label: 'Hospital Admin', color: 'primary' },
+  [ROLES.BED_MANAGER]: { label: 'Bed Manager', color: 'info' },
+  [ROLES.NURSE_MANAGER]: { label: 'Nurse Manager', color: 'warning' },
+  [ROLES.DOCTOR]: { label: 'Doctor / Surgeon', color: 'success' },
+};
+
+export function can(role, action) {
+  return canPerformAction(role, action);
+}
+
+export function isRouteAllowed(role, path) {
+  if (!role || !path) return false;
+  if (role === ROLES.ADMIN) return true;
+  if (path === '/' || path === '/_kit' || path === '/404') return true;
+  const normalized = path.replace('-patients', '').replace('-ot', '').replace('-log', '');
+  return canAccessRoute(role, path) || canAccessRoute(role, normalized);
+}
+
+export function getAllowedRoutes(role) {
+  return getRoutesForRole(role);
+}
+

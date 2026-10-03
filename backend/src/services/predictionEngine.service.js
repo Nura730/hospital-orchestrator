@@ -7,6 +7,7 @@
  * CALC 4 projectBedDemand             occupied + expected admissions − expected discharges
  * CALC 5 scoreDischargeReadiness      rule score → probability + blocking factors
  */
+const icuNeed = require('../ml/icuNeed');
 const db = require('../config/db');
 const flowRepo = require('../repositories/flow.repo');
 const flowConfig = require('../config/flowConfig');
@@ -138,6 +139,25 @@ function estimateAdmissionProbability(patient) {
 
   const probability = round(Math.min(0.99, p), 2);
   return { probability, factors };
+}
+
+/* ───────────────────────── ICU need (trained model, ml/) ───────────────────────── */
+
+/** ICU-need prediction for a patient row (age, gender, acuity, requires_ot, arrival time). */
+function icuRiskFromRow(p) {
+  return icuNeed.predictIcuNeed({
+    age: p.age,
+    gender: p.gender,
+    acuity: p.acuity,
+    requiresOt: p.requires_ot,
+    arrivalTime: p.waiting_since || p.admission_date || p.created_at || new Date(),
+  });
+}
+
+async function icuRiskForPatient(patientId) {
+  const patient = await flowRepo.getPatientById(patientId);
+  if (!patient) throw new AppError('Patient not found', 404, 'NOT_FOUND');
+  return { patientId: patient.id, alias: patient.patient_id, acuity: patient.acuity, ...icuRiskFromRow(patient) };
 }
 
 async function admissionProbabilityForPatient(patientId) {
@@ -369,6 +389,8 @@ module.exports = {
   forecastArrivals,
   estimateAdmissionProbability,
   admissionProbabilityForPatient,
+  icuRiskFromRow,
+  icuRiskForPatient,
   getLosTable,
   predictLosFromTable,
   predictLOS,

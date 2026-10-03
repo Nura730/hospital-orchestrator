@@ -68,6 +68,10 @@ module.exports = {
     ok(res, await prediction.admissionProbabilityForPatient(req.params.patientId));
   }),
 
+  getIcuRisk: asyncHandler(async (req, res) => {
+    ok(res, await prediction.icuRiskForPatient(req.params.patientId));
+  }),
+
   getLos: asyncHandler(async (req, res) => {
     ok(res, await prediction.predictLOS(req.params.patientId));
   }),

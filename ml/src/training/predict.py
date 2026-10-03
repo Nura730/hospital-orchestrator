@@ -12,7 +12,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from .common import MODELS
+from .common import MODELS, as_category_text
 
 
 @lru_cache(maxsize=None)
@@ -25,7 +25,7 @@ def predict(name, frame: pd.DataFrame) -> np.ndarray:
     b = load_model(name)
     X = frame.copy()
     for c, values in b["categories"].items():
-        X[c] = X[c].astype(str).astype(pd.CategoricalDtype(values))
+        X[c] = as_category_text(X[c]).astype(pd.CategoricalDtype(values))
     X = X[b["features"]]
     if b["task"] == "binary":
         return b["model"].predict_proba(X)[:, 1]

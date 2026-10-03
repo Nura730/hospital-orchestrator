@@ -42,6 +42,7 @@ export function AmbulanceIncomingAlert() {
           <p className="text-[11px] text-white/85">
             {amb.injuryType}
             {amb.probability != null && ` · admission probability ${Math.round(amb.probability * 100)}%`}
+            {amb.icuProbability != null && ` · ICU need ${Math.round(amb.icuProbability * 100)}% (model)${amb.requiresIcu ? ', ICU bed prioritised' : ''}`}
             {amb.vitals && Object.keys(amb.vitals).length > 0 && ` · ${Object.entries(amb.vitals).map(([k, v]) => `${k} ${v}`).join(', ')}`}
           </p>
         </div>

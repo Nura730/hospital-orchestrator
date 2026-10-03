@@ -19,6 +19,7 @@ router.get('/bed-demand', flow.getBedDemand);
 router.get('/discharge-candidates', authorize('admin', 'nurse_manager', 'doctor'), flow.getDischargeCandidates);
 router.get('/admission-probability/:patientId', authorize('doctor', 'admin'), flow.getAdmissionProbability);
 router.get('/los/:patientId', authorize('doctor', 'admin'), flow.getLos);
+router.get('/icu-risk/:patientId', authorize('doctor', 'admin', 'nurse_manager'), flow.getIcuRisk);
 
 // Phase 3 — bottlenecks, live state, bed map, numbers-first dashboards
 router.get('/bottlenecks', flow.getBottlenecks);

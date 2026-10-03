@@ -27,7 +27,7 @@ import { FlowModal, FlowError, FlowSkeleton } from './FlowUi.jsx';
 import StatusPill from './StatusPill.jsx';
 import RequestForm from './RequestForm.jsx';
 import PatientReportSheet, { printReport } from './PatientReportSheet.jsx';
-import { TabBar, AcuityBadge, Avatar, Field, TimelineList, ProgressLine, EventIcon, MiniEmpty, Chip, PanelTitle } from './CareUi.jsx';
+import { TabBar, AcuityBadge, Avatar, Field, TimelineList, ProgressLine, EventIcon, MiniEmpty, Chip, PanelTitle, IcuRiskBadge } from './CareUi.jsx';
 import careApi from '../../api/careApi.js';
 import { useAuthStore } from '../../store/authStore.js';
 import { errorText } from '../../hooks/useFlowPolling.js';
@@ -95,6 +95,20 @@ function Overview({ data, canRequest, requester, onChanged }) {
           </Field>
           <Field label="Bed">{profile.bed ? `${profile.bed.id} · ${profile.bed.ward} · Floor ${profile.bed.floor}` : 'Not assigned'}</Field>
           <Field label="Admission type">{profile.admissionType}</Field>
+          <Field label="ICU risk (model)">
+            {profile.icuRisk ? (
+              <span className="flex flex-col items-end gap-0.5">
+                <IcuRiskBadge risk={profile.icuRisk} showLabel />
+                {profile.icuRisk.factors?.length > 0 && (
+                  <span className="text-[10px] text-ink-500">
+                    {profile.icuRisk.factors.map((f) => `${f.factor} ${f.direction === 'up' ? 'raises' : 'lowers'}`).join(' · ')}
+                  </span>
+                )}
+              </span>
+            ) : profile.requires.icu ? (
+              'Already in ICU'
+            ) : null}
+          </Field>
         </section>
 
         <section className="flow-card p-3.5">

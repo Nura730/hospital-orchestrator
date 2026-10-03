@@ -33,7 +33,7 @@ import PatientDetailPopup from '../components/domain/PatientDetailPopup.jsx';
 import DoctorCalendar from '../components/domain/DoctorCalendar.jsx';
 import NotificationsList from '../components/domain/NotificationsList.jsx';
 import { FlowModal, FlowError, FlowSkeleton } from '../components/domain/FlowUi.jsx';
-import { StatTile, TabBar, AcuityDot, AcuityBadge, MiniEmpty, PanelTitle, EventIcon } from '../components/domain/CareUi.jsx';
+import { StatTile, TabBar, AcuityDot, AcuityBadge, MiniEmpty, PanelTitle, EventIcon, IcuRiskBadge } from '../components/domain/CareUi.jsx';
 import careApi from '../api/careApi.js';
 import flowApi from '../api/flowApi.js';
 import { useAuthStore } from '../store/authStore.js';
@@ -332,6 +332,7 @@ function PatientsTab({ patients, onOpen, onReport, onUpdate, onRequestOt, onTrac
             <th scope="col">Patient</th>
             <th scope="col">Days Admitted</th>
             <th scope="col">Acuity</th>
+            <th scope="col" title="ICU need predicted by the trained model">ICU risk</th>
             <th scope="col">Status</th>
             <th scope="col" className="text-right">
               Action
@@ -350,6 +351,7 @@ function PatientsTab({ patients, onOpen, onReport, onUpdate, onRequestOt, onTrac
               <td>
                 <AcuityBadge level={p.acuity} size="xs" />
               </td>
+              <td>{p.bedId?.startsWith('ICU') ? <span className="text-[11px] text-ink-500">In ICU</span> : <IcuRiskBadge risk={p.icuRisk} size="xs" />}</td>
               <td>
                 <StatusPill status={p.acuity <= 2 && p.status === 'admitted' ? 'critical' : p.status} size="xs" />
                 {p.otPending && <span className="ml-1 text-[10px] text-fg-violet font-semibold">OT requested</span>}

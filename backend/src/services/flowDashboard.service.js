@@ -488,7 +488,7 @@ async function getOtImpact() {
 
 async function getDoctorPatients(doctorId) {
   const res = await db.query(
-    `SELECT p.id, p.patient_id AS alias, p.status, p.acuity, p.bed_id, b.ward, b.type AS bed_type,
+    `SELECT p.id, p.patient_id AS alias, p.status, p.acuity, p.age, p.gender, p.bed_id, b.ward, b.type AS bed_type,
             COALESCE(b.department_id, p.department_id) AS department_id, d.name AS department_name,
             p.admission_date, p.expected_discharge, p.discharge_date, p.waiting_since, p.created_at,
             p.requires_icu, p.requires_isolation, p.requires_imaging, p.requires_ot,
@@ -516,6 +516,7 @@ async function getDoctorPatients(doctorId) {
       admittedAt: p.admission_date,
       expectedDischarge: p.expected_discharge || los.expectedReleaseTime,
       admissionProbability: adm.probability,
+      icuRisk: prediction.icuRiskFromRow(p),
       factors: [...adm.factors].sort((a, b) => b.impact - a.impact).slice(0, 3),
       los,
       readiness,

@@ -6,6 +6,7 @@
  *   - applies ALL database changes in ONE transaction
  *   - emits socket events only after the transaction commits
  */
+const icuNeed = require('../ml/icuNeed');
 const db = require('../config/db');
 const flowRepo = require('../repositories/flow.repo');
 const flowConfig = require('../config/flowConfig');
@@ -370,14 +371,16 @@ async function handlePatientDeteriorated(client, payload, user, effects) {
 async function handleAmbulanceIncoming(client, payload, user, effects, ctx) {
   const eta = Math.max(1, Number(payload.eta) || 10);
   const acuity = Math.max(1, Math.min(5, Number(payload.acuity) || 2));
-  const requiresIcu = Boolean(payload.requiresIcu) || acuity === 1;
   const arrivalTime = new Date(Date.now() + eta * 60000);
+  // ICU need from the trained model (ml/icu_need); an explicit crew flag still wins
+  const icu = icuNeed.predictIcuNeed({ age: payload.age, gender: payload.gender, acuity, requiresOt: payload.requiresOt, arrivalTime });
+  const requiresIcu = payload.requiresIcu !== undefined ? Boolean(payload.requiresIcu) : icu.needsIcu;
   const { probability, factors } = prediction.estimateAdmissionProbability({ acuity, requires_icu: requiresIcu, arrivalTime });
 
   let bed = null;
   let bedMode = null;
   if (probability > 0.7) {
-    const preferType = acuity <= 2 || requiresIcu ? 'icu' : 'ed';
+    const preferType = requiresIcu ? 'icu' : 'ed';
     for (const type of [preferType, 'ed']) {
       const avail = await client.query(
         `SELECT id, ward, department_id FROM beds WHERE type = $1 AND status = 'available' ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED`,
@@ -462,6 +465,9 @@ async function handleAmbulanceIncoming(client, payload, user, effects, ctx) {
     vitals,
     probability,
     factors,
+    icuProbability: icu.probability,
+    icuFactors: icu.factors,
+    requiresIcu,
     bedId: bed ? bed.id : null,
     bedMode,
     arrivesAt: arrivalTime.toISOString(),

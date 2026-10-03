@@ -104,6 +104,15 @@ Light and dark themes are toggled from the top bar.
 
 ---
 
+## Machine learning (`ml/`)
+
+Trained LightGBM models live in `ml/` (training code, reports, models). The **ICU-need** model is integrated:
+it runs in JavaScript in both the backend and the browser, decides ICU bed reservation for incoming ambulances and
+shows an "ICU risk" score on doctor views and the patient popup. See [`ml/INTEGRATION.md`](ml/INTEGRATION.md) for
+the analysis of all 12 models, what is and is not integrated, and how to re-export after retraining.
+
+---
+
 ## 🛠️ Technology Stack
 
 - **Backend**: Node.js, Express.js, PostgreSQL (Neon DB), Socket.IO, Zod, Jest, Supertest

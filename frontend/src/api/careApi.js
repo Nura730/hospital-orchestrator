@@ -10,12 +10,13 @@
 
 import * as care from './mock/careMock.js';
 import { flowApi } from './flowApi.js';
+import { loadIcuModel } from '../ml/icuNeed.js';
 
 const wait = (ms = 120 + Math.random() * 160) => new Promise((r) => setTimeout(r, ms));
 
 /** Run a care-model call asynchronously and hand back a copy (callers can't mutate shared state). */
 async function call(fn, ...args) {
-  await wait();
+  await Promise.all([wait(), loadIcuModel()]);
   return care.clone(fn(...args));
 }
 

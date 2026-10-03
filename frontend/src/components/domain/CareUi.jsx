@@ -256,3 +256,28 @@ export function PanelTitle({ children, count, action }) {
     </div>
   );
 }
+
+/* ── ICU risk from the trained model (ml/icu_need) ──────────────── */
+const ICU_LEVEL = {
+  high: { text: '#991B1B', bg: 'rgba(239,68,68,0.10)', border: 'rgba(239,68,68,0.35)', label: 'High' },
+  watch: { text: '#92400E', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.40)', label: 'Watch' },
+  low: { text: '#046C4E', bg: 'rgba(16,185,129,0.10)', border: 'rgba(16,185,129,0.35)', label: 'Low' },
+};
+
+/** "ICU 87%" pill; the tooltip lists the model's main reasons. */
+export function IcuRiskBadge({ risk, size = 'sm', showLabel = false }) {
+  if (!risk) return <span className="text-ink-500">—</span>;
+  const s = ICU_LEVEL[risk.level] || ICU_LEVEL.low;
+  const why = (risk.factors || []).map((f) => `${f.factor} ${f.direction === 'up' ? 'raises' : 'lowers'} risk`).join(' · ');
+  return (
+    <span
+      className={clsx('inline-flex items-center gap-1 rounded-full border font-semibold whitespace-nowrap tabular-nums', size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-[11px]')}
+      style={{ color: s.text, backgroundColor: s.bg, borderColor: s.border }}
+      title={`ICU need predicted by model: ${Math.round(risk.probability * 100)}%${why ? ` (${why})` : ''}`}
+    >
+      <HeartPulse className="w-3 h-3" aria-hidden="true" />
+      {showLabel ? `${s.label} · ` : ''}
+      {Math.round(risk.probability * 100)}%
+    </span>
+  );
+}

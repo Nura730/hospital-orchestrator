@@ -90,14 +90,24 @@ def time_split(df, time_col, val=0.15, test=0.15, group_key=None):
     )
 
 
+def as_category_text(s):
+    """Text form of a categorical column with missing values spelled 'nan'.
+
+    pandas < 3 turned NaN into the string 'nan' on astype(str); pandas >= 3 keeps it missing.
+    The saved models learned 'nan' as a real category (e.g. "no diagnostic test"), so missing
+    values are mapped to 'nan' explicitly to keep training and inference identical on any version.
+    """
+    return s.astype(object).where(s.notna(), "nan").astype(str)
+
+
 def encode_categories(frames, cats):
     """Category dtypes fitted on the train frame (unseen values become NaN)."""
     mapping = {}
     for c in cats:
-        values = sorted(frames[0][c].astype(str).unique())
+        values = sorted(as_category_text(frames[0][c]).unique())
         dtype = pd.CategoricalDtype(values)
         for f in frames:
-            f[c] = f[c].astype(str).astype(dtype)
+            f[c] = as_category_text(f[c]).astype(dtype)
         mapping[c] = values
     return mapping
 

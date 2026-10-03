@@ -246,7 +246,10 @@ async function demoAmbulance(body, user) {
       acuity: body.acuity || 1,
       injuryType: body.injuryType || 'Road traffic collision, chest trauma',
       vitals: body.vitals || { HR: 128, BP: '88/54', SpO2: '89%', GCS: 12 },
-      requiresIcu: body.requiresIcu !== undefined ? body.requiresIcu : true,
+      age: body.age ?? 68,
+      gender: body.gender || 'M',
+      // ICU need comes from the trained model unless the caller sets it explicitly
+      ...(body.requiresIcu !== undefined ? { requiresIcu: body.requiresIcu } : {}),
     },
     user
   );

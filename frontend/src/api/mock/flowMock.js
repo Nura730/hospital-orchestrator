@@ -6,6 +6,7 @@
  */
 
 import { liveEmitter } from './liveEmitter.js';
+import { loadIcuModel, predictIcuNeed } from '../../ml/icuNeed.js';
 
 const WARN = 0.75;
 const DANGER = 0.88;
@@ -119,9 +120,12 @@ function buildState() {
     if (zone === 'PACU') doctor = DOCTORS.find((d) => d.id === 'doc-hughes');
     if (doctor.id === ME_DOCTOR && !trio[bedId] && i % 3 !== 0) doctor = DOCTORS[1];
     const admitted = now - (zone === 'ED' ? 1 + rand() * 6 : zone === 'Radiology' ? 0.5 + rand() : 12 + rand() * 96) * H;
+    const demo = rng(9000 + i);
     const p = {
       id: `pt-${i + 1}`,
       alias: `PF${String(i + 1).padStart(3, '0')}`,
+      age: zone === 'ICU' || zone === 'HDU' ? 45 + Math.floor(demo() * 45) : 18 + Math.floor(demo() * 70),
+      gender: demo() < 0.5 ? 'M' : 'F',
       acuity,
       status: acuity <= 2 ? 'critical' : 'admitted',
       bedId,
@@ -551,7 +555,7 @@ function doctorPatients() {
       const adm = admissionProbability(p, p.waitingSince || p.admittedAt || new Date());
       const l = los(p);
       const bed = st().beds.find((b) => b.id === p.bedId);
-      return { patientId: p.id, alias: p.alias, status: p.status, acuity: p.acuity, bedId: p.bedId, ward: bed?.ward || null, department: p.department, admittedAt: p.admittedAt, expectedDischarge: p.expectedDischarge || l.expectedReleaseTime, admissionProbability: adm.probability, factors: [...adm.factors].sort((a, b) => b.impact - a.impact).slice(0, 3), los: l, readiness: readiness(p), requiresOt: p.requiresOt };
+      return { patientId: p.id, alias: p.alias, status: p.status, acuity: p.acuity, bedId: p.bedId, ward: bed?.ward || null, department: p.department, admittedAt: p.admittedAt, expectedDischarge: p.expectedDischarge || l.expectedReleaseTime, admissionProbability: adm.probability, factors: [...adm.factors].sort((a, b) => b.impact - a.impact).slice(0, 3), icuRisk: predictIcuNeed({ age: p.age, gender: p.gender, acuity: p.acuity, requiresOt: p.requiresOt, arrivalTime: p.admittedAt || p.waitingSince }), los: l, readiness: readiness(p), requiresOt: p.requiresOt };
     });
 }
 
@@ -736,12 +740,14 @@ function processEvent(eventType, payload = {}) {
     case 'AMBULANCE_INCOMING': {
       const eta = +payload.eta || 8;
       const acuity = +payload.acuity || 1;
-      const requiresIcu = payload.requiresIcu !== undefined ? payload.requiresIcu : acuity === 1;
-      const adm = admissionProbability({ acuity, requiresIcu }, new Date(Date.now() + eta * MIN));
+      const arrival = new Date(Date.now() + eta * MIN);
+      const icu = predictIcuNeed({ age: payload.age, gender: payload.gender, acuity, requiresOt: payload.requiresOt, arrivalTime: arrival });
+      const requiresIcu = payload.requiresIcu !== undefined ? Boolean(payload.requiresIcu) : icu ? icu.needsIcu : acuity === 1;
+      const adm = admissionProbability({ acuity, requiresIcu }, arrival);
       let bed = null;
       let bedMode = null;
       if (adm.probability > 0.7) {
-        for (const type of [acuity <= 2 || requiresIcu ? 'icu' : 'ed', 'ed']) {
+        for (const type of [requiresIcu ? 'icu' : 'ed', 'ed']) {
           const free = s.beds.find((b) => b.type === type && b.status === 'available');
           if (free) {
             free.status = 'reserved';
@@ -757,7 +763,7 @@ function processEvent(eventType, payload = {}) {
           }
         }
       }
-      const banner = { eventId: uid('evt'), eta, acuity, injuryType: payload.injuryType || 'Road traffic collision, chest trauma', vitals: payload.vitals || { HR: 128, BP: '88/54', SpO2: '89%' }, probability: adm.probability, factors: adm.factors, bedId: bed?.id || null, bedMode, arrivesAt: iso(Date.now() + eta * MIN), receivedAt: new Date().toISOString() };
+      const banner = { eventId: uid('evt'), eta, acuity, injuryType: payload.injuryType || 'Road traffic collision, chest trauma', vitals: payload.vitals || { HR: 128, BP: '88/54', SpO2: '89%' }, probability: adm.probability, factors: adm.factors, age: payload.age ?? null, icuProbability: icu?.probability ?? null, icuFactors: icu?.factors || [], requiresIcu, bedId: bed?.id || null, bedMode, arrivesAt: iso(Date.now() + eta * MIN), receivedAt: new Date().toISOString() };
       s.ambulance = banner;
       addRec({ type: 'trauma_team', title: `Prepare trauma team: ambulance ETA ${eta} min (acuity ${acuity})`, detail: banner.injuryType, expectedImpact: 'Door-to-treatment under 10 min', risk: 'high' });
       notify(`Ambulance ETA ${eta} min: acuity ${acuity}`, `${banner.injuryType}. ${bed ? `Bed ${bed.id} ${bedMode}.` : ''}`, 'alert');
@@ -1008,7 +1014,7 @@ function matchPost(path, body = {}) {
     runAnalysis();
     return { reset: true };
   }
-  if (path === '/demo/ambulance') return processEvent('AMBULANCE_INCOMING', { eta: 8, acuity: 1, requiresIcu: true, ...body });
+  if (path === '/demo/ambulance') return processEvent('AMBULANCE_INCOMING', { eta: 8, acuity: 1, age: 68, gender: 'M', ...body });
   if (path === '/demo/surge') {
     s.surgeFactor = 1.6;
     const free = s.beds.filter((b) => b.type === 'ed' && b.status === 'available').slice(0, 4);
@@ -1060,11 +1066,11 @@ export function patientReadiness(p) {
 
 export const flowMock = {
   async get(path, params) {
-    await delay();
+    await Promise.all([delay(), loadIcuModel()]);
     return matchGet(path, params);
   },
   async post(path, body) {
-    await delay();
+    await Promise.all([delay(), loadIcuModel()]);
     if (path === '/ai-report') await new Promise((r) => setTimeout(r, 900));
     return matchPost(path, body);
   },

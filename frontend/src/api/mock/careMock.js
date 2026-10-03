@@ -17,6 +17,7 @@ import {
   recordEvent,
   patientReadiness,
 } from './flowMock.js';
+import { predictIcuNeed } from '../../ml/icuNeed.js';
 
 const MIN = 60 * 1000;
 const H = 60 * MIN;
@@ -268,8 +269,9 @@ function buildProfile(S, p) {
     patientId: p.id,
     alias: p.alias,
     name: isPortal ? PORTAL_NAME : null,
-    age: 24 + Math.floor(rand() * 58),
-    gender: rand() < 0.52 ? 'Male' : 'Female',
+    // rand() is still drawn so the rest of the generated profile stays stable
+    age: ((r) => p.age ?? 24 + Math.floor(r * 58))(rand()),
+    gender: ((r) => (p.gender ? (p.gender === 'M' ? 'Male' : 'Female') : r < 0.52 ? 'Male' : 'Female'))(rand()),
     bloodGroup: pick(rand, BLOOD_GROUPS),
     status: patientStatus(S, p),
     acuity: p.acuity,
@@ -293,6 +295,7 @@ function buildProfile(S, p) {
     nurse: nurse ? { id: nurse.id, name: nurse.name, shift: `${nurse.shift[0]} - ${nurse.shift[1]}` } : null,
     otSurgeon: requiresOt ? (zone === 'PACU' ? 'Dr. Nathan Hughes' : otPending?.surgeon || 'To be assigned') : null,
     readiness: p.bedId ? patientReadiness(p).score : null,
+    icuRisk: bed?.type === 'icu' ? null : predictIcuNeed({ age: p.age, gender: p.gender, acuity: p.acuity, requiresOt: requiresOt, arrivalTime: admittedAt }),
   };
 }
 
@@ -700,7 +703,7 @@ export function getDoctorDashboard() {
   const rows = active
     .map((p) => {
       const prof = buildProfile(S, p);
-      return { patientId: p.id, alias: p.alias, bedId: p.bedId, ward: prof.bed?.ward, acuity: p.acuity, status: prof.status, admittedAt: p.admittedAt, daysAdmitted: prof.daysAdmitted, diagnosis: prof.diagnosis, readiness: prof.readiness, otPending: Boolean(c.otNeeded[p.id]) };
+      return { patientId: p.id, alias: p.alias, bedId: p.bedId, ward: prof.bed?.ward, acuity: p.acuity, status: prof.status, admittedAt: p.admittedAt, daysAdmitted: prof.daysAdmitted, diagnosis: prof.diagnosis, readiness: prof.readiness, otPending: Boolean(c.otNeeded[p.id]), icuRisk: prof.icuRisk };
     })
     .sort((a, b) => a.acuity - b.acuity || a.daysAdmitted - b.daysAdmitted);
   const admittedToday = rows.filter((r) => new Date(r.admittedAt).getTime() >= today);

@@ -11,6 +11,7 @@ import { Search, Brain } from 'lucide-react';
 import FlowPageHeader from '../../components/domain/FlowPageHeader.jsx';
 import FlowKpiCard from '../../components/domain/FlowKpiCard.jsx';
 import PatientDetailPopup from '../../components/domain/PatientDetailPopup.jsx';
+import { IcuRiskBadge } from '../../components/domain/CareUi.jsx';
 import StatusPill from '../../components/domain/StatusPill.jsx';
 import AiReportButton from '../../components/domain/AiReportButton.jsx';
 import { SectionHeader, FlowSkeleton, FlowEmpty, FlowError, ReadinessBar } from '../../components/domain/FlowUi.jsx';
@@ -72,7 +73,7 @@ export default function DoctorPredictionsPage() {
     <div className="flow-page">
       <FlowPageHeader
         title={`Good ${new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}, ${displayName(user)}`}
-        subtitle="Admission probability and discharge readiness for your patients"
+        subtitle="Admission probability, ICU risk (trained model) and discharge readiness for your patients"
         crumbs={[{ label: 'Doctor', to: '/doctor/dashboard' }, { label: 'My Patient Predictions' }]}
         actions={<AiReportButton scope="doctor" />}
       />
@@ -118,6 +119,7 @@ export default function DoctorPredictionsPage() {
                   <th scope="col">Acuity</th>
                   <th scope="col">Status</th>
                   <th scope="col">Admission prob.</th>
+                  <th scope="col" title="ICU need predicted by the trained model">ICU risk</th>
                   <th scope="col">Expected discharge</th>
                   <th scope="col">Readiness</th>
                   <th scope="col">Top factors</th>
@@ -142,6 +144,7 @@ export default function DoctorPredictionsPage() {
                     <td>
                       <span className={clsx('text-2xl font-extrabold tabular-nums', probColor(p.admissionProbability))}>{Math.round(p.admissionProbability * 100)}%</span>
                     </td>
+                    <td>{p.bedId?.startsWith('ICU') ? <span className="text-[11px] text-ink-500">In ICU</span> : <IcuRiskBadge risk={p.icuRisk} />}</td>
                     <td>
                       <div>{dateTime(p.expectedDischarge)}</div>
                       <div className="text-[10px] text-ink-500">{timeUntil(p.expectedDischarge)}</div>

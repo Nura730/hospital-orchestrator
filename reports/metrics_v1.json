@@ -1,0 +1,854 @@
+[
+  {
+    "name": "pressure_pressure_t1h",
+    "task": "regression",
+    "target": "pressure_score_t1h",
+    "description": "Forecast department pressure_score 1h ahead",
+    "n_train": 2944,
+    "n_val": 628,
+    "n_test": 636,
+    "best_iteration": 88,
+    "key_metric": "MAE",
+    "improvement_pct": 24.69974370803092,
+    "beats_baseline": true,
+    "metrics": {
+      "Persistence (current value)": {
+        "MAE": 12.907290356394128,
+        "RMSE": 19.207578887247042,
+        "MAPE": 53.00414697501661,
+        "R2": -0.4050557965159043
+      },
+      "LightGBM": {
+        "MAE": 9.719222718713388,
+        "RMSE": 14.398385156570539,
+        "MAPE": 43.38850995163091,
+        "R2": 0.21045680750900153
+      }
+    },
+    "top_features": [
+      [
+        "pressure_score_rmean24",
+        837613.8487548828
+      ],
+      [
+        "queue_length_rmean3",
+        740681.665802002
+      ],
+      [
+        "pressure_score_rmean3",
+        435066.7229003906
+      ],
+      [
+        "queue_length_rmean6",
+        385799.451171875
+      ],
+      [
+        "utilization_percent_rmean24",
+        258047.9998474121
+      ],
+      [
+        "pressure_score_rmean6",
+        200155.94229125977
+      ],
+      [
+        "utilization_percent_rmean6",
+        124363.67120361328
+      ],
+      [
+        "utilization_percent_rmean3",
+        116095.65753173828
+      ],
+      [
+        "queue_length_rmean24",
+        96866.0767211914
+      ],
+      [
+        "utilization_percent",
+        90571.38784790039
+      ]
+    ]
+  },
+  {
+    "name": "pressure_pressure_t4h",
+    "task": "regression",
+    "target": "pressure_score_t4h",
+    "description": "Forecast department pressure_score 4h ahead",
+    "n_train": 2945,
+    "n_val": 634,
+    "n_test": 633,
+    "best_iteration": 104,
+    "key_metric": "MAE",
+    "improvement_pct": 24.673805432133182,
+    "beats_baseline": true,
+    "metrics": {
+      "Persistence (current value)": {
+        "MAE": 12.474907056345446,
+        "RMSE": 18.115157540452703,
+        "MAPE": 55.79636567673564,
+        "R2": -0.2281635809325151
+      },
+      "LightGBM": {
+        "MAE": 9.396872761423317,
+        "RMSE": 13.185273837609238,
+        "MAPE": 42.84335782087959,
+        "R2": 0.34934571820120175
+      }
+    },
+    "top_features": [
+      [
+        "queue_length_rmean6",
+        969443.3547668457
+      ],
+      [
+        "pressure_score_rmean24",
+        513900.1080932617
+      ],
+      [
+        "average_waiting_time_rmean24",
+        445405.990234375
+      ],
+      [
+        "queue_length_rmean24",
+        310529.4756164551
+      ],
+      [
+        "utilization_percent_rmean24",
+        239801.9137878418
+      ],
+      [
+        "utilization_percent_rmean6",
+        191419.43591308594
+      ],
+      [
+        "occupied_capacity",
+        122912.48956298828
+      ],
+      [
+        "average_waiting_time_rstd24",
+        119458.25299072266
+      ],
+      [
+        "hour",
+        104896.7025756836
+      ],
+      [
+        "utilization_percent_rstd24",
+        99247.869140625
+      ]
+    ]
+  },
+  {
+    "name": "pressure_pressure_t24h",
+    "task": "regression",
+    "target": "pressure_score_t24h",
+    "description": "Forecast department pressure_score 24h ahead",
+    "n_train": 2928,
+    "n_val": 633,
+    "n_test": 629,
+    "best_iteration": 61,
+    "key_metric": "MAE",
+    "improvement_pct": 25.01270731072525,
+    "beats_baseline": true,
+    "metrics": {
+      "Persistence (current value)": {
+        "MAE": 13.363472443031267,
+        "RMSE": 19.384868175633073,
+        "MAPE": 60.68766017955626,
+        "R2": -0.34002486019179146
+      },
+      "LightGBM": {
+        "MAE": 10.02090619430643,
+        "RMSE": 14.313464296294722,
+        "MAPE": 46.16481212817804,
+        "R2": 0.2694050439222577
+      }
+    },
+    "top_features": [
+      [
+        "queue_length_rmean24",
+        1274624.1303100586
+      ],
+      [
+        "queue_length_rstd24",
+        421064.7161254883
+      ],
+      [
+        "utilization_percent_rmean3",
+        234312.10705566406
+      ],
+      [
+        "queue_length_rmean6",
+        229551.6323852539
+      ],
+      [
+        "department",
+        192830.56253051758
+      ],
+      [
+        "utilization_percent_rmean24",
+        140932.35021972656
+      ],
+      [
+        "average_waiting_time_rstd24",
+        100582.60241699219
+      ],
+      [
+        "pressure_score_rstd24",
+        98563.1420288086
+      ],
+      [
+        "hour",
+        89702.052734375
+      ],
+      [
+        "utilization_percent_rstd24",
+        89071.82614135742
+      ]
+    ]
+  },
+  {
+    "name": "pressure_utilization_t1h",
+    "task": "regression",
+    "target": "utilization_percent_t1h",
+    "description": "Forecast department utilization_percent 1h ahead",
+    "n_train": 2944,
+    "n_val": 628,
+    "n_test": 636,
+    "best_iteration": 68,
+    "key_metric": "MAE",
+    "improvement_pct": 24.079441737545775,
+    "beats_baseline": true,
+    "metrics": {
+      "Persistence (current value)": {
+        "MAE": 20.655491614255766,
+        "RMSE": 26.465113209207853,
+        "MAPE": 46.60883921732281,
+        "R2": -0.06567282404629893
+      },
+      "LightGBM": {
+        "MAE": 15.681764545397396,
+        "RMSE": 19.979518702975145,
+        "MAPE": 35.45457801308589,
+        "R2": 0.3926396693885945
+      }
+    },
+    "top_features": [
+      [
+        "utilization_percent_rmean24",
+        6343203.791931152
+      ],
+      [
+        "utilization_percent_rmean6",
+        1695574.7497558594
+      ],
+      [
+        "utilization_percent_rmean3",
+        933691.2533569336
+      ],
+      [
+        "occupied_capacity",
+        747727.4354858398
+      ],
+      [
+        "total_capacity",
+        446254.9989013672
+      ],
+      [
+        "pressure_score_rmean6",
+        425066.40661621094
+      ],
+      [
+        "department",
+        388130.75158691406
+      ],
+      [
+        "pressure_score_rmean3",
+        335014.57568359375
+      ],
+      [
+        "pressure_score_lag12",
+        169698.85595703125
+      ],
+      [
+        "utilization_percent_rstd6",
+        151061.73864746094
+      ]
+    ]
+  },
+  {
+    "name": "pressure_utilization_t4h",
+    "task": "regression",
+    "target": "utilization_percent_t4h",
+    "description": "Forecast department utilization_percent 4h ahead",
+    "n_train": 2945,
+    "n_val": 634,
+    "n_test": 633,
+    "best_iteration": 66,
+    "key_metric": "MAE",
+    "improvement_pct": 22.93922718371172,
+    "beats_baseline": true,
+    "metrics": {
+      "Persistence (current value)": {
+        "MAE": 19.757909952606635,
+        "RMSE": 25.406547005504994,
+        "MAPE": 45.523672921412675,
+        "R2": -0.020289966019136463
+      },
+      "LightGBM": {
+        "MAE": 15.22559810182501,
+        "RMSE": 19.04965043747601,
+        "MAPE": 35.85457740733772,
+        "R2": 0.42640369026193636
+      }
+    },
+    "top_features": [
+      [
+        "utilization_percent_rmean24",
+        7264886.02746582
+      ],
+      [
+        "occupied_capacity",
+        1927476.9389648438
+      ],
+      [
+        "utilization_percent_rmean6",
+        563095.0074462891
+      ],
+      [
+        "department",
+        307811.4587402344
+      ],
+      [
+        "average_waiting_time_rmean24",
+        276952.58435058594
+      ],
+      [
+        "pressure_score_rmean24",
+        210064.77124023438
+      ],
+      [
+        "pressure_score_rmean3",
+        177915.54064941406
+      ],
+      [
+        "pressure_score_lag6",
+        176888.61932373047
+      ],
+      [
+        "utilization_percent_rmean3",
+        169008.86853027344
+      ],
+      [
+        "total_capacity",
+        150565.72912597656
+      ]
+    ]
+  },
+  {
+    "name": "pressure_utilization_t24h",
+    "task": "regression",
+    "target": "utilization_percent_t24h",
+    "description": "Forecast department utilization_percent 24h ahead",
+    "n_train": 2928,
+    "n_val": 633,
+    "n_test": 629,
+    "best_iteration": 63,
+    "key_metric": "MAE",
+    "improvement_pct": 25.98430626012536,
+    "beats_baseline": true,
+    "metrics": {
+      "Persistence (current value)": {
+        "MAE": 20.769242448330687,
+        "RMSE": 26.512857932480237,
+        "MAPE": 50.10381674743465,
+        "R2": -0.049476086254657714
+      },
+      "LightGBM": {
+        "MAE": 15.372498882648483,
+        "RMSE": 19.30818072149982,
+        "MAPE": 35.80174691091412,
+        "R2": 0.4434013253775957
+      }
+    },
+    "top_features": [
+      [
+        "department",
+        6969150.174682617
+      ],
+      [
+        "patient_count",
+        1560764.7781982422
+      ],
+      [
+        "utilization_percent_rmean24",
+        427093.6799316406
+      ],
+      [
+        "utilization_percent_rmean3",
+        371452.5372314453
+      ],
+      [
+        "utilization_percent_rmean6",
+        249701.17028808594
+      ],
+      [
+        "day_of_week",
+        230107.6795654297
+      ],
+      [
+        "occupied_capacity",
+        181094.5604248047
+      ],
+      [
+        "pressure_score_rstd24",
+        172208.7509765625
+      ],
+      [
+        "queue_length_rstd24",
+        169675.15814208984
+      ],
+      [
+        "average_waiting_time_rstd24",
+        168645.08947753906
+      ]
+    ]
+  },
+  {
+    "name": "resource_demand",
+    "task": "regression",
+    "target": "actual_demand",
+    "description": "Forecast actual resource demand from history only (no external forecasts)",
+    "n_train": 5213,
+    "n_val": 1124,
+    "n_test": 1123,
+    "best_iteration": 698,
+    "key_metric": "MAE",
+    "improvement_pct": -10.256853025803112,
+    "beats_baseline": false,
+    "metrics": {
+      "Persistence (current_demand)": {
+        "MAE": 1.8856337192045116,
+        "RMSE": 2.8243679853502823,
+        "MAPE": 21.42818515136236,
+        "R2": 0.8772233726728893
+      },
+      "Existing forecaster (predicted_demand_30m)": {
+        "MAE": 1.8010092015434847,
+        "RMSE": 2.7540387425503816,
+        "MAPE": 18.910173436615647,
+        "R2": 0.8832617362187758
+      },
+      "Existing forecaster (predicted_demand_1h)": {
+        "MAE": 1.7217868803799345,
+        "RMSE": 2.78446214643675,
+        "MAPE": 16.066678623177243,
+        "R2": 0.8806683143316341
+      },
+      "LightGBM": {
+        "MAE": 1.898388030118065,
+        "RMSE": 2.7052365651803583,
+        "MAPE": 22.943251289926632,
+        "R2": 0.887362335527112
+      }
+    },
+    "top_features": [
+      [
+        "current_demand",
+        103920.48186957836
+      ],
+      [
+        "actual_demand_rmean6",
+        15229.733991861343
+      ],
+      [
+        "actual_demand_rmean24",
+        10433.343517541885
+      ],
+      [
+        "actual_demand_rstd24",
+        8983.639435887337
+      ],
+      [
+        "actual_demand_rstd6",
+        8366.689202547073
+      ],
+      [
+        "current_demand_diff1",
+        8048.025418519974
+      ],
+      [
+        "actual_demand_lag24",
+        7186.945886731148
+      ],
+      [
+        "actual_demand_rstd3",
+        6996.672900676727
+      ],
+      [
+        "hour",
+        6537.5061728954315
+      ],
+      [
+        "actual_demand_rmean3",
+        6501.978743314743
+      ]
+    ]
+  },
+  {
+    "name": "resource_demand_stacked",
+    "task": "regression",
+    "target": "actual_demand",
+    "description": "Correct the existing demand forecaster using history (stacked model)",
+    "n_train": 5213,
+    "n_val": 1124,
+    "n_test": 1123,
+    "best_iteration": 656,
+    "key_metric": "MAE",
+    "improvement_pct": 16.549991322937878,
+    "beats_baseline": true,
+    "metrics": {
+      "Persistence (current_demand)": {
+        "MAE": 1.8856337192045116,
+        "RMSE": 2.8243679853502823,
+        "MAPE": 21.42818515136236,
+        "R2": 0.8772233726728893
+      },
+      "Existing forecaster (predicted_demand_30m)": {
+        "MAE": 1.8010092015434847,
+        "RMSE": 2.7540387425503816,
+        "MAPE": 18.910173436615647,
+        "R2": 0.8832617362187758
+      },
+      "Existing forecaster (predicted_demand_1h)": {
+        "MAE": 1.7217868803799345,
+        "RMSE": 2.78446214643675,
+        "MAPE": 16.066678623177243,
+        "R2": 0.8806683143316341
+      },
+      "LightGBM": {
+        "MAE": 1.4368313010775726,
+        "RMSE": 2.206073921331616,
+        "MAPE": 14.692701473459865,
+        "R2": 0.9250945770663939
+      }
+    },
+    "top_features": [
+      [
+        "predicted_demand_1h",
+        109772.82972729206
+      ],
+      [
+        "predicted_demand_30m",
+        34896.185598909855
+      ],
+      [
+        "predicted_demand_2h",
+        13364.262294054031
+      ],
+      [
+        "current_demand",
+        11643.191900730133
+      ],
+      [
+        "actual_demand_rstd6",
+        6470.615094661713
+      ],
+      [
+        "actual_demand_rstd3",
+        5868.016290903091
+      ],
+      [
+        "predicted_demand_4h",
+        5761.001834988594
+      ],
+      [
+        "actual_demand_rstd24",
+        5760.793808221817
+      ],
+      [
+        "current_demand_diff1",
+        5187.084812402725
+      ],
+      [
+        "current_demand_lag6",
+        4836.790785074234
+      ]
+    ]
+  },
+  {
+    "name": "length_of_stay",
+    "task": "regression",
+    "target": "length_of_stay_hours",
+    "description": "Predict inpatient length of stay (hours) at admission",
+    "n_train": 6347,
+    "n_val": 1360,
+    "n_test": 1361,
+    "best_iteration": 485,
+    "key_metric": "MAE",
+    "improvement_pct": 28.29947932938765,
+    "beats_baseline": true,
+    "metrics": {
+      "Median LOS per department": {
+        "MAE": 6.31836149889787,
+        "RMSE": 12.000619378455793,
+        "MAPE": 57.49607120165334,
+        "R2": 0.7031687290691881
+      },
+      "LightGBM": {
+        "MAE": 4.53029809256128,
+        "RMSE": 8.25601068483119,
+        "MAPE": 44.07499835193865,
+        "R2": 0.8595108382506917
+      }
+    },
+    "top_features": [
+      [
+        "admit_delay_hours",
+        64531.574771825224
+      ],
+      [
+        "department",
+        10786.706866871566
+      ],
+      [
+        "age",
+        2463.5358342267573
+      ],
+      [
+        "acuity_level",
+        1984.1965097784996
+      ],
+      [
+        "diagnostic_type",
+        1267.2718075476587
+      ],
+      [
+        "arrival_hour",
+        837.1102640926838
+      ],
+      [
+        "arrival_day_of_week",
+        484.95888078957796
+      ],
+      [
+        "gender",
+        406.7478315010667
+      ],
+      [
+        "priority",
+        330.2002544179559
+      ],
+      [
+        "requires_icu",
+        320.87249954789877
+      ]
+    ]
+  },
+  {
+    "name": "icu_need",
+    "task": "binary",
+    "target": "requires_icu",
+    "description": "Classify whether an arriving patient will need an ICU bed",
+    "n_train": 7000,
+    "n_val": 1500,
+    "n_test": 1500,
+    "best_iteration": 170,
+    "key_metric": "ROC_AUC",
+    "improvement_pct": 3.6872820701046067,
+    "beats_baseline": true,
+    "metrics": {
+      "ICU rate per acuity level": {
+        "ROC_AUC": 0.9394827586206896,
+        "PR_AUC": 0.424985434087857,
+        "F1_best": 0.5961538461538461,
+        "Recall_at_90_precision": 0.0
+      },
+      "LightGBM": {
+        "ROC_AUC": 0.9741241379310345,
+        "PR_AUC": 0.5412467700442224,
+        "F1_best": 0.5714285714285714,
+        "Recall_at_90_precision": 0.04
+      }
+    },
+    "top_features": [
+      [
+        "acuity_level",
+        48156.663055956364
+      ],
+      [
+        "age",
+        13343.332076470368
+      ],
+      [
+        "priority",
+        10990.693331718445
+      ],
+      [
+        "requires_ot",
+        7277.836032569408
+      ],
+      [
+        "arrival_hour",
+        5502.1162286400795
+      ],
+      [
+        "arrival_day_of_week",
+        3173.3236059881747
+      ],
+      [
+        "gender",
+        1149.8128026127815
+      ],
+      [
+        "requires_diagnostic",
+        1024.5032782256603
+      ],
+      [
+        "diagnostic_type",
+        886.2802048921585
+      ],
+      [
+        "arrival_is_weekend",
+        82.6122288107872
+      ]
+    ]
+  },
+  {
+    "name": "ed_wait_time",
+    "task": "regression",
+    "target": "waiting_time_minutes",
+    "description": "Predict ED waiting time (minutes) at arrival",
+    "n_train": 7000,
+    "n_val": 1498,
+    "n_test": 1502,
+    "best_iteration": 80,
+    "key_metric": "MAE",
+    "improvement_pct": 0.12192714464534192,
+    "beats_baseline": true,
+    "metrics": {
+      "Median wait per priority": {
+        "MAE": 67.00639813581891,
+        "RMSE": 112.64945035380029,
+        "MAPE": 192.3045401968644,
+        "R2": -0.1348263183691969
+      },
+      "LightGBM": {
+        "MAE": 66.92469914784222,
+        "RMSE": 111.1712931089755,
+        "MAPE": 204.09808779903713,
+        "R2": -0.10523991217306716
+      }
+    },
+    "top_features": [
+      [
+        "acuity_level",
+        2035.124715089798
+      ],
+      [
+        "arrivals_prev_3h",
+        1941.740559577942
+      ],
+      [
+        "load_utilization_percent",
+        1448.2563517093658
+      ],
+      [
+        "arrivals_prev_1h",
+        1387.2718216180801
+      ],
+      [
+        "load_average_waiting_time",
+        1292.4695811271667
+      ],
+      [
+        "load_pressure_score",
+        1158.6462199687958
+      ],
+      [
+        "load_queue_length",
+        1088.0735350847244
+      ],
+      [
+        "hour",
+        1078.2159478664398
+      ],
+      [
+        "load_staff_gap",
+        976.5712785720825
+      ],
+      [
+        "load_resource_gap",
+        775.0449379682541
+      ]
+    ]
+  },
+  {
+    "name": "diagnostic_wait_time",
+    "task": "regression",
+    "target": "waiting_time_minutes",
+    "description": "Predict diagnostic test waiting time (minutes) at request",
+    "n_train": 6989,
+    "n_val": 1511,
+    "n_test": 1500,
+    "best_iteration": 354,
+    "key_metric": "MAE",
+    "improvement_pct": 0.3913444941969315,
+    "beats_baseline": true,
+    "metrics": {
+      "Median wait per test & priority": {
+        "MAE": 123.27757666666668,
+        "RMSE": 239.7033388863896,
+        "MAPE": 115.2444754439719,
+        "R2": -0.03152215416233384
+      },
+      "LightGBM": {
+        "MAE": 122.79513665780227,
+        "RMSE": 237.9490068993366,
+        "MAPE": 121.84350346123732,
+        "R2": -0.0164784740571311
+      }
+    },
+    "top_features": [
+      [
+        "equipment_id",
+        21417.71370768547
+      ],
+      [
+        "load_staff_gap",
+        10850.685417890549
+      ],
+      [
+        "department",
+        10465.513366222382
+      ],
+      [
+        "load_utilization_percent",
+        7202.386246919632
+      ],
+      [
+        "load_pressure_score",
+        6594.305336475372
+      ],
+      [
+        "test_type",
+        6470.570162534714
+      ],
+      [
+        "load_average_waiting_time",
+        6171.779807329178
+      ],
+      [
+        "arrivals_prev_3h",
+        5959.343089997768
+      ],
+      [
+        "load_available_capacity",
+        5839.6734174489975
+      ],
+      [
+        "load_queue_length",
+        5625.043761730194
+      ]
+    ]
+  }
+]

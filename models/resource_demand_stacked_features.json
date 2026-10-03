@@ -1,0 +1,61 @@
+{
+  "target": "actual_demand",
+  "task": "regression",
+  "target_transform": null,
+  "features": {
+    "current_demand": "float64",
+    "actual_demand_lag1": "float64",
+    "actual_demand_lag2": "float64",
+    "actual_demand_lag3": "float64",
+    "actual_demand_lag6": "float64",
+    "actual_demand_lag12": "float64",
+    "actual_demand_lag24": "float64",
+    "current_demand_lag1": "float64",
+    "current_demand_lag2": "float64",
+    "current_demand_lag3": "float64",
+    "current_demand_lag6": "float64",
+    "current_demand_lag12": "float64",
+    "current_demand_lag24": "float64",
+    "actual_demand_rmean3": "float64",
+    "actual_demand_rstd3": "float64",
+    "actual_demand_rmean6": "float64",
+    "actual_demand_rstd6": "float64",
+    "actual_demand_rmean24": "float64",
+    "actual_demand_rstd24": "float64",
+    "current_demand_diff1": "float64",
+    "hour": "int32",
+    "day_of_week": "int32",
+    "is_weekend": "int64",
+    "department": "category",
+    "resource_type": "category",
+    "predicted_demand_30m": "float64",
+    "predicted_demand_1h": "float64",
+    "predicted_demand_2h": "float64",
+    "predicted_demand_4h": "float64",
+    "predicted_demand_8h": "float64",
+    "predicted_demand_24h": "float64"
+  },
+  "categories": {
+    "department": [
+      "CARDIOLOGY",
+      "ED",
+      "HDU",
+      "ICU",
+      "MEDICINE",
+      "ORTHOPEDICS",
+      "OT",
+      "PEDIATRICS",
+      "RADIOLOGY",
+      "SURGERY"
+    ],
+    "resource_type": [
+      "BED",
+      "DIAGNOSTIC_UNIT",
+      "IV_PUMP",
+      "OT_ROOM",
+      "OXYGEN_CYLINDER",
+      "VENTILATOR",
+      "WHEELCHAIR"
+    ]
+  }
+}

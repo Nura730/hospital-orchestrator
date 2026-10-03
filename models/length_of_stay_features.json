@@ -1,0 +1,59 @@
+{
+  "target": "length_of_stay_hours",
+  "task": "regression",
+  "target_transform": "log1p",
+  "features": {
+    "age": "int64",
+    "acuity_level": "int64",
+    "requires_icu": "int64",
+    "requires_ot": "int64",
+    "requires_diagnostic": "int64",
+    "admit_delay_hours": "float64",
+    "arrival_hour": "int32",
+    "arrival_day_of_week": "int32",
+    "arrival_is_weekend": "int64",
+    "gender": "category",
+    "department": "category",
+    "priority": "category",
+    "required_bed_type": "category",
+    "diagnostic_type": "category"
+  },
+  "categories": {
+    "gender": [
+      "F",
+      "M"
+    ],
+    "department": [
+      "CARDIOLOGY",
+      "ED",
+      "HDU",
+      "ICU",
+      "MEDICINE",
+      "ORTHOPEDICS",
+      "PEDIATRICS",
+      "SURGERY"
+    ],
+    "priority": [
+      "CRITICAL",
+      "ELECTIVE",
+      "HIGH",
+      "LOW",
+      "MEDIUM"
+    ],
+    "required_bed_type": [
+      "ED",
+      "GENERAL",
+      "HDU",
+      "ICU",
+      "ISOLATION"
+    ],
+    "diagnostic_type": [
+      "CT",
+      "LAB",
+      "MRI",
+      "ULTRASOUND",
+      "XRAY",
+      "nan"
+    ]
+  }
+}

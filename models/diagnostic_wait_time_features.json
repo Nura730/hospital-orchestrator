@@ -1,0 +1,59 @@
+{
+  "target": "waiting_time_minutes",
+  "task": "regression",
+  "target_transform": null,
+  "features": {
+    "hour": "int32",
+    "day_of_week": "int32",
+    "is_weekend": "int64",
+    "arrivals_prev_1h": "int64",
+    "arrivals_prev_3h": "int64",
+    "load_queue_length": "float64",
+    "load_utilization_percent": "float64",
+    "load_pressure_score": "float64",
+    "load_average_waiting_time": "float64",
+    "load_available_capacity": "float64",
+    "load_staff_gap": "float64",
+    "load_resource_gap": "float64",
+    "test_type": "category",
+    "department": "category",
+    "priority": "category",
+    "equipment_id": "category"
+  },
+  "categories": {
+    "test_type": [
+      "CT",
+      "LAB",
+      "MRI",
+      "ULTRASOUND",
+      "XRAY"
+    ],
+    "department": [
+      "CARDIOLOGY",
+      "ED",
+      "MEDICINE",
+      "ORTHOPEDICS",
+      "PEDIATRICS",
+      "SURGERY"
+    ],
+    "priority": [
+      "CRITICAL",
+      "ELECTIVE",
+      "HIGH",
+      "LOW",
+      "MEDIUM"
+    ],
+    "equipment_id": [
+      "CT-01",
+      "CT-02",
+      "LAB-01",
+      "LAB-02",
+      "MRI-01",
+      "US-01",
+      "US-02",
+      "XR-01",
+      "XR-02",
+      "XR-03"
+    ]
+  }
+}

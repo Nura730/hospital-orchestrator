@@ -27,19 +27,24 @@ export function useFlowPolling(fetcher, { intervalMs = 0, refreshOn = [], deps =
   const fetcherRef = useRef(fetcher);
   const toastRef = useRef(toastOnError);
   const lastToast = useRef(0);
+  // Only the newest request may update state (e.g. switching months quickly must not show an older month)
+  const seq = useRef(0);
   fetcherRef.current = fetcher;
   toastRef.current = toastOnError;
 
   const refresh = useCallback(async ({ silent = false } = {}) => {
     if (!silent) setLoading(true);
+    const id = ++seq.current;
     try {
       const result = await fetcherRef.current();
+      if (id !== seq.current) return result;
       if (mounted.current) {
         setData(result);
         setError(null);
       }
       return result;
     } catch (err) {
+      if (id !== seq.current) return null;
       if (mounted.current) {
         setError(errorText(err));
         // Avoid toast storms while polling
@@ -50,7 +55,7 @@ export function useFlowPolling(fetcher, { intervalMs = 0, refreshOn = [], deps =
       }
       return null;
     } finally {
-      if (mounted.current) setLoading(false);
+      if (mounted.current && id === seq.current) setLoading(false);
     }
   }, []);
 

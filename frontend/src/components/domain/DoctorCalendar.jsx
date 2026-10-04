@@ -1,11 +1,12 @@
 /**
  * @file DoctorCalendar.jsx
  * Doctor calendar built with CSS grid only (no library). Month view shows colored dots per event type;
- * clicking a day slides in a panel with that day's events and an "Add Event" form. Week view shows
- * 08:00-20:00 time slots with colored event blocks.
+ * clicking a day opens a panel with that day's events and an "Add Event" form. The panel sits beside the
+ * calendar on wide screens and below it on phones, so every day stays clickable; its arrows (and the
+ * Left/Right keys) step one day and move the calendar along. Week view shows 08:00-20:00 time slots.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { ChevronLeft, ChevronRight, X, Plus, MapPin } from 'lucide-react';
@@ -33,7 +34,7 @@ const mondayOf = (d) => {
 };
 const key = (d) => dayStart(d).getTime();
 
-function DayPanel({ date, events, onClose, onAdded }) {
+function DayPanel({ date, events, onClose, onAdded, onStep }) {
   const [form, setForm] = useState({ time: '10:00', type: 'consultation', title: '', location: '' });
   const [busy, setBusy] = useState(false);
 
@@ -56,17 +57,23 @@ function DayPanel({ date, events, onClose, onAdded }) {
   };
 
   return (
-    <aside className="absolute inset-y-0 right-0 z-10 w-full sm:w-80 bg-cream-50 border-l border-cream-200 flex flex-col animate-slide-in-right" aria-label="Day details">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-cream-200">
-        <div>
-          <p className="text-sm font-bold text-ink-900">{date.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' })}</p>
+    <aside className="flex flex-col bg-cream-50 border-t lg:border-t-0 lg:border-l border-cream-200 lg:max-h-[640px]" aria-label="Day details">
+      <div className="flex items-center gap-1 px-3 py-3 border-b border-cream-200">
+        <button type="button" className="flow-btn-ghost !p-1.5" onClick={() => onStep(-1)} aria-label="Previous day">
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <div className="flex-1 text-center min-w-0" aria-live="polite">
+          <p className="text-sm font-bold text-ink-900 truncate">{date.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' })}</p>
           <p className="text-xs text-ink-500">{events.length} {events.length === 1 ? 'event' : 'events'}</p>
         </div>
+        <button type="button" className="flow-btn-ghost !p-1.5" onClick={() => onStep(1)} aria-label="Next day">
+          <ChevronRight className="w-4 h-4" />
+        </button>
         <button type="button" className="flow-btn-ghost !p-1.5" onClick={onClose} aria-label="Close day panel">
           <X className="w-4 h-4" />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+      <div className="flex-1 overflow-y-auto p-3 space-y-1.5 min-h-[120px]">
         {!events.length && <MiniEmpty text="No events" />}
         {events.map((e) => (
           <div key={e.id} className="flex items-start gap-2.5 rounded-lg border border-cream-200 px-3 py-2 border-l-4" style={{ borderLeftColor: EVENT_COLORS[e.type] }}>
@@ -74,8 +81,8 @@ function DayPanel({ date, events, onClose, onAdded }) {
             <div className="min-w-0">
               <p className="text-xs font-semibold text-ink-900 truncate">{e.title}</p>
               <p className="text-xs text-ink-500">
-                {clock(e.start)} - {clock(e.end)}
-                {e.alias ? ` · ${e.alias}` : ''}
+                {clock(e.start)} to {clock(e.end)}
+                {e.alias ? `, ${e.alias}` : ''}
               </p>
               {e.location && (
                 <p className="text-xs text-ink-500 inline-flex items-center gap-1">
@@ -156,7 +163,7 @@ function MonthGrid({ cursor, byDay, selected, onSelect }) {
   );
 }
 
-function WeekGrid({ cursor, byDay, onSelect }) {
+function WeekGrid({ cursor, byDay, selected, onSelect }) {
   const monday = mondayOf(cursor);
   const days = Array.from({ length: 7 }, (_, i) => new Date(monday.getTime() + i * DAY + 2 * 3600000));
   const today = new Date();
@@ -166,7 +173,7 @@ function WeekGrid({ cursor, byDay, onSelect }) {
       <div className="grid min-w-[720px]" style={{ gridTemplateColumns: '52px repeat(7, minmax(0, 1fr))' }}>
         <div className="border-b border-cream-200" />
         {days.map((d) => (
-          <button key={d.toISOString()} type="button" onClick={() => onSelect(dayStart(d))} className={clsx('py-2 text-center border-b border-l border-cream-200 hover:bg-sunken', sameDay(d, today) && 'bg-royal-500/10')}>
+          <button key={d.toISOString()} type="button" onClick={() => onSelect(dayStart(d))} aria-pressed={Boolean(selected && sameDay(selected, d))} className={clsx('py-2 text-center border-b border-l border-cream-200 hover:bg-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-royal-500', sameDay(d, today) && 'bg-royal-500/10', selected && sameDay(selected, d) && 'ring-2 ring-inset ring-royal-500')}>
             <span className="label-xs block">{WEEKDAYS[(d.getDay() + 6) % 7]}</span>
             <span className={clsx('text-sm font-bold', sameDay(d, today) ? 'text-royal-500' : 'text-ink-900')}>{d.getDate()}</span>
           </button>
@@ -199,7 +206,7 @@ function WeekGrid({ cursor, byDay, onSelect }) {
                     onClick={() => onSelect(dayStart(d))}
                     className="absolute left-1 right-1 rounded-md px-1.5 py-1 text-left overflow-hidden text-[11px] leading-tight border-l-2"
                     style={{ top, height, backgroundColor: `${color}26`, borderLeftColor: color, color: 'rgb(var(--ink-900))' }}
-                    title={`${e.title} · ${clock(e.start)}-${clock(e.end)}`}
+                    title={`${e.title}, ${clock(e.start)} to ${clock(e.end)}`}
                   >
                     <span className="block font-semibold truncate">{e.title}</span>
                     <span className="block opacity-75 tabular-nums">{clock(e.start)}</span>
@@ -242,10 +249,38 @@ export function DoctorCalendar() {
     setCursor(c);
   };
 
+  // Select a day and keep it visible: the calendar follows when the day leaves the shown month/week
+  const selectDay = (d) => {
+    const day = dayStart(d);
+    setSelected(day);
+    const visible = view === 'week' ? sameDay(mondayOf(day), mondayOf(cursor)) : day.getMonth() === cursor.getMonth() && day.getFullYear() === cursor.getFullYear();
+    if (!visible) setCursor(day);
+  };
+  const stepDay = (dir) => {
+    if (!selected) return;
+    const d = new Date(selected);
+    d.setDate(d.getDate() + dir); // calendar arithmetic, safe across daylight-saving changes
+    selectDay(d);
+  };
+
+  useEffect(() => {
+    if (!selected) return undefined;
+    const onKey = (e) => {
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+      if (e.key === 'ArrowLeft') stepDay(-1);
+      else if (e.key === 'ArrowRight') stepDay(1);
+      else if (e.key === 'Escape') setSelected(null);
+      else return;
+      e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
   const title = view === 'week' ? `Week of ${mondayOf(cursor).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}` : cursor.toLocaleDateString([], { month: 'long', year: 'numeric' });
 
   return (
-    <section className="flow-card relative overflow-hidden">
+    <section className="flow-card overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-b border-cream-200">
         <div className="flex items-center gap-1">
           <button type="button" className="flow-btn-ghost !p-1.5" onClick={() => move(-1)} aria-label="Previous">
@@ -255,7 +290,14 @@ export function DoctorCalendar() {
             <ChevronRight className="w-4 h-4" />
           </button>
           <h3 className="text-sm font-bold text-ink-900 ml-1">{title}</h3>
-          <button type="button" className="flow-btn-secondary !py-1 ml-2" onClick={() => setCursor(dayStart(new Date()))}>
+          <button
+            type="button"
+            className="flow-btn-secondary !py-1 ml-2"
+            onClick={() => {
+              setCursor(dayStart(new Date()));
+              if (selected) setSelected(dayStart(new Date()));
+            }}
+          >
             Today
           </button>
         </div>
@@ -277,11 +319,12 @@ export function DoctorCalendar() {
         </div>
       </div>
 
-      <div className={clsx(q.loading && !q.data && 'opacity-50')}>
-        {view === 'month' ? <MonthGrid cursor={cursor} byDay={byDay} selected={selected} onSelect={setSelected} /> : <WeekGrid cursor={cursor} byDay={byDay} onSelect={setSelected} />}
+      <div className={clsx('grid grid-cols-1', selected && 'lg:grid-cols-[minmax(0,1fr)_320px]')}>
+        <div className={clsx('min-w-0', q.loading && !q.data && 'opacity-50')}>
+          {view === 'month' ? <MonthGrid cursor={cursor} byDay={byDay} selected={selected} onSelect={selectDay} /> : <WeekGrid cursor={cursor} byDay={byDay} selected={selected} onSelect={selectDay} />}
+        </div>
+        {selected && <DayPanel date={selected} events={byDay[key(selected)] || []} onClose={() => setSelected(null)} onAdded={() => q.refresh({ silent: true })} onStep={stepDay} />}
       </div>
-
-      {selected && <DayPanel date={selected} events={byDay[key(selected)] || []} onClose={() => setSelected(null)} onAdded={() => q.refresh({ silent: true })} />}
     </section>
   );
 }

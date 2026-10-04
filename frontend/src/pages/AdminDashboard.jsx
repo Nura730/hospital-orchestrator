@@ -13,7 +13,6 @@ import FlowKpiCard from '../components/domain/FlowKpiCard.jsx';
 import FlowIntelligenceStrip from '../components/domain/FlowIntelligenceStrip.jsx';
 import AmbulanceIncomingAlert from '../components/domain/AmbulanceIncomingAlert.jsx';
 import AiReportButton from '../components/domain/AiReportButton.jsx';
-import DemoControls from '../components/domain/DemoControls.jsx';
 import StatusPill from '../components/domain/StatusPill.jsx';
 import { SectionHeader, FlowSkeleton, FlowError } from '../components/domain/FlowUi.jsx';
 import flowApi from '../api/flowApi.js';
@@ -134,9 +133,6 @@ export default function AdminDashboard() {
         </aside>
       </div>
 
-      <div className="mt-5">
-        <DemoControls onChanged={() => numbers.refresh({ silent: true })} />
-      </div>
     </div>
   );
 }

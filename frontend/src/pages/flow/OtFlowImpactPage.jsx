@@ -1,20 +1,18 @@
 /**
  * @file OtFlowImpactPage.jsx
- * /ot/flow/impact: upcoming OT cases against post-op beds (left) and ICU capacity impact with one
- * recommended action (right).
+ * /ot/flow/impact: ICU capacity impact (top) and upcoming OT cases against post-op beds (full width).
  */
 
 import FlowPageHeader from '../../components/domain/FlowPageHeader.jsx';
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import clsx from 'clsx';
-import toast from 'react-hot-toast';
-import { CheckCircle2, AlertTriangle, XCircle, BedDouble, HeartPulse, ShieldAlert, PauseCircle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, BedDouble, HeartPulse, ShieldAlert } from 'lucide-react';
 import AiReportButton from '../../components/domain/AiReportButton.jsx';
 import StatusPill from '../../components/domain/StatusPill.jsx';
 import { FlowError, FlowSkeleton } from '../../components/domain/FlowUi.jsx';
 import { StatTile, MiniEmpty } from '../../components/domain/CareUi.jsx';
 import flowApi from '../../api/flowApi.js';
-import { useFlowPolling, errorText } from '../../hooks/useFlowPolling.js';
+import { useFlowPolling } from '../../hooks/useFlowPolling.js';
 import { clock } from '../../utils/flowFormat.js';
 
 const BED = {
@@ -26,31 +24,7 @@ const BED = {
 
 export default function OtFlowImpactPage() {
   const q = useFlowPolling(() => flowApi.getOtImpact(), { intervalMs: 60000, refreshOn: ['ot.caseCompleted', 'bed.updated', 'flow.analysisComplete'] });
-  const [deferring, setDeferring] = useState(false);
-  const [deferred, setDeferred] = useState({});
   const d = q.data;
-
-  const target = useMemo(() => {
-    const up = (d?.upcoming || []).filter((c) => !deferred[c.caseId]);
-    return up.find((c) => c.urgency === 'elective' && c.postOpType === 'icu' && c.availability !== 'YES') || up.find((c) => c.urgency === 'elective' && c.availability !== 'YES') || null;
-  }, [d, deferred]);
-
-  const defer = async () => {
-    if (!target) return;
-    setDeferring(true);
-    try {
-      await flowApi.createRecommendationBatch(
-        [{ type: 'defer_ot', text: `Defer ${target.caseNumber} (${target.procedure})`, impact: `Frees one ${target.postOpType === 'icu' ? 'ICU' : 'post-op'} bed`, why: target.risk || 'Post-op capacity is constrained', relatedType: 'ot_case', relatedId: target.caseId }],
-        { autoApprove: false, source: 'ot_flow_impact' }
-      );
-      setDeferred((x) => ({ ...x, [target.caseId]: true }));
-      toast.success(`Deferral of ${target.caseNumber} sent for approval`);
-    } catch (e) {
-      toast.error(errorText(e, 'Could not submit deferral'));
-    } finally {
-      setDeferring(false);
-    }
-  };
 
   const o = d?.overflow;
   const shortage = o?.shortageRisk;
@@ -60,7 +34,7 @@ export default function OtFlowImpactPage() {
     <div className="space-y-4">
       <FlowPageHeader
         title="OT Flow Impact"
-        subtitle={d ? `${d.inProgress.length} in surgery · ${d.upcoming.length} upcoming · ${unconfirmed} without a confirmed post-op bed` : 'Loading…'}
+        subtitle={d ? `${d.inProgress.length} in surgery, ${d.upcoming.length} upcoming, ${unconfirmed} without a confirmed post-op bed` : 'Loading…'}
         showHealth={false}
         actions={<AiReportButton scope="ot" variant="secondary" />}
       />
@@ -69,7 +43,15 @@ export default function OtFlowImpactPage() {
       {!d && !q.error && <FlowSkeleton lines={10} />}
 
       {d && (
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-4">
+        <>
+          <section className="space-y-2" aria-label="Capacity impact">
+            <h2 className="label-xs">Capacity impact</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <StatTile icon={HeartPulse} value={o.icuDemand} label="ICU beds needed from OT" tone="violet" />
+              <StatTile icon={BedDouble} value={o.icuAvailable} label="ICU beds available" tone={o.icuAvailable ? 'ok' : 'bad'} />
+              <StatTile icon={ShieldAlert} value={shortage ? 'SHORTAGE' : 'OK'} label="Risk" tone={shortage ? 'bad' : 'ok'} />
+            </div>
+          </section>
           <section>
             <h2 className="label-xs mb-2">Upcoming cases vs beds</h2>
             {!d.upcoming.length ? (
@@ -92,11 +74,11 @@ export default function OtFlowImpactPage() {
                     {d.upcoming.map((c) => {
                       const [Icon, label, tone] = BED[c.availability] || BED['N/A'];
                       return (
-                        <tr key={c.caseId} className={clsx(deferred[c.caseId] && 'text-ink-500 line-through [&_*]:!text-ink-500')}>
+                        <tr key={c.caseId}>
                           <td>
                             <span className="font-mono font-semibold">{c.caseNumber}</span>
                             <span className="block text-xs text-ink-500">
-                              {c.room} · {c.alias}
+                              {c.room}, {c.alias}
                             </span>
                           </td>
                           <td className="max-w-[220px] truncate">{c.procedure}</td>
@@ -104,10 +86,12 @@ export default function OtFlowImpactPage() {
                           <td>
                             <span className={clsx('inline-flex items-center gap-1.5 font-semibold', tone)}>
                               <Icon className="w-3.5 h-3.5" aria-hidden="true" /> {label}
-                              <span className="font-normal text-ink-500">· {c.postOpType === 'icu' ? 'ICU' : 'Post-op'}</span>
+                              <span className="font-normal text-ink-500">({c.postOpType === 'icu' ? 'ICU' : 'Post-op'})</span>
                             </span>
                           </td>
-                          <td>{deferred[c.caseId] ? <StatusPill status="pending" label="Deferral pending" size="xs" /> : <StatusPill status={c.urgency === 'emergency' ? 'urgent' : c.status} label={c.urgency === 'emergency' ? 'Emergency' : undefined} size="xs" />}</td>
+                          <td>
+                            <StatusPill status={c.urgency === 'emergency' ? 'urgent' : c.status} label={c.urgency === 'emergency' ? 'Emergency' : undefined} size="xs" />
+                          </td>
                         </tr>
                       );
                     })}
@@ -116,25 +100,7 @@ export default function OtFlowImpactPage() {
               </div>
             )}
           </section>
-
-          <section className="space-y-3">
-            <h2 className="label-xs">Capacity impact</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-3">
-              <StatTile icon={HeartPulse} value={o.icuDemand} label="ICU beds needed from OT" tone="violet" />
-              <StatTile icon={BedDouble} value={o.icuAvailable} label="ICU beds available" tone={o.icuAvailable ? 'ok' : 'bad'} />
-              <StatTile icon={ShieldAlert} value={shortage ? 'SHORTAGE' : 'OK'} label="Risk" tone={shortage ? 'bad' : 'ok'} />
-            </div>
-            <div className={clsx('flow-card p-4 border-l-4', target ? 'border-l-[#F59E0B]' : 'border-l-[#10B981]')}>
-              <p className="label-xs mb-1">Recommendation</p>
-              <p className="text-sm text-ink-900">{target ? `Defer ${target.room} elective case (${target.procedure}) to free 1 ${target.postOpType === 'icu' ? 'ICU' : 'post-op'} bed` : 'No deferral needed'}</p>
-              {target && (
-                <button type="button" className="flow-btn-primary mt-3" onClick={defer} disabled={deferring}>
-                  <PauseCircle className="w-3.5 h-3.5" aria-hidden="true" /> {deferring ? 'Sending…' : 'Defer Case'}
-                </button>
-              )}
-            </div>
-          </section>
-        </div>
+        </>
       )}
     </div>
   );

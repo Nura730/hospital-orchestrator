@@ -2,7 +2,7 @@
  * @file FlowCommandCenterPage.jsx
  * /admin/flow/command-center: classic operations-room layout.
  *  1. Title bar with live clock.
- *  2. KPI band (six key numbers).
+ *  2. KPI band (five key numbers).
  *  3. Department status board (table) + action queue.
  *  4. Arrivals vs capacity forecast + live activity log.
  *  5. Discharge readiness.
@@ -17,7 +17,6 @@ import { Line } from 'react-chartjs-2';
 import {
   BedDouble,
   HeartPulse,
-  Ambulance,
   LogOut,
   Sparkles,
   Inbox,
@@ -430,7 +429,6 @@ export default function FlowCommandCenterPage() {
 
   const [forecast, demand] = forecastQ.data || [];
   const ed = summary?.departments?.find((d) => d.department === 'Emergency');
-  const arrivals6h = forecast ? Math.round(forecast.predicted.reduce((a, b) => a + b, 0)) : null;
 
   return (
     <div className="space-y-5">
@@ -457,10 +455,9 @@ export default function FlowCommandCenterPage() {
         <FlowSkeleton lines={12} />
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
             <Kpi icon={BedDouble} label="Bed occupancy" value={`${Math.round(summary.occupancy.pct)}%`} sub={`${summary.occupancy.occupied} of ${summary.occupancy.capacity} beds`} tone={summary.occupancy.pct > 90 ? 'bad' : summary.occupancy.pct >= 75 ? 'warn' : 'ok'} to="/admin/beds-overview" />
             <Kpi icon={HeartPulse} label="ICU" value={`${Math.round(summary.icu.pct)}%`} sub={`${summary.icu.occupied} of ${summary.icu.total} beds`} tone={summary.icu.pct > 90 ? 'bad' : summary.icu.pct >= 75 ? 'warn' : 'ok'} />
-            <Kpi icon={Ambulance} label="Arrivals 6h" value={arrivals6h ?? '—'} sub="expected at Emergency" />
             <Kpi icon={LogOut} label="Discharge ready" value={summary.dischargeReady} sub="patients" tone="ok" to="/admin/flow/discharge-planner" />
             <Kpi icon={Sparkles} label="Beds to clean" value={summary.dirtyBeds} sub="waiting for housekeeping" tone={summary.dirtyBeds > 2 ? 'warn' : 'default'} to="/admin/flow/housekeeping" />
             <Kpi icon={Inbox} label="Open requests" value={badgeQ.data?.requests ?? '—'} sub="patients, staff and theatre" tone={(badgeQ.data?.requests || 0) > 0 ? 'violet' : 'default'} />

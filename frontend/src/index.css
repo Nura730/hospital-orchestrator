@@ -313,3 +313,13 @@
     animation: none !important;
   }
 }
+
+/* ── Toasts: bottom-right; on phones sit above the 64 px bottom navigation ── */
+.mo-toaster {
+  bottom: 16px !important;
+}
+@media (max-width: 767px) {
+  .mo-toaster {
+    bottom: 80px !important;
+  }
+}

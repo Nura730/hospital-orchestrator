@@ -6,7 +6,8 @@
 
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, ToastBar, toast } from 'react-hot-toast';
+import { X } from 'lucide-react';
 import AppShell from './components/layout/AppShell';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import { useAuthStore } from './store/authStore.js';
@@ -60,7 +61,9 @@ export default function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Toaster
-        position="top-right"
+        // Bottom-right, away from the top bar menus (bell, account, Sign out); above the phone bottom nav
+        position="bottom-right"
+        containerClassName="mo-toaster"
         toastOptions={{
           duration: 3500,
           style: {
@@ -74,7 +77,28 @@ export default function App() {
           success: { iconTheme: { primary: '#10B981', secondary: '#FFFFFF' } },
           error: { iconTheme: { primary: '#EF4444', secondary: '#FFFFFF' } },
         }}
-      />
+      >
+        {(t) => (
+          <ToastBar toast={t}>
+            {({ icon, message }) => (
+              <>
+                {icon}
+                {message}
+                {t.type !== 'loading' && (
+                  <button
+                    type="button"
+                    onClick={() => toast.dismiss(t.id)}
+                    className="ml-1 -mr-1 p-1 rounded-md text-ink-500 hover:text-ink-900 hover:bg-sunken shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-royal-500"
+                    aria-label="Dismiss notification"
+                  >
+                    <X className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
+                )}
+              </>
+            )}
+          </ToastBar>
+        )}
+      </Toaster>
 
       <Suspense fallback={<PageLoader />}>
         <Routes>

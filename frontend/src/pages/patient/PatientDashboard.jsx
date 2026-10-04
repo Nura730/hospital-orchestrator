@@ -180,13 +180,17 @@ function RequestsTab({ requests, profile, onSent }) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [openId, setOpenId] = useState(null);
-  const goesTo = (k) => (['nurse_assistance', 'dietary'].includes(k) ? profile.nurse?.name || 'Your nurse' : profile.doctor.name);
+  // Ask the hospital where this type really goes (same routing rules the request will follow)
+  const routeQ = useFlowPolling(() => careApi.previewPortalRoute(type), { deps: [type], toastOnError: false });
+  // Only trust an answer for the type that is selected now (a click can arrive before the previous answer)
+  const route = routeQ.data?.type === type ? routeQ.data : null;
+  const goesTo = () => route?.name || 'the right team';
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
     try {
       await careApi.submitPortalRequest({ type, message: message.trim() });
-      toast.success(`Sent to ${goesTo(type)}. You can follow it below.`);
+      toast.success(`Sent to ${goesTo()}. You can follow it below.`);
       setMessage('');
       onSent();
     } catch (err) {
@@ -215,8 +219,13 @@ function RequestsTab({ requests, profile, onSent }) {
             </button>
           ))}
         </div>
-        <p className="text-sm text-ink-500">
-          Goes to <b className="text-ink-900">{goesTo(type)}</b>
+        <p className="text-sm text-ink-500 min-h-[2.5rem]" aria-live="polite">
+          Goes to <b className="text-ink-900">{route ? route.name : '…'}</b>
+          {route?.doctorInformed && (
+            <>
+              . Your doctor, <b className="text-ink-900">{route.doctorName}</b>, is kept informed.
+            </>
+          )}
         </p>
         <label className="block">
           <span className="flex justify-between text-xs font-semibold text-ink-900 mb-1">

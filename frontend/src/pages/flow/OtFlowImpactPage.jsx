@@ -92,7 +92,7 @@ export default function OtFlowImpactPage() {
                     {d.upcoming.map((c) => {
                       const [Icon, label, tone] = BED[c.availability] || BED['N/A'];
                       return (
-                        <tr key={c.caseId} className={clsx(deferred[c.caseId] && 'opacity-50')}>
+                        <tr key={c.caseId} className={clsx(deferred[c.caseId] && 'text-ink-500 line-through [&_*]:!text-ink-500')}>
                           <td>
                             <span className="font-mono font-semibold">{c.caseNumber}</span>
                             <span className="block text-xs text-ink-500">

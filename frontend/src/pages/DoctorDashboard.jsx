@@ -1,7 +1,7 @@
 /**
  * @file DoctorDashboard.jsx
  * /doctor/dashboard (+ /doctor/schedule, /doctor/patients, /doctor/ot-cases, /doctor/calendar,
- * /doctor/notifications, each opening its tab): one-line header with quick status, 4 stat tiles, Today's Board (admitted today,
+ * /doctor/notifications, each opening its tab): one-line header with current status, 4 stat tiles, Today's Board (admitted today,
  * discharges, my beds) and tabs: Today's Schedule, My Patients, OT Cases, Calendar, Notifications.
  * Clicking any patient opens PatientDetailPopup.
  */
@@ -23,7 +23,6 @@ import {
   Eye,
   FileText,
   Activity,
-  Plus,
   ChevronDown,
   Route,
 } from 'lucide-react';
@@ -50,13 +49,8 @@ const ROUTE_TAB = {
 };
 const TAB_ROUTE = { schedule: '/doctor/schedule', patients: '/doctor/patients', ot: '/doctor/ot-cases', calendar: '/doctor/calendar', notifications: '/doctor/notifications' };
 
-// [value (backend DOCTOR_STATUS), label, color, what other teams now see]
-const STATUS_BUTTONS = [
-  ['available', 'Available', '#047857', 'OT and admin can assign you'],
-  ['in_surgery', 'In Surgery', '#6D28D9', 'OT and admin now see you as in surgery'],
-  ['on_break', 'Break', '#B45309', 'OT and admin see you as on break'],
-  ['off_duty', 'Off Duty', '#475569', 'You are hidden from OT assignment'],
-];
+// Read-only: a doctor's status follows their surgeries (set when a case starts, released when it ends)
+const STATUS_LABEL = { available: 'Available', in_surgery: 'In Surgery', on_break: 'On Break', break: 'On Break', off_duty: 'Off Duty', in_consultation: 'In Consultation', emergency: 'Emergency' };
 const STATUS_PILL = { available: 'online', in_surgery: 'in_surgery', on_break: 'on_break', break: 'on_break', off_duty: 'off_duty', in_consultation: 'in_consultation', emergency: 'emergency' };
 const BED_STATE = {
   occupied: ['#014BAA', 'Occupied'],
@@ -115,54 +109,6 @@ function UpdateStatusModal({ patient, onClose, onSaved, by }) {
         <span className="label-xs block mb-1">Note</span>
         <textarea className="flow-input min-h-[70px]" maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Progress note (no clinical values)" />
       </label>
-    </FlowModal>
-  );
-}
-
-function RequestOtModal({ patients, initial, onClose, onSaved, by }) {
-  const [patientId, setPatientId] = useState(initial || patients[0]?.patientId || '');
-  const [procedure, setProcedure] = useState('');
-  const [busy, setBusy] = useState(false);
-  const submit = async (e) => {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      await careApi.requestOt(patientId, procedure.trim(), by);
-      toast.success('OT slot requested');
-      onSaved();
-      onClose();
-    } catch (err) {
-      toast.error(errorText(err, 'Could not request OT'));
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <FlowModal open onClose={onClose} size="sm" title="Request OT slot">
-      <form onSubmit={submit} className="space-y-3">
-        <label className="block">
-          <span className="label-xs block mb-1">Patient</span>
-          <select className="flow-input" value={patientId} onChange={(e) => setPatientId(e.target.value)} required>
-            {patients.map((p) => (
-              <option key={p.patientId} value={p.patientId}>
-                {p.alias} · {p.bedId}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="label-xs block mb-1">Procedure</span>
-          <input className="flow-input" required maxLength={80} value={procedure} onChange={(e) => setProcedure(e.target.value)} placeholder="e.g. Laparoscopic appendectomy" />
-        </label>
-        <div className="flex justify-end gap-2">
-          <button type="button" className="flow-btn-ghost" onClick={onClose}>
-            Cancel
-          </button>
-          <button type="submit" className="flow-btn-primary" disabled={busy || !patientId}>
-            <Scissors className="w-3.5 h-3.5" aria-hidden="true" /> Request
-          </button>
-        </div>
-      </form>
     </FlowModal>
   );
 }
@@ -305,7 +251,7 @@ function ScheduleTab({ events }) {
           const past = new Date(e.end).getTime() <= now;
           const color = EVENT_COLORS[e.type] || '#014BAA';
           return (
-            <li key={e.id || i} className={clsx('relative pl-5 py-2', past && 'opacity-55')}>
+            <li key={e.id || i} className={clsx('relative pl-5 py-2', past && 'text-ink-500 [&_*]:!text-ink-500')}>
               <span className="absolute -left-[5px] top-3.5 w-2.5 h-2.5 rounded-full border-2 border-cream-50" style={{ backgroundColor: past ? '#94A3B8' : color }} aria-hidden="true" />
               <div className="flex items-start gap-3">
                 <span className="text-xs font-semibold tabular-nums text-ink-500 w-11 shrink-0">{clock(e.start)}</span>
@@ -323,7 +269,7 @@ function ScheduleTab({ events }) {
   );
 }
 
-function PatientsTab({ patients, onOpen, onReport, onUpdate, onRequestOt, onTrack }) {
+function PatientsTab({ patients, onOpen, onReport, onUpdate, onTrack }) {
   if (!patients.length) return <MiniEmpty text="No active patients" />;
   return (
     <div className="table-wrap">
@@ -366,9 +312,6 @@ function PatientsTab({ patients, onOpen, onReport, onUpdate, onRequestOt, onTrac
                   <button type="button" className="flow-btn-ghost !px-2 !py-1" onClick={() => onUpdate(p)} title="Update Status">
                     <Activity className="w-3.5 h-3.5" aria-hidden="true" /> <span className="hidden xl:inline">Status</span>
                   </button>
-                  <button type="button" className="flow-btn-ghost !px-2 !py-1" onClick={() => onRequestOt(p.patientId)} title="Request OT">
-                    <Scissors className="w-3.5 h-3.5" aria-hidden="true" /> <span className="hidden xl:inline">OT</span>
-                  </button>
                   <button type="button" className="flow-btn-ghost !px-2 !py-1" onClick={() => onTrack(p.patientId)} title="Track Patient">
                     <Route className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
@@ -382,17 +325,12 @@ function PatientsTab({ patients, onOpen, onReport, onUpdate, onRequestOt, onTrac
   );
 }
 
-function OtCasesTab({ onRequest }) {
+function OtCasesTab() {
   const q = useFlowPolling(() => careApi.getOtBoard(), { intervalMs: 60000, refreshOn: ['ot.caseCompleted'] });
   const [open, setOpen] = useState(null);
   const cases = q.data?.cases || [];
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
-        <button type="button" className="flow-btn-primary" onClick={onRequest}>
-          <Plus className="w-3.5 h-3.5" aria-hidden="true" /> Request OT Slot
-        </button>
-      </div>
       {q.loading && !q.data && <FlowSkeleton lines={5} />}
       {q.data && (
         <div className="table-wrap">
@@ -441,29 +379,10 @@ export default function DoctorDashboard() {
   const setTab = (t) => navigate(TAB_ROUTE[t]);
   const [popup, setPopup] = useState(null); // { id, tab }
   const [updating, setUpdating] = useState(null);
-  const [otFor, setOtFor] = useState(undefined);
   const [busyId, setBusyId] = useState(null);
   const q = useFlowPolling(() => careApi.getDoctorDashboard(), { intervalMs: 30000, refreshOn: ['patient.updated', 'bed.updated', 'flow.analysisComplete'] });
   const d = q.data;
   const me = displayName(user);
-
-  // Optimistic: the button and badge change on click; the save runs in the background
-  const [pendingStatus, setPendingStatus] = useState(null);
-  const setStatus = async (status) => {
-    const current = pendingStatus || d?.doctor.status;
-    if (status === current) return;
-    const [, label, , note] = STATUS_BUTTONS.find(([k]) => k === status);
-    setPendingStatus(status);
-    try {
-      await careApi.setDoctorStatus(status);
-      toast.success(`Status: ${label}. ${note}.`, { id: 'doctor-status' });
-      await q.refresh({ silent: true });
-    } catch (e) {
-      toast.error(errorText(e, 'Could not change status'), { id: 'doctor-status' });
-    } finally {
-      setPendingStatus(null);
-    }
-  };
 
   const discharge = async (row) => {
     setBusyId(row.patientId);
@@ -493,7 +412,7 @@ export default function DoctorDashboard() {
   if (!d) return <FlowSkeleton lines={12} />;
 
   const doc = d.doctor;
-  const myStatus = pendingStatus || (doc.status === 'break' ? 'on_break' : doc.status);
+  const myStatus = doc.status === 'break' ? 'on_break' : doc.status;
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -501,30 +420,13 @@ export default function DoctorDashboard() {
         title={doc.name}
         subtitle={
           <span className="inline-flex flex-wrap items-center gap-2">
-            <StatusPill status={STATUS_PILL[myStatus] || 'online'} label={STATUS_BUTTONS.find(([k]) => k === myStatus)?.[1] || 'Available'} size="xs" />
+            <StatusPill status={STATUS_PILL[myStatus] || 'online'} label={STATUS_LABEL[myStatus] || 'Available'} size="xs" />
             <span>
               {doc.specialty} · Shift ends {doc.shiftEnd}
             </span>
           </span>
         }
         showHealth={false}
-        actions={
-          <div className="inline-flex flex-wrap rounded-lg border border-cream-200 bg-cream-50 p-0.5" role="group" aria-label="Set my status">
-            {STATUS_BUTTONS.map(([k, l, c]) => (
-              <button
-                key={k}
-                type="button"
-                onClick={() => setStatus(k)}
-                aria-pressed={myStatus === k}
-                disabled={Boolean(pendingStatus)}
-                className={clsx('px-3 py-1.5 rounded-md text-xs font-semibold disabled:cursor-wait', myStatus === k ? 'text-white' : 'text-ink-500 hover:text-ink-900 hover:bg-sunken')}
-                style={myStatus === k ? { backgroundColor: c } : undefined}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
-        }
       />
 
       {isOverview && (
@@ -550,18 +452,16 @@ export default function DoctorDashboard() {
             onOpen={(id) => setPopup({ id, tab: 'overview' })}
             onReport={(id) => setPopup({ id, tab: 'report' })}
             onUpdate={setUpdating}
-            onRequestOt={(id) => setOtFor(id)}
             onTrack={(id) => navigate(`/patient-journey/${id}`)}
           />
         )}
-        {tab === 'ot' && <OtCasesTab onRequest={() => setOtFor(null)} />}
+        {tab === 'ot' && <OtCasesTab />}
         {tab === 'calendar' && <DoctorCalendar />}
         {tab === 'notifications' && <NotificationsList source="flow" />}
       </div>
 
       {popup && <PatientDetailPopup patientId={popup.id} initialTab={popup.tab} onClose={() => setPopup(null)} onChanged={() => q.refresh({ silent: true })} />}
       {updating && <UpdateStatusModal patient={updating} by={me} onClose={() => setUpdating(null)} onSaved={() => q.refresh({ silent: true })} />}
-      {otFor !== undefined && <RequestOtModal patients={d.patients} initial={otFor} by={me} onClose={() => setOtFor(undefined)} onSaved={() => q.refresh({ silent: true })} />}
     </div>
   );
 }

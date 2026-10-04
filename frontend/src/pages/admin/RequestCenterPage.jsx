@@ -7,13 +7,14 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
-import { Inbox, Stethoscope, Scissors, CheckCircle2, Timer, X } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { Inbox, Stethoscope, Scissors, CheckCircle2, Timer, X, Eye, XCircle } from 'lucide-react';
 import FlowPageHeader from '../../components/domain/FlowPageHeader.jsx';
 import { RequestSteps, RequestHistory, REQUEST_STATUS_LABEL } from '../../components/domain/RequestThread.jsx';
 import { FlowError, FlowSkeleton } from '../../components/domain/FlowUi.jsx';
 import { StatTile, MiniEmpty } from '../../components/domain/CareUi.jsx';
 import careApi from '../../api/careApi.js';
-import { useFlowPolling } from '../../hooks/useFlowPolling.js';
+import { useFlowPolling, errorText } from '../../hooks/useFlowPolling.js';
 import { clock, timeAgo } from '../../utils/flowFormat.js';
 
 const COLUMNS = [
@@ -32,7 +33,48 @@ function columnOf(item) {
   return 'closed';
 }
 
-function Drawer({ item, onClose }) {
+/** Requests routed to the admin team (bed transfer, equipment, anything without a ward nurse) are answered here. */
+function AdminActions({ item, onChanged }) {
+  const [reply, setReply] = useState('');
+  const [busy, setBusy] = useState(null);
+  const act = async (kind) => {
+    setBusy(kind);
+    try {
+      const by = 'Admin team';
+      if (kind === 'seen') await careApi.updateRequest(item.id, { status: 'acknowledged', by });
+      if (kind === 'resolve') await careApi.updateRequest(item.id, { status: 'done', response: reply.trim() || null, by });
+      if (kind === 'decline') await careApi.updateRequest(item.id, { status: 'declined', response: reply.trim() || 'Not possible at this time', by });
+      toast.success(kind === 'seen' ? 'Marked as seen. The patient and their doctor can see that.' : kind === 'resolve' ? 'Resolved. The patient and their doctor were told.' : 'Declined');
+      setReply('');
+      onChanged();
+    } catch (e) {
+      toast.error(errorText(e, 'Could not update the request'));
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <div className="space-y-3 rounded-xl border border-cream-200 p-4">
+      <p className="text-sm font-semibold text-ink-900">Your answer</p>
+      {item.status === 'new' && (
+        <button type="button" className="flow-btn-secondary !text-sm" disabled={!!busy} onClick={() => act('seen')}>
+          <Eye className="w-4 h-4" aria-hidden="true" /> Mark as seen
+        </button>
+      )}
+      <textarea className="flow-input !text-sm min-h-[80px]" maxLength={300} value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Reply sent to the patient and their doctor" aria-label="Reply" />
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className="flow-btn-success !text-sm" disabled={!!busy} onClick={() => act('resolve')}>
+          <CheckCircle2 className="w-4 h-4" aria-hidden="true" /> {reply.trim() ? 'Reply and resolve' : 'Resolve'}
+        </button>
+        <button type="button" className="flow-btn-ghost !text-sm" disabled={!!busy} onClick={() => act('decline')}>
+          <XCircle className="w-4 h-4" aria-hidden="true" /> Decline
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Drawer({ item, onClose, onChanged }) {
   useEffect(() => {
     const esc = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', esc);
@@ -70,6 +112,13 @@ function Drawer({ item, onClose }) {
               </dd>
             </div>
           </dl>
+          {item.canAct && !['done', 'declined'].includes(item.status) && <AdminActions item={item} onChanged={onChanged} />}
+          {item.response && (
+            <div className="rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 px-4 py-3">
+              <p className="text-xs font-semibold text-fg-ok uppercase tracking-wider">Reply</p>
+              <p className="text-sm text-ink-900 mt-1">{item.response}</p>
+            </div>
+          )}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-500 mb-3">History</h3>
             <RequestHistory history={item.history} />
@@ -101,6 +150,8 @@ export default function RequestCenterPage() {
       owner: r.otRequest && ['pending'].includes(r.otRequest.status) ? 'Theatre team' : `${r.routedTo?.name || '—'} (${ROLE_LABEL[r.routedTo?.role] || 'Staff'})`,
       history: r.history,
       ot: Boolean(r.otRequest),
+      canAct: Boolean(r.canAct),
+      response: r.response,
     }));
     const ots = (otQ.data || [])
       .filter((o) => !o.linkedRequestId)
@@ -182,7 +233,7 @@ export default function RequestCenterPage() {
           </div>
         </>
       )}
-      {current && <Drawer item={current} onClose={() => setOpenId(null)} />}
+      {current && <Drawer item={current} onClose={() => setOpenId(null)} onChanged={() => { reqQ.refresh({ silent: true }); otQ.refresh({ silent: true }); }} />}
     </div>
   );
 }

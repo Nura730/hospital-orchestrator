@@ -500,6 +500,12 @@ function notifyTo(audience, title, message, type = 'general', link = null) {
   return n;
 }
 
+/** Keep the patient's own doctor informed about requests someone else handles. */
+function informDoctor(p, r, title, message) {
+  if (!p?.doctorId || r.routedTo?.role === 'doctor') return null;
+  return notifyTo({ roles: ['doctor'], doctorIds: [p.doctorId] }, title, message, 'request', '/doctor/requests');
+}
+
 /** Tell whoever is responsible for a routed request. */
 function notifyRoute(route, title, message, type) {
   if (route.role === 'doctor') return notifyTo({ roles: ['doctor'], doctorIds: [route.id] }, title, message, type, '/doctor/requests');
@@ -507,13 +513,27 @@ function notifyRoute(route, title, message, type) {
   return notifyTo({ roles: ['admin'] }, title, message, type, '/admin/requests');
 }
 
+/**
+ * Bring any request (seeded, from an older saved session, or created elsewhere) up to the current shape:
+ * a route, a history, and for open nurse requests the bedside task that lets the nurse move it along.
+ */
 function normaliseRequest(r) {
   if (r.status === 'pending') r.status = 'new';
   if (r.status === 'addressed') r.status = 'done';
-  if (!r.history) r.history = [{ at: r.createdAt, status: 'new', by: r.createdBy, text: 'Request sent' }];
-  if (!r.routedTo) {
-    const p = getFlowState().patients.find((x) => x.id === r.patientId);
-    r.routedTo = p ? routeFor(p, r.type) : { role: 'admin', id: null, name: 'Bed management' };
+  const p = getFlowState().patients.find((x) => x.id === r.patientId);
+  if (!r.routedTo) r.routedTo = p ? routeFor(p, r.type) : { role: 'admin', id: null, name: 'Bed management' };
+  if (!r.history) {
+    r.history = [{ at: r.createdAt, status: 'new', by: r.createdBy, text: `Sent to ${r.routedTo.name}` }];
+    if (r.status === 'done') r.history.push({ at: r.addressedAt || r.createdAt, status: 'done', by: r.routedTo.name, text: `Resolved by ${r.routedTo.name}` });
+  }
+  if (r.routedTo.role === 'nurse' && OPEN_REQUEST.includes(r.status) && p) {
+    const c = care();
+    if (!c.tasks.some((t) => t.requestId === r.id)) {
+      const t = task(r.routedTo.id, r.type === 'family_notification' ? 'document' : 'notify_doctor', p, p.bedId, Math.max(Date.now(), new Date(r.createdAt).getTime() + 10 * MIN), 'pending', r.priority === 'urgent' || r.type === 'nurse_assistance' ? 'urgent' : 'normal', `${r.typeLabel}: ${r.note || 'no message'}`);
+      t.title = r.typeLabel;
+      t.requestId = r.id;
+      c.tasks.push(t);
+    }
   }
   return r;
 }
@@ -553,6 +573,7 @@ export function createRequest({ patientId, type, priority = 'medium', note = '',
     t.requestId = r.id;
     c.tasks.push(t);
   }
+  informDoctor(p, r, `${r.typeLabel} from ${source === 'patient' ? `patient ${p.alias}` : createdBy}`, `${p.alias}${p.bedId ? ` in ${p.bedId}` : ''}: ${r.note || 'no message'}. Handled by ${route.name}.`);
   addPatientEvent(p.id, 'doctor_note', `Request sent to ${route.name}: ${r.typeLabel}`, createdBy);
   recordEvent('REQUEST_CREATED', { patientId, type, priority, routedTo: route.name }, { requestId: r.id });
   return r;
@@ -579,6 +600,7 @@ export function updateRequest(requestId, update) {
   const p = S.patients.find((x) => x.id === r.patientId);
   if (r.source === 'patient') notifyTo({ roles: ['patient'], patientId: r.patientId }, `${r.typeLabel}: ${STATUS_TEXT[value].toLowerCase()}`, text || response || `${by} updated your request`, 'request', '/patient/requests');
   else notifyTo({ roles: ['admin'] }, `${r.typeLabel} ${STATUS_TEXT[value].toLowerCase()} for ${r.alias}`, `${by}${response ? `: ${response}` : ''}`, 'request', '/admin/requests');
+  informDoctor(p, r, `${r.typeLabel} for ${r.alias}: ${STATUS_TEXT[value].toLowerCase()}`, `${by}${response ? `: ${response}` : ''}`);
   if (p && value === 'done') addPatientEvent(p.id, 'doctor_note', `${r.typeLabel} resolved by ${by}`, by);
   // close the linked nurse task too
   if (['done', 'declined'].includes(value)) {
@@ -597,7 +619,7 @@ export function listRequests(role) {
   c.requests.forEach(normaliseRequest);
   const mine = c.requests.filter((r) => {
     if (role === 'admin') return true;
-    if (role === 'doctor') return r.routedTo?.role === 'doctor' && r.routedTo.id === v.doctorId;
+    if (role === 'doctor') return (r.routedTo?.role === 'doctor' && r.routedTo.id === v.doctorId) || getFlowState().patients.find((x) => x.id === r.patientId)?.doctorId === v.doctorId;
     if (role === 'nurse') return r.routedTo?.role === 'nurse' && r.routedTo.id === v.nurseId;
     if (role === 'patient') return r.patientId === v.patientId;
     return false;
@@ -606,7 +628,8 @@ export function listRequests(role) {
   return mine
     .map((r) => {
       const p = S.patients.find((x) => x.id === r.patientId);
-      return { ...r, bedId: p?.bedId ?? r.bedId, acuity: p?.acuity ?? null, patientStatus: p?.status ?? null, otRequest: (c.otRequests || []).find((o) => o.linkedRequestId === r.id) || null };
+      const mineToHandle = role === 'admin' ? r.routedTo?.role === 'admin' : role === 'patient' ? false : r.routedTo?.role === role && r.routedTo.id === (role === 'doctor' ? v.doctorId : v.nurseId);
+      return { ...r, bedId: p?.bedId ?? r.bedId, acuity: p?.acuity ?? null, patientStatus: p?.status ?? null, canAct: mineToHandle, otRequest: (c.otRequests || []).find((o) => o.linkedRequestId === r.id) || null };
     })
     .sort((a, b) => Number(OPEN_REQUEST.includes(b.status)) - Number(OPEN_REQUEST.includes(a.status)) || new Date(b.createdAt) - new Date(a.createdAt));
 }
@@ -674,6 +697,7 @@ export function getNurseDashboard(nurseId = ME_NURSE) {
   const S = getFlowState();
   const c = care();
   const n = NURSES.find((x) => x.id === nurseId) || NURSES[0];
+  c.requests.forEach(normaliseRequest); // every open nurse request has its task before the list is built
   const tasks = c.tasks.filter((t) => t.nurseId === n.id).sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt));
   const beds = n.beds
     .map((id) => S.beds.find((b) => b.id === id))
@@ -741,8 +765,16 @@ export function setNurseStatus(status, nurseId = ME_NURSE) {
 export function updateTask(taskId, status) {
   const t = care().tasks.find((x) => x.id === taskId);
   if (!t) throw new Error('Task not found');
+  const prev = t.status;
   t.status = status;
   t.completedAt = status === 'done' ? new Date().toISOString() : null;
+  // A task created from a patient request carries the request with it
+  const r = t.requestId ? care().requests.find((x) => x.id === t.requestId) : null;
+  if (r && prev !== status && OPEN_REQUEST.includes(r.status)) {
+    const nurse = NURSES.find((n) => n.id === t.nurseId)?.name || 'Nurse';
+    if (status === 'in_progress') updateRequest(r.id, { status: 'in_progress', by: nurse, text: `${nurse} is on it` });
+    if (status === 'done') updateRequest(r.id, { status: 'done', by: nurse, text: `Done by ${nurse}` });
+  }
   if (status === 'done' && t.patientId) addPatientEvent(t.patientId, t.type === 'medication' ? 'medication' : 'status_change', `${t.title} completed`, NURSES.find((n) => n.id === t.nurseId)?.name);
   if (status === 'done' && t.type === 'clean_bed') {
     const bed = getFlowState().beds.find((b) => b.id === t.bedId);
@@ -1071,6 +1103,18 @@ function syncOtNeeded(c, patientId) {
  * Doctor sends a patient for surgery scheduling, optionally answering a patient request.
  * @returns the OT request
  */
+/** Who hears back when the theatre team books or declines: the requesting doctor, the patient, the bedside nurse. */
+function otReplyTo(p, by, requestId) {
+  const c = care();
+  const linked = requestId ? c.requests.find((x) => x.id === requestId) : null;
+  const nurse = p.bedId ? nurseForBed(p.bedId) : null;
+  return [
+    { role: 'doctor', name: by },
+    ...(linked?.source === 'patient' || p.id === c.portalPatientId ? [{ role: 'patient', name: `Patient ${p.alias}` }] : []),
+    ...(nurse ? [{ role: 'nurse', name: nurse.name }] : []),
+  ];
+}
+
 export function escalateToOt(requestId, patientId, { procedure, urgency = 'urgent', preferredStart = null, durationMin = 90, notes = '' } = {}, by = 'Doctor') {
   const S = getFlowState();
   const c = care();
@@ -1091,6 +1135,7 @@ export function escalateToOt(requestId, patientId, { procedure, urgency = 'urgen
     status: 'pending',
     createdAt: now,
     linkedRequestId: requestId || null,
+    replyTo: otReplyTo(p, by, requestId),
     history: [{ at: now, status: 'pending', by, text: `Requested by ${by}` }],
   };
   (c.otRequests = c.otRequests || []).unshift(o);
@@ -1172,7 +1217,8 @@ export function listOtRequests() {
     .map((o) => {
       const p = S.patients.find((x) => x.id === o.patientId);
       const prof = p ? buildProfile(S, p) : null;
-      return { ...o, bedId: p?.bedId ?? o.bedId, ward: prof?.bed?.ward || null, acuity: p?.acuity ?? null, age: prof?.age ?? null, doctorName: prof?.doctor.name || null, diagnosis: prof?.diagnosis || null, icuRisk: prof?.icuRisk || null, patientStatus: p?.status || null, location: p?.location || null };
+      const linked = o.linkedRequestId ? c.requests.find((x) => x.id === o.linkedRequestId) : null;
+      return { ...o, replyTo: o.replyTo || (p ? otReplyTo(p, o.requestedBy?.name || prof?.doctor.name || 'Requesting doctor', o.linkedRequestId) : []), origin: linked ? { type: linked.typeLabel, source: linked.source, note: linked.note, createdAt: linked.createdAt } : null, bedId: p?.bedId ?? o.bedId, ward: prof?.bed?.ward || null, acuity: p?.acuity ?? null, age: prof?.age ?? null, doctorName: prof?.doctor.name || null, diagnosis: prof?.diagnosis || null, icuRisk: prof?.icuRisk || null, patientStatus: p?.status || null, location: p?.location || null };
     })
     .sort((a, b) => Number(b.status === 'pending') - Number(a.status === 'pending') || URGENCY_RANK[a.urgency] - URGENCY_RANK[b.urgency] || new Date(a.createdAt) - new Date(b.createdAt));
 }
@@ -1370,7 +1416,7 @@ export function getBadgeCounts(role) {
   const c = care();
   const v = viewerFor(role);
   const out = { notifications: getFlowState().notifications.filter((n) => canSee(n, v) && !isReadFor(n, v)).length };
-  if (role === 'doctor') out.requests = listRequests('doctor').filter((r) => ['new', 'acknowledged'].includes(r.status)).length;
+  if (role === 'doctor') out.requests = listRequests('doctor').filter((r) => r.canAct && ['new', 'acknowledged'].includes(r.status)).length;
   if (role === 'ot_manager') out.otRequests = (c.otRequests || []).filter((o) => o.status === 'pending').length;
   if (role === 'admin') {
     c.requests.forEach(normaliseRequest);
@@ -1439,6 +1485,15 @@ export function getPortal() {
     },
     nextEvent: detail.schedule.find((s) => s.status !== 'done') || null,
   };
+}
+
+/** Who a portal request of this type would go to, and whether the patient's own doctor is kept informed. */
+export function previewPortalRoute(type) {
+  const S = getFlowState();
+  const p = patientById(S, care().portalPatientId);
+  const route = routeFor(p, type);
+  const doctor = doctorById(p.doctorId) || doctorByName(p.doctorName);
+  return { ...route, type, doctorName: doctor?.name || p.doctorName || 'your doctor', doctorInformed: route.role !== 'doctor' };
 }
 
 export function submitPortalRequest({ type, message }) {

@@ -1,14 +1,15 @@
 /**
  * @file DoctorRequestsPage.jsx
- * /doctor/requests: requests routed to this doctor (from their patients, nurses and admin).
- * Left: inbox. Right: the request, its progress, and actions: mark as seen, reply and resolve,
- * send to the theatre team (OT request) or decline. Everything updates live in every open tab.
+ * /doctor/requests: requests routed to this doctor, plus every request from this doctor's own patients
+ * that a nurse or the admin team handles (shown with who is handling it, view only).
+ * Left: inbox. Right: the request, who it is from and who answers, its progress, and actions: mark as seen,
+ * reply and resolve, send to the theatre team (OT request) or decline. Live in every open tab.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
-import { Inbox, Eye, Send, Scissors, XCircle, CheckCircle2, BedDouble, MessageSquareText } from 'lucide-react';
+import { Inbox, Eye, Send, Scissors, XCircle, CheckCircle2, BedDouble, MessageSquareText, ArrowRight, UserRound } from 'lucide-react';
 import FlowPageHeader from '../../components/domain/FlowPageHeader.jsx';
 import StatusPill from '../../components/domain/StatusPill.jsx';
 import PatientDetailPopup from '../../components/domain/PatientDetailPopup.jsx';
@@ -20,6 +21,26 @@ import { useFlowPolling, errorText } from '../../hooks/useFlowPolling.js';
 import { timeAgo } from '../../utils/flowFormat.js';
 
 const OPEN = ['new', 'acknowledged', 'in_progress', 'scheduled'];
+const ROLE_NAME = { doctor: 'Doctor', nurse: 'Nurse', admin: 'Admin team' };
+
+/** From who, to who: "Patient PF020 -> You" or "Patient PF020 -> Nurse Priya Sharma (you are kept informed)". */
+function Route({ r }) {
+  const from = r.source === 'patient' ? `Patient ${r.alias}` : r.createdBy;
+  const to = r.canAct ? 'You' : r.routedTo?.name || 'Staff';
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      <span className="inline-flex items-center gap-1.5 rounded-lg bg-sunken px-2.5 py-1 font-semibold text-ink-900">
+        <UserRound className="w-4 h-4 text-ink-500" aria-hidden="true" /> {from}
+      </span>
+      <ArrowRight className="w-4 h-4 text-ink-500" aria-label="sent to" />
+      <span className={clsx('inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 font-semibold', r.canAct ? 'bg-royal-500/10 text-royal-500' : 'bg-sunken text-ink-900')}>
+        {to}
+        {!r.canAct && r.routedTo?.role && <span className="font-normal text-ink-500">({ROLE_NAME[r.routedTo.role] || r.routedTo.role})</span>}
+      </span>
+      {!r.canAct && <span className="text-ink-500">You are kept informed</span>}
+    </div>
+  );
+}
 const PRIORITY_COLOR = { urgent: '#DC2626', high: '#B45309', medium: '#014BAA', low: '#475569' };
 const STATUS_TONE = { new: 'pending', acknowledged: 'in_progress', in_progress: 'in_progress', scheduled: 'scheduled', done: 'done', declined: 'rejected' };
 
@@ -125,6 +146,8 @@ function Detail({ r, onOpenPatient, onChanged }) {
         </button>
       </div>
 
+      <Route r={r} />
+
       <blockquote className="rounded-xl bg-sunken px-4 py-3 text-base text-ink-900 border-l-4 border-royal-500">
         <MessageSquareText className="inline w-4 h-4 mr-2 text-ink-500 align-[-2px]" aria-hidden="true" />
         {r.note || 'No message'}
@@ -134,7 +157,7 @@ function Detail({ r, onOpenPatient, onChanged }) {
 
       {r.response && (
         <div className="rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 px-4 py-3">
-          <p className="text-xs font-semibold text-fg-ok uppercase tracking-wider">Your reply</p>
+          <p className="text-xs font-semibold text-fg-ok uppercase tracking-wider">{r.canAct ? 'Your reply' : `Reply from ${r.routedTo?.name || 'staff'}`}</p>
           <p className="text-sm text-ink-900 mt-1">{r.response}</p>
         </div>
       )}
@@ -148,7 +171,13 @@ function Detail({ r, onOpenPatient, onChanged }) {
         </div>
       )}
 
-      {open && (
+      {open && !r.canAct && (
+        <p className="rounded-xl border border-cream-200 px-4 py-3 text-sm text-ink-500">
+          {r.routedTo?.name || 'The care team'} is handling this. You will be notified at every step.
+        </p>
+      )}
+
+      {open && r.canAct && (
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {r.status === 'new' && (
@@ -200,7 +229,7 @@ export default function DoctorRequestsPage() {
     <div>
       <FlowPageHeader
         title="Requests"
-        subtitle="Questions and requests from your patients, nurses and the admin team"
+        subtitle="Requests for you to answer, and every request from your patients that the nurses or admin team handle"
         showHealth={false}
         actions={
           <div className="inline-flex rounded-lg border border-cream-200 bg-cream-50 p-0.5" role="group" aria-label="Show">
@@ -239,7 +268,7 @@ export default function DoctorRequestsPage() {
                       <span className="block text-sm text-ink-500 truncate mt-0.5">{r.note || 'No message'}</span>
                       <span className="flex items-center gap-2 mt-2">
                         <span className="text-xs font-semibold text-ink-900">{r.alias}</span>
-                        <span className="text-xs text-ink-500">{r.source === 'patient' ? 'Patient' : r.createdBy}</span>
+                        <span className="text-xs text-ink-500 truncate">{r.canAct ? (r.source === 'patient' ? 'Patient' : r.createdBy) : `${r.routedTo?.name || 'Staff'} handling`}</span>
                         <StatusPill status={STATUS_TONE[r.status]} label={REQUEST_STATUS_LABEL[r.status]} size="xs" className="ml-auto" />
                       </span>
                     </span>

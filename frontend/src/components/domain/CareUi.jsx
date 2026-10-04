@@ -187,7 +187,7 @@ export function TimelineList({ items, emptyText = 'Nothing scheduled', showStatu
           className={clsx(
             'flex items-start gap-2.5 rounded-lg px-2.5 py-2 border-l-2',
             e.status === 'in_progress' ? 'border-royal-500 bg-royal-500/5' : 'border-transparent',
-            e.status === 'done' && 'opacity-70'
+            e.status === 'done' && 'text-ink-500 [&_*]:!text-ink-500'
           )}
         >
           {showStatus ? <StatusIcon status={e.status} className="w-4 h-4 mt-px shrink-0" /> : <EventIcon type={e.type} className="w-4 h-4 mt-px shrink-0" />}

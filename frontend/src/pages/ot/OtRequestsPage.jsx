@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import { ClipboardList, Siren, CalendarCheck, DoorOpen, Clock3, UserRound, Check, XCircle, Stethoscope, CalendarClock } from 'lucide-react';
 import FlowPageHeader from '../../components/domain/FlowPageHeader.jsx';
 import StatusPill from '../../components/domain/StatusPill.jsx';
-import { RequestHistory } from '../../components/domain/RequestThread.jsx';
+import { RequestHistory, RequestPath } from '../../components/domain/RequestThread.jsx';
 import { FlowError, FlowSkeleton } from '../../components/domain/FlowUi.jsx';
 import { StatTile, AcuityBadge, IcuRiskBadge, MiniEmpty, Avatar } from '../../components/domain/CareUi.jsx';
 import careApi from '../../api/careApi.js';
@@ -288,6 +288,7 @@ function RequestCard({ o }) {
           {o.icuRisk && <IcuRiskBadge risk={o.icuRisk} showLabel />}
         </div>
       </div>
+      <RequestPath o={o} />
       <dl className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 rounded-xl bg-sunken px-4 py-3">
         {facts.map(([k, v]) => (
           <div key={k} className="min-w-0">

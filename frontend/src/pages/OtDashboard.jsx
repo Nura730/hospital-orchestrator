@@ -7,6 +7,7 @@
 
 import FlowPageHeader from '../components/domain/FlowPageHeader.jsx';
 import React, { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { DoorOpen, Activity, Sparkles, ClipboardList, Play, CheckCircle2, Timer, Wrench, ChevronDown } from 'lucide-react';
@@ -18,6 +19,7 @@ import { StatTile, ProgressLine, PanelTitle } from '../components/domain/CareUi.
 import careApi from '../api/careApi.js';
 import { useFlowPolling, errorText } from '../hooks/useFlowPolling.js';
 import { clock } from '../utils/flowFormat.js';
+import { RequestPath } from '../components/domain/RequestThread.jsx';
 
 const STATE_PILL = { available: ['available', 'Ready'], in_surgery: ['in_surgery', 'Surgery'], cleaning: ['cleaning', 'Cleaning'], maintenance: ['maintenance', 'Maintenance'] };
 const CASE_COLORS = { in_progress: '#8B5CF6', scheduled: '#014BAA', completed: '#10B981' };
@@ -109,6 +111,8 @@ function RoomCard({ room, onAction, busy }) {
   );
 }
 
+const CASE_LABEL = { in_progress: 'In surgery', scheduled: 'Scheduled', completed: 'Completed' };
+
 function MiniGantt({ rooms, cases, expanded }) {
   const { start, end } = useMemo(() => {
     const times = cases.flatMap((c) => [new Date(c.start).getTime(), new Date(c.end).getTime()]);
@@ -120,44 +124,101 @@ function MiniGantt({ rooms, cases, expanded }) {
   }, [cases]);
   const span = end - start;
   const hours = Array.from({ length: Math.round(span / 3600000) + 1 }, (_, i) => start + i * 3600000);
-  const nowPct = ((Date.now() - start) / span) * 100;
-  const rowH = expanded ? 'h-9' : 'h-6';
+  const pct = (t) => ((t - start) / span) * 100;
+  const nowPct = pct(Date.now());
+  const rowH = expanded ? 44 : 30;
+  const grid = (
+    <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+      {hours.map((h, i) => (
+        <span key={h} className="absolute top-0 bottom-0 w-px bg-cream-200" style={{ left: `${(i / (hours.length - 1)) * 100}%` }} />
+      ))}
+    </div>
+  );
   return (
-    <div className="relative">
-      <div className="ml-12 relative h-4 text-[10px] text-ink-500">
-        {hours.map((h, i) => (
-          <span key={h} className="absolute -translate-x-1/2 tabular-nums" style={{ left: `${(i / (hours.length - 1)) * 100}%` }}>
-            {clock(h)}
-          </span>
-        ))}
-      </div>
-      <div className="space-y-1.5 mt-1">
+    <div className="space-y-2">
+      <div className="grid gap-x-3" style={{ gridTemplateColumns: '56px minmax(0, 1fr)' }}>
+        <span />
+        <div className="relative h-5 text-xs text-ink-500 tabular-nums">
+          {hours.map((h, i) => {
+            const first = i === 0;
+            const last = i === hours.length - 1;
+            return (
+              <span key={h} className="absolute top-0" style={{ left: `${(i / (hours.length - 1)) * 100}%`, transform: first ? 'none' : last ? 'translateX(-100%)' : 'translateX(-50%)' }}>
+                {clock(h)}
+              </span>
+            );
+          })}
+        </div>
         {rooms.map((r) => (
-          <div key={r.roomId} className="flex items-center gap-2">
-            <span className="w-10 text-[11px] font-semibold text-ink-500">{r.name}</span>
-            <div className={clsx('relative flex-1 rounded bg-sunken', rowH)}>
+          <React.Fragment key={r.roomId}>
+            <span className="text-sm font-semibold text-ink-900 self-center">{r.name}</span>
+            <div className="relative rounded-md bg-sunken my-1" style={{ height: rowH }}>
+              {grid}
               {cases
                 .filter((c) => c.roomId === r.roomId)
                 .map((c) => {
-                  const left = ((new Date(c.start).getTime() - start) / span) * 100;
-                  const width = ((new Date(c.end).getTime() - new Date(c.start).getTime()) / span) * 100;
+                  const left = Math.max(0, pct(new Date(c.start).getTime()));
+                  const width = Math.max(1.5, pct(new Date(c.end).getTime()) - left);
                   return (
                     <span
                       key={c.id}
-                      className="absolute top-0.5 bottom-0.5 rounded overflow-hidden px-1 text-[10px] leading-[1.6] text-white"
-                      style={{ left: `${Math.max(0, left)}%`, width: `${Math.max(1, width)}%`, backgroundColor: CASE_COLORS[c.status] || '#94A3B8' }}
-                      title={`${c.caseNumber} · ${c.procedure} · ${c.surgeon} · ${clock(c.start)}-${clock(c.end)} · ${c.status.replace('_', ' ')}`}
+                      className="absolute top-1 bottom-1 rounded-md overflow-hidden px-1.5 text-xs font-semibold leading-tight text-white flex items-center whitespace-nowrap"
+                      style={{ left: `${left}%`, width: `${Math.min(width, 100 - left)}%`, backgroundColor: CASE_COLORS[c.status] || '#94A3B8' }}
+                      title={`${c.caseNumber}: ${c.procedure}, ${c.surgeon}, ${clock(c.start)} to ${clock(c.end)} (${CASE_LABEL[c.status] || c.status})`}
                     >
-                      {expanded ? c.procedure : ''}
+                      <span className="truncate">{expanded ? `${c.alias}: ${c.procedure}` : c.alias}</span>
                     </span>
                   );
                 })}
+              {nowPct >= 0 && nowPct <= 100 && <span className="absolute -top-1 -bottom-1 w-0.5 bg-[#DC2626] z-10" style={{ left: `${nowPct}%` }} aria-hidden="true" />}
             </div>
-          </div>
+          </React.Fragment>
         ))}
       </div>
-      {nowPct >= 0 && nowPct <= 100 && <span className="absolute top-4 bottom-0 w-px bg-[#EF4444]" style={{ left: `calc(3rem + (100% - 3rem) * ${nowPct / 100})` }} aria-hidden="true" />}
+      <div className="flex flex-wrap items-center gap-4 pl-[68px] text-xs text-ink-500">
+        {Object.entries(CASE_LABEL).map(([k, l]) => (
+          <span key={k} className="inline-flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: CASE_COLORS[k] }} aria-hidden="true" /> {l}
+          </span>
+        ))}
+        <span className="inline-flex items-center gap-1.5">
+          <span className="w-0.5 h-3 bg-[#DC2626]" aria-hidden="true" /> Now
+        </span>
+      </div>
     </div>
+  );
+}
+
+/** Theatre requests waiting for a booking: who asked, the path it took, and who hears back. */
+function WaitingRequests() {
+  const q = useFlowPolling(() => careApi.listOtRequests(), { intervalMs: 60000, toastOnError: false });
+  const waiting = (q.data || []).filter((o) => o.status === 'pending');
+  return (
+    <section className="flow-card p-4" aria-label="Requests waiting">
+      <PanelTitle
+        action={
+          <Link to="/ot/requests" className="text-sm font-semibold text-royal-500 hover:underline">
+            Open OT Requests
+          </Link>
+        }
+      >
+        Requests waiting ({waiting.length})
+      </PanelTitle>
+      {!waiting.length && <p className="text-sm text-ink-500 py-4 text-center">No requests waiting. Every request is booked.</p>}
+      <ul className="divide-y divide-cream-200">
+        {waiting.map((o) => (
+          <li key={o.id} className="py-3 flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 space-y-1.5">
+              <p className="text-sm font-bold text-ink-900">
+                {o.procedure} <span className="font-normal text-ink-500">for {o.alias}{o.bedId ? ` in ${o.bedId}` : ''}</span>
+              </p>
+              <RequestPath o={o} compact />
+            </div>
+            <span className={clsx('rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wide', o.urgency === 'emergency' ? 'bg-[#DC2626]/10 text-fg-bad' : o.urgency === 'urgent' ? 'bg-[#F59E0B]/15 text-fg-warn' : 'bg-sunken text-ink-500')}>{o.urgency}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -274,6 +335,8 @@ export default function OtDashboard() {
         ))}
       </div>
 
+      <WaitingRequests />
+
       <section className="flow-card p-4">
         <PanelTitle>Doctors Available for OT</PanelTitle>
         <DoctorAvailability doctors={d.doctors} onAssign={setAssigning} />
@@ -289,9 +352,7 @@ export default function OtDashboard() {
         >
           Today
         </PanelTitle>
-        <div className={expanded ? '' : 'max-h-[150px] overflow-hidden'}>
-          <MiniGantt rooms={d.rooms} cases={d.cases} expanded={expanded} />
-        </div>
+        <MiniGantt rooms={d.rooms} cases={d.cases} expanded={expanded} />
       </section>
 
       {assigning && <AssignSurgeonModal doctor={assigning} cases={d.cases} onClose={() => setAssigning(null)} onDone={refresh} />}

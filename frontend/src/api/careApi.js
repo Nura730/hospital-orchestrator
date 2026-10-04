@@ -96,6 +96,7 @@ export const careApi = {
   // Patient portal
   getPortal: () => call(care.getPortal),
   submitPortalRequest: (body) => change(care.submitPortalRequest, body),
+  previewPortalRoute: (type) => call(care.previewPortalRoute, type),
 
   // Notifications (shared hospital feed)
   getNotifications: (role) => call(care.getNotifications, role),

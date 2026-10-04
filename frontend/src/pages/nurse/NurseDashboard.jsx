@@ -88,7 +88,7 @@ function ShiftTab({ d, onOpen }) {
             const current = mins >= minutesOf(s.start) && mins < minutesOf(s.end);
             const past = mins >= minutesOf(s.end);
             return (
-              <li key={s.start} className={clsx('flex items-center gap-3 rounded-lg px-3 py-2 border-l-2', current ? 'border-royal-500 bg-royal-500/10' : 'border-transparent', past && 'opacity-55')}>
+              <li key={s.start} className={clsx('flex items-center gap-3 rounded-lg px-3 py-2 border-l-2', current ? 'border-royal-500 bg-royal-500/10' : 'border-transparent', past && 'text-ink-500 [&_*]:!text-ink-500')}>
                 <span className="text-xs font-semibold tabular-nums text-ink-500 w-24 shrink-0">
                   {s.start} - {s.end}
                 </span>

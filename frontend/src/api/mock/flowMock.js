@@ -976,6 +976,7 @@ const routes = {
 };
 
 function matchGet(path, params) {
+  if (path === '/mci') return st().mci || { active: false };
   if (routes[path]) return routes[path](params || {});
   let m = path.match(/^\/admission-probability\/(.+)$/);
   if (m) {
@@ -1051,6 +1052,7 @@ function matchPost(path, body = {}) {
     runAnalysis();
     return { reset: true };
   }
+  if (path === '/mci') return setMassCasualty(Boolean(body.active));
   if (path === '/demo/ambulance') return processEvent('AMBULANCE_INCOMING', { eta: 8, acuity: 1, age: 68, gender: 'M', ...body });
   if (path === '/demo/surge') {
     s.surgeFactor = 1.6;
@@ -1066,6 +1068,59 @@ function matchPost(path, body = {}) {
     return { injected: free.length };
   }
   throw new Error(`Mock route not found: POST ${path}`);
+}
+
+/* ───────────────────────── Mass-casualty mode ───────────────────────── */
+
+const ALL_ROLES = ['admin', 'doctor', 'ot_manager', 'nurse'];
+
+/**
+ * One switch for a major incident: a first wave of casualties into Emergency, arrivals x2.2, elective surgery moved to tomorrow, discharge
+ * reminders for every ready patient, and an alert to all staff. Standing down restores normal arrivals;
+ * postponed cases stay on tomorrow's list.
+ */
+function setMassCasualty(active) {
+  const s = st();
+  const now = new Date().toISOString();
+  if (active) {
+    if (s.mci?.active) return s.mci;
+    s.surgeFactor = 2.2;
+    const electives = s.cases.filter((c) => c.status === 'scheduled' && c.urgency === 'elective');
+    electives.forEach((c) => {
+      c.start += 24 * H;
+      c.end += 24 * H;
+      c.postponedForMci = true;
+    });
+    // First wave of casualties fills Emergency, leaving two beds for the next arrivals
+    const freeEd = s.beds.filter((b) => b.type === 'ed' && b.status === 'available');
+    const wave = freeEd.slice(0, Math.min(6, Math.max(0, freeEd.length - 2)));
+    wave.forEach((b, i) => {
+      const p = { id: uid('mci'), alias: `MCI-${String(i + 1).padStart(2, '0')}`, acuity: [1, 2, 2, 3, 3, 2][i], age: [34, 52, 27, 61, 45, 19][i], gender: i % 2 ? 'F' : 'M', status: 'admitted', bedId: b.id, department: 'Emergency', doctorId: 'doc-patel', doctorName: 'Dr. Sunita Patel', admittedAt: now, expectedDischarge: iso(Date.now() + 10 * H), dischargeDate: null, requiresImaging: true, requiresIcu: i === 0, pendingTasks: ['Trauma assessment'] };
+      s.patients.push(p);
+      Object.assign(b, { status: 'occupied', patientId: p.id, expectedRelease: p.expectedDischarge, releaseConfidence: 0.5 });
+      emit('bed.updated', { bedId: b.id, status: 'occupied' });
+    });
+    const ready = dischargeCandidates().candidates.filter((c) => c.ready);
+    for (const c of ready) {
+      notify(`Discharge nudge: ${c.alias} (${c.bedId})`, `Major incident: discharge if safe. Readiness ${c.score}/100.`);
+      emit('flow.dischargeNudge', { patientId: c.patientId, alias: c.alias, doctorId: c.doctorId, probability: c.probability, bedId: c.bedId, score: c.score });
+    }
+    const n = notify('MASS CASUALTY MODE ACTIVE', `${wave.length} casualties in Emergency, more expected. ${electives.length} elective cases moved to tomorrow, ${ready.length} discharges flagged. Report to your department lead.`, 'alert');
+    n.audience = { roles: ALL_ROLES };
+    n.link = null;
+    s.mci = { active: true, startedAt: now, postponed: electives.map((c) => c.caseNumber), nudged: ready.length, casualties: wave.length };
+    logEvent('MCI_ACTIVATED', {}, { postponed: electives.length, nudged: ready.length });
+  } else {
+    if (!s.mci?.active) return { active: false };
+    s.surgeFactor = 1;
+    const n = notify('Mass casualty mode stood down', `Normal operations resumed. Postponed elective cases remain on tomorrow's list.`, 'general');
+    n.audience = { roles: ALL_ROLES };
+    logEvent('MCI_STOOD_DOWN', {}, { durationMin: Math.round((Date.now() - new Date(s.mci.startedAt).getTime()) / MIN) });
+    s.mci = { active: false, endedAt: now };
+  }
+  emit('flow.mci', s.mci);
+  runAnalysis();
+  return s.mci;
 }
 
 function matchPatch(path, body = {}) {

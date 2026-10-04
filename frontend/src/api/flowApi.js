@@ -91,6 +91,9 @@ export const flowApi = {
   aiReport: (scope, format = 'explain') => post('/ai-report', { scope, format }, { timeout: AI_TIMEOUT_MS }),
   demoReset: () => post('/demo/reset', {}),
   demoAmbulance: (body = {}) => post('/demo/ambulance', body),
+  /** Mass-casualty mode (demo hospital only; the backend has no such switch yet). */
+  getMci: () => (isFlowMock ? get('/mci') : Promise.resolve({ active: false, unsupported: true })),
+  setMci: (active) => (isFlowMock ? post('/mci', { active }) : Promise.reject(new Error('Mass casualty mode is available in the demo hospital only'))),
   demoSurge: () => post('/demo/surge', {}),
 
   // Doctor OT request (core doctor API)

@@ -33,6 +33,7 @@ import {
   MessageSquare,
   Info,
   CheckCircle2,
+  Siren,
 } from 'lucide-react';
 import '../../components/charts/setupChart.js';
 import FlowPageHeader from '../../components/domain/FlowPageHeader.jsx';
@@ -47,6 +48,7 @@ import careApi from '../../api/careApi.js';
 import { useLiveStore } from '../../store/liveStore.js';
 import { useFlowPolling, errorText } from '../../hooks/useFlowPolling.js';
 import { clock, readinessBand, BAND_STYLES } from '../../utils/flowFormat.js';
+import { runwayHours, formatRunway, runwayTone } from '../../utils/runway.js';
 
 const SEV = {
   LOW: { label: 'Normal', color: '#047857', bar: '#10B981' },
@@ -95,7 +97,45 @@ function Kpi({ icon: Icon, label, value, sub, tone = 'default', to }) {
   );
 }
 
-function StatusBoard({ departments }) {
+const RUNWAY_COLOR = { bad: '#B91C1C', warn: '#B45309', ok: 'rgb(var(--ink-500))' };
+
+function MassCasualtySwitch({ onChanged }) {
+  const q = useFlowPolling(() => flowApi.getMci(), { intervalMs: 30000, toastOnError: false });
+  const [busy, setBusy] = useState(false);
+  if (!q.data || q.data.unsupported) return null;
+  const active = Boolean(q.data.active);
+  const toggle = async () => {
+    const msg = active
+      ? 'Stand down mass casualty mode and return to normal operations?'
+      : 'Activate mass casualty mode? Elective surgery moves to tomorrow, ready patients are flagged for discharge and all staff are alerted.';
+    if (!window.confirm(msg)) return;
+    setBusy(true);
+    try {
+      await flowApi.setMci(!active);
+      toast.success(active ? 'Mass casualty mode stood down' : 'Mass casualty mode active. All staff alerted.');
+      q.refresh({ silent: true });
+      onChanged();
+    } catch (e) {
+      toast.error(errorText(e, 'Could not change mass casualty mode'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={busy}
+      aria-pressed={active}
+      className={clsx('inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[13px] font-semibold transition-colors', active ? 'bg-white text-[#B91C1C] border-2 border-[#B91C1C]' : 'bg-[#B91C1C] text-white hover:bg-[#991B1B]')}
+    >
+      <Siren className="w-4 h-4" aria-hidden="true" /> {active ? 'Stand down' : 'Mass casualty'}
+    </button>
+  );
+}
+
+function StatusBoard({ departments, bottlenecks = [] }) {
+  const runwayOf = Object.fromEntries(bottlenecks.map((b) => [b.department, runwayHours(b)]));
   return (
     <section className="flow-card overflow-hidden h-full" aria-label="Department status board">
       <header className="flex items-center justify-between px-5 py-3.5 border-b border-cream-200">
@@ -117,6 +157,7 @@ function StatusBoard({ departments }) {
             <th scope="col" className="text-right">
               In 2 hours
             </th>
+            <th scope="col">Capacity runway</th>
             <th scope="col">Status</th>
           </tr>
         </thead>
@@ -146,6 +187,9 @@ function StatusBoard({ departments }) {
                   <span className="inline-flex items-center gap-1">
                     <Trend className="w-4 h-4 text-ink-500" aria-hidden="true" /> {d.predicted2hPct}%
                   </span>
+                </td>
+                <td className="!text-sm font-semibold whitespace-nowrap" style={{ color: RUNWAY_COLOR[runwayTone(runwayOf[d.department])] }}>
+                  {d.department in runwayOf ? formatRunway(runwayOf[d.department]) : '—'}
                 </td>
                 <td>
                   <span className="inline-flex rounded-md px-2 py-1 text-xs font-bold" style={{ color: s.color, backgroundColor: `${s.bar}1F` }}>
@@ -398,6 +442,7 @@ export default function FlowCommandCenterPage() {
             <button type="button" className="flow-btn-secondary" onClick={() => setShowDemo((v) => !v)} aria-expanded={showDemo}>
               <FlaskConical className="w-4 h-4" aria-hidden="true" /> Demo <ChevronDown className={clsx('w-3.5 h-3.5 transition-transform', showDemo && 'rotate-180')} aria-hidden="true" />
             </button>
+            <MassCasualtySwitch onChanged={refreshAll} />
             <AiReportButton scope="admin" label="AI Report" />
             <span className="hidden md:block w-px h-10 bg-cream-200 mx-1" aria-hidden="true" />
             <LiveClock />
@@ -423,7 +468,7 @@ export default function FlowCommandCenterPage() {
 
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch">
             <div className="xl:col-span-8">
-              <StatusBoard departments={summary.departments || []} />
+              <StatusBoard departments={summary.departments || []} bottlenecks={bnQ.data?.bottlenecks || []} />
             </div>
             <div className="xl:col-span-4">
               <ActionQueue actions={actions} onApplied={refreshAll} />

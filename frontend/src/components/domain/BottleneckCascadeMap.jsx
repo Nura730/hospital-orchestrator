@@ -7,7 +7,8 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import { TrendingUp, TrendingDown, Minus, Ban } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Ban, Timer } from 'lucide-react';
+import { runwayHours, formatRunway, runwayTone } from '../../utils/runway.js';
 
 export function severityOf(util) {
   const pct = util <= 1.5 ? util * 100 : util;
@@ -44,6 +45,17 @@ function Ring({ pct, color, glow }) {
         style={{ transition: 'stroke-dasharray 600ms ease' }}
       />
     </svg>
+  );
+}
+
+function Runway({ d }) {
+  const h = runwayHours(d);
+  if (h === null) return null;
+  const tone = runwayTone(h);
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-bold tabular-nums" style={{ color: tone === 'bad' ? '#B91C1C' : tone === 'warn' ? '#B45309' : 'rgb(var(--ink-500))' }}>
+      <Timer className="w-3.5 h-3.5" aria-hidden="true" /> {formatRunway(h)}
+    </span>
   );
 }
 
@@ -90,6 +102,7 @@ function Node({ d, selected, onSelect }) {
           <Trend className="w-3.5 h-3.5 text-ink-500" aria-hidden="true" /> {next}% in 2h
         </span>
       )}
+      <Runway d={d} />
     </button>
   );
 }

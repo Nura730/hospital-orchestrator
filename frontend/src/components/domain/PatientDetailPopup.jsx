@@ -122,8 +122,8 @@ function Overview({ data, canRequest, requester, onChanged, canMove }) {
               <span className="flex flex-col items-end gap-0.5">
                 <IcuRiskBadge risk={profile.icuRisk} showLabel />
                 {profile.icuRisk.factors?.length > 0 && (
-                  <span className="text-[11px] text-ink-500">
-                    {profile.icuRisk.factors.map((f) => `${f.factor} ${f.direction === 'up' ? 'raises' : 'lowers'}`).join(' · ')}
+                  <span className="text-xs text-ink-500 text-right">
+                    Why: {profile.icuRisk.factors.map((f) => `${f.factor.toLowerCase()} ${f.direction === 'up' ? 'raises' : 'lowers'} it`).join(', ')}
                   </span>
                 )}
               </span>
@@ -131,6 +131,22 @@ function Overview({ data, canRequest, requester, onChanged, canMove }) {
               'Already in ICU'
             ) : null}
           </Field>
+          {profile.icuWhatIf?.length > 0 && (
+            <div className="mt-2 rounded-lg border border-cream-200 bg-sunken/50 px-3 py-2" aria-label="ICU risk what-if">
+              <p className="text-xs font-semibold uppercase tracking-wider text-ink-500 mb-1">What if</p>
+              <ul className="space-y-0.5">
+                {profile.icuWhatIf.map((w) => (
+                  <li key={w.label} className="flex items-center justify-between gap-3 text-xs">
+                    <span className="text-ink-900">{w.label}</span>
+                    <span className="tabular-nums font-semibold whitespace-nowrap" style={{ color: w.delta > 0.005 ? '#B91C1C' : w.delta < -0.005 ? '#047857' : 'rgb(var(--ink-500))' }}>
+                      ICU risk {Math.round(w.probability * 100)}% ({w.delta >= 0 ? '+' : ''}
+                      {Math.round(w.delta * 100)} pts)
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
 
         <section className="flow-card p-3.5">

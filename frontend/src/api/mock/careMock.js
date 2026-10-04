@@ -322,6 +322,7 @@ function buildProfile(S, p) {
     readiness: p.bedId ? patientReadiness(p).score : null,
     location: p.location || null,
     icuRisk: bed?.type === 'icu' ? null : predictIcuNeed({ age: p.age, gender: p.gender, acuity: p.acuity, requiresOt: requiresOt, arrivalTime: admittedAt }),
+    icuWhatIf: bed?.type === 'icu' ? [] : icuWhatIf({ age: p.age, gender: p.gender, acuity: p.acuity, requiresOt, arrivalTime: admittedAt }),
   };
 }
 
@@ -803,6 +804,22 @@ function generatedDoctorEvents(dayStart, myAliases) {
 
 function myPatientsRaw(S) {
   return S.patients.filter((p) => p.doctorId === FLOW_ME_DOCTOR);
+}
+
+/** ICU risk under one change at a time (acuity one step better or worse, surgery planned or not). */
+function icuWhatIf(base) {
+  const now = predictIcuNeed(base);
+  if (!now) return [];
+  const a = Number(base.acuity) || 3;
+  const out = [];
+  const add = (label, inputs) => {
+    const r = predictIcuNeed({ ...base, ...inputs });
+    if (r) out.push({ label, probability: r.probability, delta: r.probability - now.probability });
+  };
+  if (a < 5) add(`If acuity improves to ${a + 1}`, { acuity: a + 1 });
+  if (a > 1) add(`If acuity worsens to ${a - 1}`, { acuity: a - 1 });
+  add(base.requiresOt ? 'If surgery is no longer needed' : 'If surgery becomes necessary', { requiresOt: !base.requiresOt });
+  return out;
 }
 
 export function getDoctorEvents(fromMs, toMs) {

@@ -12,7 +12,7 @@ const RED = ['bg-[#EF4444]/10 text-fg-bad border-[#EF4444]/30', '#EF4444'];
 const AMBER = ['bg-[#F59E0B]/10 text-fg-warn border-[#F59E0B]/30', '#F59E0B'];
 const BLUE = ['bg-[#014BAA]/10 text-fg-info border-[#014BAA]/30', '#014BAA'];
 const PURPLE = ['bg-[#8B5CF6]/10 text-fg-violet border-[#8B5CF6]/30', '#8B5CF6'];
-const GREY = ['bg-[#6B7280]/10 text-ink-500 border-[#6B7280]/30', '#94A3B8'];
+const GREY = ['bg-[#6B7280]/10 text-ink-900 border-[#6B7280]/30', '#94A3B8'];
 
 const s = (tone, label) => [tone[0], label, tone[1]];
 

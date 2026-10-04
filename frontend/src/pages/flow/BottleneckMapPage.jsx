@@ -10,6 +10,7 @@ import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { RefreshCw, X, Zap, Users, Stethoscope, Sparkles, LogOut, ArrowRightLeft, BedDouble, ShieldCheck, AlertOctagon } from 'lucide-react';
 import BottleneckCascadeMap, { severityOf, SEVERITY_STYLE } from '../../components/domain/BottleneckCascadeMap.jsx';
+import ExperimentalOutlook from '../../components/domain/ExperimentalOutlook.jsx';
 import { FlowError, FlowSkeleton } from '../../components/domain/FlowUi.jsx';
 import { MiniEmpty, ProgressLine } from '../../components/domain/CareUi.jsx';
 import flowApi from '../../api/flowApi.js';
@@ -325,6 +326,8 @@ export default function BottleneckMapPage() {
               </div>
             </section>
           </div>
+
+          <ExperimentalOutlook departments={depts} />
         </>
       )}
 

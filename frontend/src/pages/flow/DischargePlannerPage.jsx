@@ -29,7 +29,7 @@ import { exportCsv, timeUntil, clock, dateTime } from '../../utils/flowFormat.js
 const GROUPS = {
   ready: { label: 'Ready', color: '#10B981', pill: 'bg-[#10B981]/10 text-fg-ok', dot: 'bg-[#10B981]' },
   almost: { label: 'Almost ready', color: '#F59E0B', pill: 'bg-[#F59E0B]/15 text-fg-warn', dot: 'bg-[#F59E0B]' },
-  notyet: { label: 'Not yet', color: '#9AA4B2', pill: 'bg-[#6B7280]/10 text-ink-500', dot: 'bg-[#9AA4B2]' },
+  notyet: { label: 'Not yet', color: '#9AA4B2', pill: 'bg-[#6B7280]/10 text-ink-900', dot: 'bg-[#9AA4B2]' },
 };
 
 function groupOf(p) {

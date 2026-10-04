@@ -60,6 +60,21 @@ models cannot tell 85% from 100%, which is exactly the range where this app rais
 bottlenecks, so the app keeps its arrival-history forecast (`predictionEngine.service.js`, CALC 1 and 4).
 To revisit: log hourly `department_state` rows from this hospital, retrain, and repeat this check.
 
+### Experimental outlook (display only)
+
+The three `pressure_utilization_*` models are shown as a labelled **Experimental** table at the bottom of the
+Bottleneck Map ("Model outlook, next 24 hours": now, +1h, +4h, +24h per department). They run in the browser
+only (`frontend/src/ml/outlook.js`, lazy-loaded, about 150 KB gzip) from the department figures the page already
+loads, so the same view works in demo mode and against the backend. Nothing else reads them: severity, root
+cause, alerts and recommended actions are unchanged. If the models fail to load, the table is hidden.
+
+Inputs: the current capacity and occupancy, assumed steady for the last 48 h (lags equal the current value,
+rolling deviations 0); typical values for what the app does not measure (queue 1, wait 20 min; Emergency
+queue 4, wait 45 min; staff and resource gap +1; pressure score = 0.45 x utilization + 1.5 x queue + 0.1 x wait).
+`python scripts/export_js_models.py --outlook` re-exports the models and writes
+`frontend/tests/fixtures/outlook_parity.json` (400 hospital snapshots built and scored in Python); the browser
+code matches it exactly (7,200 predictions, max difference 0).
+
 ## Fix made to the training code
 
 On pandas 3, `astype(str)` keeps missing values missing, whereas the models were trained (pandas 2) with missing

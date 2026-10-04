@@ -37,7 +37,6 @@ const PatientDashboard      = lazy(() => import('./pages/patient/PatientDashboar
 const DoctorRequestsPage    = lazy(() => import('./pages/doctor/DoctorRequestsPage'));
 const OtRequestsPage        = lazy(() => import('./pages/ot/OtRequestsPage'));
 const OtSurgeonsPage        = lazy(() => import('./pages/ot/OtSurgeonsPage'));
-const RequestCenterPage     = lazy(() => import('./pages/admin/RequestCenterPage'));
 
 /** Page-level loading fallback */
 function PageLoader() {
@@ -124,7 +123,6 @@ export default function App() {
             <Route path="admin/flow/housekeeping" element={<HousekeepingBoardPage />} />
             <Route path="admin/flow/audit" element={<FlowAuditLogPage />} />
             <Route path="admin/patients" element={<PatientsPage />} />
-            <Route path="admin/requests" element={<RequestCenterPage />} />
             <Route path="admin/nurses" element={<NurseManagementPage />} />
             <Route path="admin/patient-journey" element={<PatientJourneyPage />} />
             <Route path="admin/patient-journey/:patientId" element={<PatientJourneyPage />} />

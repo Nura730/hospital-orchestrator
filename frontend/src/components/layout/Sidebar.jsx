@@ -55,7 +55,6 @@ export const NAV_BY_ROLE = {
     { path: '/admin/beds-overview', label: 'Live Bed Map', icon: MapIcon },
     { section: 'People' },
     { path: '/admin/patients', label: 'Patients', icon: Users },
-    { path: '/admin/requests', label: 'Request Center', icon: Inbox, badge: 'requests' },
     { path: '/admin/flow/staff', label: 'Staff and Doctors', icon: UserRound },
     { path: '/admin/nurses', label: 'Nurse Management', icon: HeartHandshake },
     { section: 'Patient Tracking' },

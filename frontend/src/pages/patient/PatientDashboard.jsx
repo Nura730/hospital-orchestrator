@@ -51,6 +51,101 @@ const REQUEST_OPTIONS = [
   ['general_query', 'General Query', HelpCircle, '#014BAA'],
 ];
 const MAX = 200;
+const REQUEST_STYLE = Object.fromEntries(REQUEST_OPTIONS.map(([k, , Icon, c]) => [k, { Icon, color: c }]));
+// Status label colours: text shade passes AA on its tint
+const REQ_STATUS = {
+  new: ['Sent', '#92400E', '#F59E0B'],
+  acknowledged: ['Seen', '#014BAA', '#014BAA'],
+  in_progress: ['In progress', '#6D28D9', '#8B5CF6'],
+  scheduled: ['Scheduled', '#014BAA', '#014BAA'],
+  done: ['Resolved', '#046C4E', '#10B981'],
+  declined: ['Declined', '#B91C1C', '#EF4444'],
+};
+const OPEN_STATUSES = ['new', 'acknowledged', 'in_progress', 'scheduled'];
+const initials = (name = '') =>
+  name
+    .replace(/^(Dr\.|Nurse)\s+/, '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
+
+function RequestCard({ r, doctorName, expanded, onToggle }) {
+  const style = REQUEST_STYLE[r.type] || { Icon: MessageSquare, color: '#014BAA' };
+  const [label, text, tint] = REQ_STATUS[r.status] || REQ_STATUS.new;
+  const last = r.history?.[r.history.length - 1];
+  const handler = r.routedTo?.name || 'Care team';
+  const doctorInformed = r.routedTo?.role && r.routedTo.role !== 'doctor';
+  const { Icon } = style;
+  return (
+    <article className="flow-card overflow-hidden">
+      <div className="p-4 space-y-4">
+        <header className="flex items-start gap-3">
+          <span className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${style.color}1A`, color: style.color }}>
+            <Icon className="w-5 h-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-base font-bold text-ink-900">{r.typeLabel}</h3>
+              <span className="rounded-full px-2.5 py-0.5 text-xs font-bold" style={{ color: text, backgroundColor: `${tint}1F` }}>
+                {label}
+              </span>
+            </div>
+            <p className="text-xs text-ink-500 mt-0.5">Sent {timeAgo(r.createdAt)}, at {clock(r.createdAt)}</p>
+          </div>
+        </header>
+
+        <blockquote className="rounded-lg bg-sunken px-3.5 py-2.5 text-sm text-ink-900 border-l-[3px]" style={{ borderLeftColor: style.color }}>
+          {r.note || 'No message'}
+        </blockquote>
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+          <span className="inline-flex items-center gap-2">
+            <span className="w-7 h-7 rounded-full bg-royal-500/10 text-royal-500 text-xs font-bold flex items-center justify-center" aria-hidden="true">
+              {initials(handler)}
+            </span>
+            <span className="text-ink-500">
+              Handled by <b className="text-ink-900">{handler}</b>
+            </span>
+          </span>
+          {doctorInformed && <span className="text-ink-500">Your doctor, {doctorName}, is kept informed</span>}
+        </div>
+
+        <RequestSteps status={r.status} history={r.history} />
+
+        {r.response && (
+          <div className="rounded-lg border border-[#10B981]/30 bg-[#10B981]/5 px-3.5 py-2.5">
+            <p className="text-xs font-bold uppercase tracking-wider text-fg-ok">Reply from {last?.by || handler}</p>
+            <p className="text-sm text-ink-900 mt-1">{r.response}</p>
+          </div>
+        )}
+      </div>
+
+      <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-cream-200 bg-sunken/50 px-4 py-2.5">
+        {last ? (
+          <p className="text-sm text-ink-900 min-w-0">
+            <span className="text-ink-500">Latest:</span> {last.text}
+            <span className="text-ink-500">
+              {last.text.includes(last.by) ? '' : `, ${last.by}`}, {timeAgo(last.at)}
+            </span>
+          </p>
+        ) : (
+          <span />
+        )}
+        <button type="button" className="text-sm font-semibold text-royal-500 hover:underline shrink-0" onClick={onToggle} aria-expanded={expanded}>
+          {expanded ? 'Hide history' : `History (${r.history?.length || 0})`}
+        </button>
+      </footer>
+      {expanded && (
+        <div className="px-4 pb-4 pt-3 border-t border-cream-200">
+          <RequestHistory history={r.history} />
+        </div>
+      )}
+    </article>
+  );
+}
 
 function HeaderCard({ p, name }) {
   return (
@@ -180,6 +275,7 @@ function RequestsTab({ requests, profile, onSent }) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [openId, setOpenId] = useState(null);
+  const [show, setShow] = useState('open');
   // Ask the hospital where this type really goes (same routing rules the request will follow)
   const routeQ = useFlowPolling(() => careApi.previewPortalRoute(type), { deps: [type], toastOnError: false });
   // Only trust an answer for the type that is selected now (a click can arrive before the previous answer)
@@ -238,49 +334,30 @@ function RequestsTab({ requests, profile, onSent }) {
         </button>
       </form>
       <section className="space-y-3" aria-label="My requests">
-        <h2 className="text-base font-bold text-ink-900">My requests</h2>
-        {!requests.length && (
-          <div className="flow-card">
-            <MiniEmpty text="No requests yet" />
-          </div>
-        )}
-        {requests.map((r) => {
-          const expanded = openId === r.id;
-          const last = r.history?.[r.history.length - 1];
-          return (
-            <article key={r.id} className="flow-card p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-ink-900">{r.typeLabel}</p>
-                  <p className="text-sm text-ink-500 mt-0.5">{r.note || 'No message'}</p>
-                </div>
-                <span className="text-xs text-ink-500 shrink-0">{timeAgo(r.createdAt)}</span>
-              </div>
-              <div className="mt-4">
-                <RequestSteps status={r.status} compact />
-              </div>
-              {last && (
-                <p className="text-sm text-ink-900 mt-3">
-                  <span className="font-semibold">Latest:</span> {last.text} <span className="text-ink-500">({last.by})</span>
-                </p>
-              )}
-              {r.response && (
-                <p className="mt-2 rounded-lg bg-[#10B981]/5 border border-[#10B981]/30 px-3 py-2 text-sm text-ink-900">
-                  <span className="font-semibold text-fg-ok">Reply: </span>
-                  {r.response}
-                </p>
-              )}
-              <button type="button" className="text-xs font-semibold text-royal-500 hover:underline mt-3" onClick={() => setOpenId(expanded ? null : r.id)} aria-expanded={expanded}>
-                {expanded ? 'Hide history' : 'Show full history'}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-base font-bold text-ink-900">My requests</h2>
+          <div className="inline-flex rounded-lg border border-cream-200 bg-cream-50 p-0.5" role="group" aria-label="Show requests">
+            {[
+              ['open', `Open (${requests.filter((r) => OPEN_STATUSES.includes(r.status)).length})`],
+              ['closed', `Closed (${requests.filter((r) => !OPEN_STATUSES.includes(r.status)).length})`],
+            ].map(([k, l]) => (
+              <button key={k} type="button" onClick={() => setShow(k)} aria-pressed={show === k} className={clsx('px-3 py-1.5 rounded-md text-sm font-semibold', show === k ? 'bg-royal-500 text-white' : 'text-ink-500 hover:text-ink-900')}>
+                {l}
               </button>
-              {expanded && (
-                <div className="mt-3">
-                  <RequestHistory history={r.history} />
-                </div>
-              )}
-            </article>
-          );
-        })}
+            ))}
+          </div>
+        </div>
+        {(() => {
+          const list = requests.filter((r) => (show === 'open' ? OPEN_STATUSES.includes(r.status) : !OPEN_STATUSES.includes(r.status)));
+          if (!list.length) {
+            return (
+              <div className="flow-card">
+                <MiniEmpty text={show === 'open' ? 'No open requests. Send one on the left whenever you need help.' : 'No closed requests yet'} />
+              </div>
+            );
+          }
+          return list.map((r) => <RequestCard key={r.id} r={r} doctorName={profile.doctor.name} expanded={openId === r.id} onToggle={() => setOpenId(openId === r.id ? null : r.id)} />);
+        })()}
       </section>
     </div>
   );

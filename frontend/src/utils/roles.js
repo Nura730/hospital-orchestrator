@@ -23,7 +23,6 @@ export const FLOW_ROUTES = {
     '/admin/flow/discharge-planner',
     '/admin/beds-overview',
     '/admin/patients',
-    '/admin/requests',
     '/admin/nurses',
     '/admin/flow/staff',
     '/admin/flow/housekeeping',

@@ -463,7 +463,7 @@ export default function FlowCommandCenterPage() {
             <Kpi icon={Ambulance} label="Arrivals 6h" value={arrivals6h ?? '—'} sub="expected at Emergency" />
             <Kpi icon={LogOut} label="Discharge ready" value={summary.dischargeReady} sub="patients" tone="ok" to="/admin/flow/discharge-planner" />
             <Kpi icon={Sparkles} label="Beds to clean" value={summary.dirtyBeds} sub="waiting for housekeeping" tone={summary.dirtyBeds > 2 ? 'warn' : 'default'} to="/admin/flow/housekeeping" />
-            <Kpi icon={Inbox} label="Open requests" value={badgeQ.data?.requests ?? '—'} sub="patients, staff and theatre" tone={(badgeQ.data?.requests || 0) > 0 ? 'violet' : 'default'} to="/admin/requests" />
+            <Kpi icon={Inbox} label="Open requests" value={badgeQ.data?.requests ?? '—'} sub="patients, staff and theatre" tone={(badgeQ.data?.requests || 0) > 0 ? 'violet' : 'default'} />
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch">

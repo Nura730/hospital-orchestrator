@@ -153,7 +153,7 @@ function Detail({ r, onOpenPatient, onChanged }) {
         {r.note || 'No message'}
       </blockquote>
 
-      <RequestSteps status={r.status} />
+      <RequestSteps status={r.status} history={r.history} />
 
       {r.response && (
         <div className="rounded-xl border border-[#10B981]/30 bg-[#10B981]/5 px-4 py-3">

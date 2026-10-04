@@ -28,7 +28,6 @@ const SHORT = {
   "Today's Schedule": 'Schedule',
   'OT Cases': 'OT',
   'OT Requests': 'Requests',
-  'Request Center': 'Requests',
   'My Treatment': 'Treatment',
 };
 

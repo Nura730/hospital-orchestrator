@@ -20,7 +20,12 @@ const ORDER = STEPS.map(([k]) => k);
 
 export const REQUEST_STATUS_LABEL = { new: 'Sent', acknowledged: 'Seen', in_progress: 'In progress', scheduled: 'Scheduled', done: 'Resolved', declined: 'Declined' };
 
-export function RequestSteps({ status, compact = false }) {
+/**
+ * @param {{ status: string, compact?: boolean, history?: object[] }} props
+ * With `history`, only the steps the request actually went through are filled; skipped ones stay faint
+ * (a diet request goes Sent, Seen, Resolved and never Scheduled).
+ */
+export function RequestSteps({ status, compact = false, history = null }) {
   const declined = status === 'declined';
   const idx = declined ? -1 : ORDER.indexOf(status);
   if (declined) {
@@ -33,7 +38,9 @@ export function RequestSteps({ status, compact = false }) {
   return (
     <ol className="flex items-center w-full" aria-label={`Request status: ${REQUEST_STATUS_LABEL[status] || status}`}>
       {STEPS.map(([key, label, Icon], i) => {
-        const done = i <= idx;
+        const reached = !history || i === 0 || i === idx || history.some((h) => h.status === key);
+        const done = i <= idx && reached;
+        const skipped = i < idx && !reached;
         const current = i === idx;
         return (
           <li key={key} className="flex items-center flex-1 last:flex-none min-w-0">
@@ -42,13 +49,18 @@ export function RequestSteps({ status, compact = false }) {
                 className={clsx(
                   'rounded-full flex items-center justify-center border-2 transition-colors',
                   compact ? 'w-6 h-6' : 'w-8 h-8',
-                  done ? 'bg-royal-500 border-royal-500 text-white' : 'bg-cream-50 border-cream-200 text-ink-500',
+                  done ? 'bg-royal-500 border-royal-500 text-white' : skipped ? 'bg-cream-50 border-dashed border-cream-200 text-ink-500/60' : 'bg-cream-50 border-cream-200 text-ink-500',
                   current && 'ring-4 ring-royal-500/20'
                 )}
               >
                 <Icon className={compact ? 'w-3 h-3' : 'w-4 h-4'} aria-hidden="true" />
               </span>
-              {!compact && <span className={clsx('text-xs font-semibold whitespace-nowrap', done ? 'text-ink-900' : 'text-ink-500')}>{label}</span>}
+              {!compact && (
+                <span className={clsx('text-xs font-semibold whitespace-nowrap', done ? 'text-ink-900' : 'text-ink-500')}>
+                  {label}
+                  {skipped && <span className="sr-only"> (skipped)</span>}
+                </span>
+              )}
             </span>
             {i < STEPS.length - 1 && <span className={clsx('h-0.5 flex-1 mx-1.5 rounded-full', i < idx ? 'bg-royal-500' : 'bg-cream-200', !compact && '-mt-5')} aria-hidden="true" />}
           </li>

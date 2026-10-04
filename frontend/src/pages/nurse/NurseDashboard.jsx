@@ -1,6 +1,6 @@
 /**
  * @file NurseDashboard.jsx
- * Nurse workspace: header with duty status, 4 stat tiles and tabs My Shift, My Patients, Tasks, Bed Board.
+ * Nurse workspace: header (name, ward, shift), 4 stat tiles and tabs My Shift, My Patients, Tasks, Bed Board.
  * Each tab also has its own route (/nurse/dashboard, /nurse/patients, /nurse/tasks, /nurse/beds) and
  * /nurse/notifications shows the notification list. Clicking a patient or occupied bed opens PatientDetailPopup.
  */
@@ -37,11 +37,6 @@ import { clock, timeAgo, timeUntil } from '../../utils/flowFormat.js';
 
 const ROUTE_TAB = { '/nurse/dashboard': 'shift', '/nurse/patients': 'patients', '/nurse/tasks': 'tasks', '/nurse/beds': 'beds', '/nurse/notifications': 'notifications' };
 const TAB_ROUTE = Object.fromEntries(Object.entries(ROUTE_TAB).map(([k, v]) => [v, k]));
-const DUTY = [
-  ['on_duty', 'On Duty', '#047857'],
-  ['on_break', 'On Break', '#B45309'],
-  ['off_duty', 'Off Duty', '#475569'],
-];
 const BED_COLORS = { available: '#10B981', occupied: '#014BAA', cleaning: '#F59E0B', reserved: '#8B5CF6', blocked: '#6B7280' };
 /* Readable (AA) text shade for each status */
 const BED_TEXT = { available: '#046C4E', occupied: '#014BAA', cleaning: '#92400E', reserved: '#6D28D9', blocked: '#374151' };
@@ -466,11 +461,6 @@ export default function NurseDashboard() {
     return () => clearInterval(t);
   }, []);
 
-  const setDuty = async (status) => {
-    await careApi.setNurseStatus(status);
-    refresh();
-  };
-
   if (q.error && !d) return <FlowError message={q.error} onRetry={q.refresh} />;
   if (!d) return <FlowSkeleton lines={12} />;
 
@@ -494,15 +484,6 @@ export default function NurseDashboard() {
         title={d.nurse.name}
         subtitle={`${d.nurse.department} · ${d.allocation.ward} · Shift ${d.nurse.shift}`}
         showHealth={false}
-        actions={
-          <div className="inline-flex rounded-lg border border-cream-200 bg-cream-50 p-0.5" role="group" aria-label="Set duty status">
-            {DUTY.map(([k, l, c]) => (
-              <button key={k} type="button" onClick={() => setDuty(k)} aria-pressed={d.nurse.status === k} className={clsx('px-3 py-1.5 rounded-md text-xs font-semibold', d.nurse.status === k ? 'text-white' : 'text-ink-500 hover:text-ink-900')} style={d.nurse.status === k ? { backgroundColor: c } : undefined}>
-                {l}
-              </button>
-            ))}
-          </div>
-        }
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

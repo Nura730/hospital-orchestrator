@@ -473,23 +473,22 @@ const REQUEST_ROUTES = {
   doctor_review: 'doctor',
   diagnostic_test: 'doctor',
   discharge_approval: 'doctor',
-  bed_transfer: 'admin',
-  equipment: 'admin',
+  bed_transfer: 'nurse',
+  equipment: 'nurse',
 };
 export const OPEN_REQUEST = ['new', 'acknowledged', 'in_progress', 'scheduled'];
 const STATUS_TEXT = { new: 'Sent', acknowledged: 'Seen', in_progress: 'In progress', scheduled: 'Scheduled', done: 'Resolved', declined: 'Declined' };
 
+/** Who handles a request: the bedside nurse or the patient's doctor. A patient without a bed
+ * (so without a bedside nurse) goes to their doctor, so every request has someone who can act on it. */
 function routeFor(p, type) {
-  const role = REQUEST_ROUTES[type] || 'admin';
-  if (role === 'doctor') {
-    const d = doctorById(p.doctorId) || doctorByName(p.doctorName);
-    return { role, id: d?.id || p.doctorId, name: d?.name || p.doctorName || 'Attending doctor' };
-  }
+  const role = REQUEST_ROUTES[type] || 'nurse';
   if (role === 'nurse') {
     const n = p.bedId ? nurseForBed(p.bedId) : null;
     if (n) return { role, id: n.id, name: n.name };
   }
-  return { role: 'admin', id: null, name: type === 'equipment' ? 'Equipment desk' : 'Bed management' };
+  const d = doctorById(p.doctorId) || doctorByName(p.doctorName);
+  return { role: 'doctor', id: d?.id || p.doctorId, name: d?.name || p.doctorName || 'Attending doctor' };
 }
 
 /** Notification for specific people: audience = { roles, doctorIds?, nurseIds?, patientId? }. */
@@ -510,7 +509,7 @@ function informDoctor(p, r, title, message) {
 function notifyRoute(route, title, message, type) {
   if (route.role === 'doctor') return notifyTo({ roles: ['doctor'], doctorIds: [route.id] }, title, message, type, '/doctor/requests');
   if (route.role === 'nurse') return notifyTo({ roles: ['nurse'], nurseIds: [route.id] }, title, message, type, '/nurse/tasks');
-  return notifyTo({ roles: ['admin'] }, title, message, type, '/admin/requests');
+  return notifyTo({ roles: ['admin'] }, title, message, type);
 }
 
 /**
@@ -521,7 +520,8 @@ function normaliseRequest(r) {
   if (r.status === 'pending') r.status = 'new';
   if (r.status === 'addressed') r.status = 'done';
   const p = getFlowState().patients.find((x) => x.id === r.patientId);
-  if (!r.routedTo) r.routedTo = p ? routeFor(p, r.type) : { role: 'admin', id: null, name: 'Bed management' };
+  if (p && (!r.routedTo || (r.routedTo.role === 'admin' && OPEN_REQUEST.includes(r.status)))) r.routedTo = routeFor(p, r.type);
+  if (!r.routedTo) r.routedTo = { role: 'nurse', id: null, name: 'Ward nurse' };
   if (!r.history) {
     r.history = [{ at: r.createdAt, status: 'new', by: r.createdBy, text: `Sent to ${r.routedTo.name}` }];
     if (r.status === 'done') r.history.push({ at: r.addressedAt || r.createdAt, status: 'done', by: r.routedTo.name, text: `Resolved by ${r.routedTo.name}` });
@@ -599,7 +599,7 @@ export function updateRequest(requestId, update) {
   r.history.push({ at: new Date().toISOString(), status: value, by, text: text || (response ? `${STATUS_TEXT[value]}: ${response}` : STATUS_TEXT[value]) });
   const p = S.patients.find((x) => x.id === r.patientId);
   if (r.source === 'patient') notifyTo({ roles: ['patient'], patientId: r.patientId }, `${r.typeLabel}: ${STATUS_TEXT[value].toLowerCase()}`, text || response || `${by} updated your request`, 'request', '/patient/requests');
-  else notifyTo({ roles: ['admin'] }, `${r.typeLabel} ${STATUS_TEXT[value].toLowerCase()} for ${r.alias}`, `${by}${response ? `: ${response}` : ''}`, 'request', '/admin/requests');
+  else notifyTo({ roles: ['admin'] }, `${r.typeLabel} ${STATUS_TEXT[value].toLowerCase()} for ${r.alias}`, `${by}${response ? `: ${response}` : ''}`, 'request');
   informDoctor(p, r, `${r.typeLabel} for ${r.alias}: ${STATUS_TEXT[value].toLowerCase()}`, `${by}${response ? `: ${response}` : ''}`);
   if (p && value === 'done') addPatientEvent(p.id, 'doctor_note', `${r.typeLabel} resolved by ${by}`, by);
   // close the linked nurse task too
@@ -755,11 +755,6 @@ export function getNurseDashboard(nurseId = ME_NURSE) {
     tasks,
     beds,
   };
-}
-
-export function setNurseStatus(status, nurseId = ME_NURSE) {
-  care().nurseStatus[nurseId] = status;
-  return { status };
 }
 
 export function updateTask(taskId, status) {
@@ -1142,7 +1137,7 @@ export function escalateToOt(requestId, patientId, { procedure, urgency = 'urgen
   syncOtNeeded(c, p.id);
   if (requestId) updateRequest(requestId, { status: 'in_progress', by, text: `Sent to the theatre team for scheduling: ${o.procedure}` });
   notifyTo({ roles: ['ot_manager'] }, `New OT request: ${o.procedure}`, `${p.alias}${p.bedId ? ` (${p.bedId})` : ''}, ${urgency}, from ${by}`, urgency === 'emergency' ? 'alert' : 'ot_assigned', '/ot/requests');
-  notifyTo({ roles: ['admin'] }, `OT requested for ${p.alias}`, `${o.procedure} (${urgency}) by ${by}`, 'ot_assigned', '/admin/requests');
+  notifyTo({ roles: ['admin'] }, `OT requested for ${p.alias}`, `${o.procedure} (${urgency}) by ${by}`, 'ot_assigned');
   if (p.id === c.portalPatientId && !requestId) notifyTo({ roles: ['patient'], patientId: p.id }, 'Surgery being scheduled', `${by} asked the theatre team to schedule: ${o.procedure}`, 'request', '/patient/requests');
   addPatientEvent(p.id, 'test_ordered', `OT requested: ${o.procedure}`, by);
   recordEvent('OT_REQUESTED', { patientId: p.id, urgency }, { otRequestId: o.id });
@@ -1277,7 +1272,7 @@ export function scheduleOtRequest(otRequestId, { surgeonId, roomId, start, durat
   }
   const ids = [...new Set([o.requestedBy.id, surgeon.id, p.doctorId].filter(Boolean))];
   notifyTo({ roles: ['doctor'], doctorIds: ids }, `Surgery booked: ${p.alias} at ${t}`, `${o.procedure} in ${room.name} with ${surgeon.name}`, 'ot_assigned', '/doctor/ot-cases');
-  notifyTo({ roles: ['admin'] }, `Surgery booked: ${p.alias}`, `${o.procedure} in ${room.name} at ${t}`, 'ot_assigned', '/admin/requests');
+  notifyTo({ roles: ['admin'] }, `Surgery booked: ${p.alias}`, `${o.procedure} in ${room.name} at ${t}`, 'ot_assigned');
   if (p.id === c.portalPatientId && !o.linkedRequestId) notifyTo({ roles: ['patient'], patientId: p.id }, `Your surgery is booked for ${t}`, `${o.procedure} with ${surgeon.name} in ${room.name}`, 'request', '/patient/dashboard');
   addPatientEvent(p.id, 'procedure', `Surgery booked: ${o.procedure} with ${surgeon.name}, ${room.name} at ${t}`, by);
   emitLive('ot.roomUpdated', { roomId: room.roomId });

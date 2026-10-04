@@ -50,7 +50,6 @@ export const careApi = {
   // Nurse
   listNurses: () => call(care.listNurses),
   getNurseDashboard: () => call(care.getNurseDashboard),
-  setNurseStatus: (status) => change(care.setNurseStatus, status),
   updateTask: (taskId, status) => change(care.updateTask, taskId, status),
   addTask: (body) => change(care.addTask, body),
   addNote: (patientId, note, by) => change(care.addNote, patientId, note, by),

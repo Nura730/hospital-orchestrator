@@ -15,7 +15,15 @@ function initSockets(httpServer) {
 
   io = new Server(httpServer, {
     cors: {
-      origin: allowedOrigins,
+      // Same rule as the REST API: listed origins, plus any localhost port outside production
+      origin: (origin, cb) =>
+        cb(
+          null,
+          !origin ||
+            allowedOrigins.includes('*') ||
+            allowedOrigins.includes(origin) ||
+            (env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))
+        ),
       methods: ['GET', 'POST'],
       credentials: true,
     },

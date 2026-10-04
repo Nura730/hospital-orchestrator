@@ -36,6 +36,11 @@ function errorHandler(err, req, res, next) {
     statusCode = 409;
     code = 'DUPLICATE_ENTRY';
     message = err.detail || 'A record with this identifier already exists';
+  } else if (err.code === '22P02' || err.code === '22007' || err.code === '22008') {
+    // PostgreSQL invalid input syntax (e.g. a non-UUID id in the URL) or a bad date
+    statusCode = 400;
+    code = 'INVALID_INPUT';
+    message = 'One of the provided values has an invalid format';
   } else if (err.code === '23503') {
     // PostgreSQL foreign key violation
     statusCode = 400;

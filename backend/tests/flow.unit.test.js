@@ -79,7 +79,7 @@ describe('CALC 5 scoreDischargeReadiness', () => {
 });
 
 describe('bottleneck chain walk', () => {
-  it('first non-LOW department is root cause, later non-LOW are cascade', () => {
+  it('worst severity wins: earliest HIGH department is root cause, contiguous non-LOW after it are cascade', () => {
     const r = bottleneck.walkChain([
       { department: 'Emergency', severity: 'LOW' },
       { department: 'Radiology', severity: 'LOW' },
@@ -88,8 +88,20 @@ describe('bottleneck chain walk', () => {
       { department: 'ICU', severity: 'HIGH' },
       { department: 'OT', severity: 'HIGH' },
     ]);
-    expect(r.rootCause).toBe('General Ward');
-    expect(r.cascade).toEqual(['ICU', 'OT']);
+    expect(r.rootCause).toBe('ICU');
+    expect(r.cascade).toEqual(['OT']);
+  });
+
+  it('a LOW department breaks the cascade; all LOW means no root cause', () => {
+    const r = bottleneck.walkChain([
+      { department: 'Emergency', severity: 'MEDIUM' },
+      { department: 'Radiology', severity: 'MEDIUM' },
+      { department: 'General Ward', severity: 'LOW' },
+      { department: 'HDU', severity: 'MEDIUM' },
+    ]);
+    expect(r.rootCause).toBe('Emergency');
+    expect(r.cascade).toEqual(['Radiology']);
+    expect(bottleneck.walkChain([{ department: 'ICU', severity: 'LOW' }]).rootCause).toBeNull();
   });
 
   it('generates cleaning, discharge and transfer actions', () => {

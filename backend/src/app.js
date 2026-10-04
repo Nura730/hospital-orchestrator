@@ -16,11 +16,12 @@ app.use(helmet());
 
 // CORS configuration
 const allowedOrigins = env.CORS_ORIGINS.split(',').map((o) => o.trim());
+const LOCAL_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
-      if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin) || (env.NODE_ENV !== 'production' && LOCAL_ORIGIN.test(origin))) {
         return callback(null, true);
       }
       return callback(new AppError('CORS origin not allowed', 403, 'CORS_ERROR'));

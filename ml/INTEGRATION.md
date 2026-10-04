@@ -35,9 +35,30 @@ explanation contributions add up to the score, and basic clinical ordering. The 
 | Model | Reason |
 |---|---|
 | `length_of_stay` | Barely reacts to acuity (acuity 1 ~34 h, acuity 5 ~35 h); its signal comes almost entirely from `admit_delay_hours`, a pattern of the partly synthetic data. LOS was also removed from the UI by product decision. |
-| `pressure_*` (6 models) | Need a 24 h hourly history per department of queue length, pressure score, waiting time and staff/resource gaps. The app does not record these yet; start logging hourly `department_state` snapshots first. |
+| `pressure_*` (6 models) | Tested and rejected: they do not transfer to this hospital (see below). They also need a 24 h hourly history per department of queue length, pressure score, waiting time and staff/resource gaps, which the app does not record. |
 | `resource_demand`, `resource_demand_stacked` | Depend on an external forecaster's `predicted_demand_*` columns that the app does not have. The plain model does not beat persistence. |
 | `ed_wait_time`, `diagnostic_wait_time` | Essentially no better than a median per priority (R2 about 0); would add noise. |
+
+## Why the pressure models are not used (tested 2026-10-04)
+
+The six `pressure_*` models beat persistence by about 25% on their own test split, so they were tried as the
+source of the department forecasts (Bottleneck Map, Command Center). Fed with the app's departments
+(Emergency = ED, General Ward = MEDICINE, Radiology, HDU, ICU, OT), a steady 48 h history and the current
+occupancy, they pull every department towards the training hospital's average within one hour:
+
+| Department | Now | t+1h | t+4h | t+24h |
+|---|---|---|---|---|
+| ICU | 92% | 74% | 70% | 59% |
+| OT | 100% | 72% | 66% | 45% |
+| General Ward | 82% | 73% | 69% | 61% |
+| Emergency | 60% | 68% | 72% | 68% |
+
+An ICU with 11 of 12 beds taken does not free two beds in an hour. The cause is visible in the trees: the
+highest `utilization_percent` split is 82.5% and the highest `occupancy_ratio` split is about 1.0, so the
+models cannot tell 85% from 100%, which is exactly the range where this app raises alarms. Their test MAE
+(about 15 utilization points) is also wider than the warning band (70 to 90%). Using them would hide real
+bottlenecks, so the app keeps its arrival-history forecast (`predictionEngine.service.js`, CALC 1 and 4).
+To revisit: log hourly `department_state` rows from this hospital, retrain, and repeat this check.
 
 ## Fix made to the training code
 

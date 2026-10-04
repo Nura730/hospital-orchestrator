@@ -29,12 +29,27 @@ apiClient.interceptors.request.use(
         }
       }
     } catch {
-      // Ignore localStorage parse errors
+      // Ignore sessionStorage parse errors
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
+
+/** Backend errors arrive as { error: { code, message } }; older handlers send a plain string. */
+function errorMessage(body) {
+  const e = body?.error;
+  if (typeof e === 'string') return e;
+  return e?.message || body?.message || null;
+}
+
+/** Error that keeps the server's error code and HTTP status for callers that need them. */
+function apiError(message, body, status) {
+  const err = new Error(message);
+  err.code = body?.error?.code || null;
+  err.status = status ?? null;
+  return err;
+}
 
 // Response interceptor: unwrap envelope and handle 401
 apiClient.interceptors.response.use(
@@ -42,7 +57,7 @@ apiClient.interceptors.response.use(
     // If backend returns standard envelope { ok: true, data: ..., error: null }
     if (response.data && typeof response.data === 'object' && 'ok' in response.data) {
       if (!response.data.ok) {
-        return Promise.reject(new Error(response.data.error || 'Server reported request failure'));
+        return Promise.reject(apiError(errorMessage(response.data) || 'Server reported request failure', response.data, response.status));
       }
       return response.data; // returns { ok: true, data: ..., error: null }
     }
@@ -58,13 +73,8 @@ apiClient.interceptors.response.use(
       }
     }
 
-    const message =
-      error.response?.data?.error ||
-      error.response?.data?.message ||
-      error.message ||
-      'Network communication error';
-
-    return Promise.reject(new Error(message));
+    const message = errorMessage(error.response?.data) || error.message || 'Network communication error';
+    return Promise.reject(apiError(message, error.response?.data, error.response?.status));
   }
 );
 

@@ -58,6 +58,7 @@ async function handleDischargeSigned(client, payload, user, effects) {
   const patient = await flowRepo.getPatientById(payload.patientId, client, { forUpdate: true });
   if (!patient) throw new AppError('Patient not found', 404, 'NOT_FOUND');
   if (patient.status === 'discharged') throw new AppError('Patient already discharged', 409, 'CONFLICT');
+  if (patient.status === 'in_surgery') throw new AppError('Patient is in surgery; complete the case before discharge', 409, 'CONFLICT');
 
   const bedId = patient.bed_id;
   await client.query(
@@ -94,7 +95,11 @@ async function handleCleaningDone(client, payload, user, effects) {
   const bedRes = await client.query('SELECT * FROM beds WHERE id = $1 FOR UPDATE', [payload.bedId]);
   const bed = bedRes.rows[0];
   if (!bed) throw new AppError('Bed not found', 404, 'NOT_FOUND');
-  if (bed.status === 'occupied') throw new AppError('Bed is occupied; cannot mark cleaning done', 409, 'CONFLICT');
+  // Only a bed waiting for housekeeping can be marked clean. Doing it on a reserved bed used to
+  // silently drop the reservation (e.g. an ICU bed held for an incoming ambulance).
+  if (bed.status !== 'cleaning') {
+    throw new AppError(`Bed ${bed.id} is ${bed.status}, not waiting for cleaning`, 409, 'CONFLICT');
+  }
 
   await client.query(
     `UPDATE beds SET status = 'available', last_cleaned_at = NOW(), patient_id = NULL, expected_release_time = NULL, release_confidence = NULL WHERE id = $1`,
@@ -158,6 +163,7 @@ async function handleOtComplete(client, payload, user, effects) {
   const c = caseRes.rows[0];
   if (!c) throw new AppError('OT case not found', 404, 'NOT_FOUND');
   if (c.status === 'completed') throw new AppError('OT case already completed', 409, 'CONFLICT');
+  if (c.status === 'cancelled') throw new AppError('OT case was cancelled', 409, 'CONFLICT');
 
   const upd = await client.query(
     `UPDATE ot_cases SET status = 'completed', actual_end = NOW(),
@@ -193,8 +199,8 @@ async function handleOtComplete(client, payload, user, effects) {
     let bedId = c.post_op_bed_id;
     if (!bedId) {
       const free = await client.query(
-        `SELECT id FROM beds WHERE type = 'post_op' AND status IN ('available', 'reserved')
-         ORDER BY (status = 'reserved') DESC, id LIMIT 1 FOR UPDATE SKIP LOCKED`
+        `SELECT id FROM beds WHERE type = 'post_op' AND status = 'available'
+         ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED`
       );
       bedId = free.rows[0] ? free.rows[0].id : null;
     }
@@ -271,7 +277,12 @@ async function handlePatientDeteriorated(client, payload, user, effects) {
   const patient = await flowRepo.getPatientById(payload.patientId, client, { forUpdate: true });
   if (!patient) throw new AppError('Patient not found', 404, 'NOT_FOUND');
 
-  const newAcuity = Math.max(1, Math.min(5, Number(payload.newAcuity) || Math.max(1, (patient.acuity || 3) - 1)));
+  const currentAcuity = patient.acuity || 3;
+  const newAcuity = Math.max(1, Math.min(5, Number(payload.newAcuity) || Math.max(1, currentAcuity - 1)));
+  // Acuity 1 is the most severe; a higher number is an improvement, not a deterioration
+  if (payload.newAcuity !== undefined && newAcuity > currentAcuity) {
+    throw new AppError(`Acuity ${newAcuity} is not worse than the current acuity ${currentAcuity}`, 400, 'VALIDATION_ERROR');
+  }
   const requiresIcu = payload.requiresIcu !== undefined ? Boolean(payload.requiresIcu) : newAcuity === 1 || patient.requires_icu;
   const newStatus = newAcuity <= 2 ? 'critical' : patient.status;
 

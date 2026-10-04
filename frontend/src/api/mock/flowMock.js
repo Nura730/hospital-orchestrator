@@ -404,7 +404,8 @@ function analyse() {
       const upcoming = st().cases.filter((c) => c.status === 'scheduled' && c.start <= Date.now() + 2 * H).length;
       const util = d.capacity ? r3(d.busy / d.capacity) : 0;
       const gap = Math.max(0, d.busy + upcoming * 0.5 - d.capacity);
-      return { department: name, departmentId: name, floor: '4', capacity: d.capacity, occupied: d.occupied, cleaning: d.cleaning, available: d.available, utilization: util, predictedGap: r1(gap), predicted: { 1: util, 2: d.capacity ? r3(Math.min(1.5, (d.busy + upcoming * 0.5) / d.capacity)) : 0, 4: util }, dischargeReady: 0, nursesOnShift: nursesOn(name) };
+      const next2h = d.capacity ? r3(Math.min(1.5, (d.busy + upcoming * 0.5) / d.capacity)) : 0;
+      return { department: name, departmentId: name, floor: '4', capacity: d.capacity, occupied: d.busy, inSurgery: d.occupied, cleaning: d.cleaning, available: d.available, utilization: util, predictedGap: r1(gap), predicted: { 1: util, 2: next2h, 4: next2h }, dischargeReady: 0, nursesOnShift: nursesOn(name) };
     }
     const dm = [1, 2, 4].map((h) => demand(name, h));
     return {
@@ -425,9 +426,13 @@ function analyse() {
       expectedAdmissions2h: dm[1].expectedAdmissions,
     };
   }).map((d) => ({ ...d, severity: d.utilization > DANGER || d.predictedGap > 0 ? 'HIGH' : d.utilization > WARN ? 'MEDIUM' : 'LOW' }));
-  const rootIdx = depts.findIndex((d) => d.severity !== 'LOW');
+  // Root cause = earliest department at the worst severity present; cascade = unbroken non-LOW run after it
+  const RANK = { LOW: 0, MEDIUM: 1, HIGH: 2 };
+  const worst = Math.max(0, ...depts.map((d) => RANK[d.severity]));
+  const rootIdx = worst > 0 ? depts.findIndex((d) => RANK[d.severity] === worst) : -1;
   const rootCause = rootIdx >= 0 ? depts[rootIdx].department : null;
-  const cascade = rootIdx >= 0 ? depts.slice(rootIdx + 1).filter((d) => d.severity !== 'LOW').map((d) => d.department) : [];
+  const cascade = [];
+  for (let i = rootIdx + 1; rootIdx >= 0 && i < depts.length && depts[i].severity !== 'LOW'; i++) cascade.push(depts[i].department);
   const list = depts.map((d) => ({ ...d, rootCause: d.department === rootCause, isCascade: cascade.includes(d.department), cascade: d.department === rootCause ? cascade : [], recommendedActions: actionsFor(d, depts) }));
   return { analyzedAt: new Date().toISOString(), thresholds: { warn: WARN, danger: DANGER, source: 'auto(50-200 beds)' }, rootCause, cascade, bottlenecks: list, dischargeCandidates: cands };
 }
@@ -676,19 +681,23 @@ function processEvent(eventType, payload = {}) {
     case 'DISCHARGE_SIGNED': {
       const p = s.patients.find((x) => x.id === payload.patientId);
       if (!p) throw new Error('Patient not found');
+      if (p.status === 'discharged') throw new Error('Patient already discharged');
+      if (p.status === 'in_surgery') throw new Error('Patient is in surgery; complete the case before discharge');
       const bed = s.beds.find((b) => b.id === p.bedId);
       Object.assign(p, { status: 'discharged', bedId: null, lastBedId: p.bedId, dischargedAt: new Date().toISOString(), pendingTasks: [] });
       if (bed) Object.assign(bed, { status: 'cleaning', patientId: null, expectedRelease: null, cleaningSince: new Date().toISOString() });
-      notify(`Housekeeping: clean ${bed?.id}`, `Bed ${bed?.id} released after discharge of ${p.alias}.`);
-      emit('bed.updated', { bedId: bed?.id, status: 'cleaning', patientId: null });
+      if (bed) {
+        notify(`Housekeeping: clean ${bed.id}`, `Bed ${bed.id} released after discharge of ${p.alias}.`);
+        emit('bed.updated', { bedId: bed.id, status: 'cleaning', patientId: null });
+      }
       emit('patient.updated', { patientId: p.id, status: 'discharged' });
-      result = { patientId: p.id, alias: p.alias, bedId: bed?.id, bedStatus: 'cleaning', housekeepingNotified: 1 };
+      result = { patientId: p.id, alias: p.alias, bedId: bed?.id || null, bedStatus: bed ? 'cleaning' : null, housekeepingNotified: bed ? 1 : 0 };
       break;
     }
     case 'CLEANING_DONE': {
       const bed = s.beds.find((b) => b.id === payload.bedId);
       if (!bed) throw new Error('Bed not found');
-      if (bed.status === 'occupied') throw new Error('Bed is occupied');
+      if (bed.status !== 'cleaning') throw new Error(`Bed ${bed.id} is ${bed.status}, not waiting for cleaning`);
       Object.assign(bed, { status: 'available', cleaningSince: null, lastCleanedAt: new Date().toISOString(), patientId: null });
       const match = s.patients.filter((p) => p.status === 'waiting' && (bed.type === 'icu' ? p.requiresIcu : !p.requiresIcu)).sort((a, b) => a.acuity - b.acuity || new Date(a.waitingSince) - new Date(b.waitingSince))[0];
       let rec = null;
@@ -704,11 +713,13 @@ function processEvent(eventType, payload = {}) {
       const c = s.cases.find((x) => x.id === payload.caseId || x.caseNumber === payload.caseId);
       if (!c) throw new Error('OT case not found');
       if (c.status === 'completed') throw new Error('Already completed');
+      if (c.status === 'cancelled') throw new Error('Case was cancelled');
       c.status = 'completed';
       const room = s.otRooms.find((r) => r.id === c.roomId);
       if (room) room.status = 'cleaning';
       const type = 'post_op';
-      const bed = s.beds.find((b) => b.type === type && (b.status === 'available' || b.status === 'reserved'));
+      // Only a free recovery bed; a reserved one is held for someone else
+      const bed = s.beds.find((b) => b.type === type && b.status === 'available');
       let postOpBedId = null;
       const linked = c.patientId ? s.patients.find((x) => x.id === c.patientId) : null;
       if (bed && c.postOpRequired && linked) {
@@ -718,6 +729,14 @@ function processEvent(eventType, payload = {}) {
         postOpBedId = bed.id;
         emit('bed.updated', { bedId: bed.id, status: 'occupied' });
         emit('patient.updated', { patientId: linked.id, status: 'in_recovery' });
+      } else if (linked) {
+        // No recovery bed free (or none needed): the patient still leaves theatre and waits for a bed
+        Object.assign(linked, { status: c.postOpRequired ? 'waiting' : 'in_recovery', location: null, requiresOt: false, waitingSince: new Date().toISOString() });
+        if (c.postOpRequired) {
+          notify(`No recovery bed for ${linked.alias}`, `${c.caseNumber} finished but no post-op bed is free. Free a PACU bed.`);
+          emit('alert.created', { alertId: uid('alt'), severity: 'high', title: `No post-op bed for case ${c.caseNumber}`, description: `${linked.alias} is waiting for a recovery bed` });
+        }
+        emit('patient.updated', { patientId: linked.id, status: linked.status });
       } else if (bed && c.postOpRequired) {
         const p = { id: uid('pt'), alias: c.patientAlias, acuity: 3, status: 'in_recovery', bedId: bed.id, department: 'General Ward', doctorId: 'doc-hughes', doctorName: c.surgeon, admittedAt: new Date().toISOString(), expectedDischarge: iso(Date.now() + 6 * H), dischargeDate: null, requiresImaging: false, requiresIcu: false, pendingTasks: [] };
         s.patients.push(p);
@@ -726,7 +745,12 @@ function processEvent(eventType, payload = {}) {
         emit('bed.updated', { bedId: bed.id, status: 'occupied' });
       }
       emit('ot.caseCompleted', { caseId: c.id, caseNumber: c.caseNumber, roomId: c.roomId, nextStatus: 'cleaning', postOpBedId });
-      emit('doctor.statusChanged', { doctorId: 'doc-menon', staffId: 'doc-menon', name: c.surgeon, newStatus: 'available' });
+      // Release the surgeon who actually did this case (was hard-coded to one doctor)
+      const surgeon = DOCTORS.find((d) => d.id === c.surgeonId || d.name === c.surgeon);
+      if (surgeon && !s.cases.some((x) => x.status === 'in_progress' && x.id !== c.id && (x.surgeonId === surgeon.id || x.surgeon === surgeon.name))) {
+        if (surgeon.status === 'in_surgery') surgeon.status = 'available';
+        emit('doctor.statusChanged', { doctorId: surgeon.id, staffId: surgeon.id, name: surgeon.name, newStatus: surgeon.status });
+      }
       result = { caseId: c.id, caseNumber: c.caseNumber, roomId: c.roomId, roomStatus: 'cleaning', postOpBedId };
       break;
     }
@@ -734,6 +758,7 @@ function processEvent(eventType, payload = {}) {
       const p = s.patients.find((x) => x.id === payload.patientId);
       if (!p) throw new Error('Patient not found');
       const acuity = Math.max(1, Math.min(5, +payload.newAcuity || p.acuity - 1));
+      if (payload.newAcuity !== undefined && acuity > p.acuity) throw new Error(`Acuity ${acuity} is not worse than the current acuity ${p.acuity}`);
       Object.assign(p, { acuity, status: acuity <= 2 ? 'critical' : p.status, requiresIcu: acuity === 1 || p.requiresIcu });
       let rec = null;
       const bed = s.beds.find((b) => b.id === p.bedId);
@@ -872,7 +897,7 @@ function aiReport(scope = 'admin', format = 'detailed') {
     if (format === 'handover') {
       lines.push('## 3) Open risks', a.rootCause ? `- Bottleneck: ${a.rootCause}${a.cascade.length ? `, then ${a.cascade.join(', ')}` : ''}` : '- None.', '', '## 4) Pending discharges', ...dischargeCandidates().candidates.filter((c) => c.ready).map((c) => `- ${c.alias} (${c.bedId}), owner ${c.doctorName}; blocked by: ${c.blockingFactors.join(', ') || 'none'}`), '', '## 5) First actions for the incoming shift');
     } else {
-      lines.push('## 3) Root cause and cascade', a.rootCause ? `${a.rootCause} is the first department in the flow chain above threshold.${a.cascade.length ? ` Downstream impact: ${a.cascade.join(', ')}.` : ''}` : 'No root cause.', ...(format === 'explain' && a.rootCause ? [`Why: ${a.rootCause} is at ${Math.round(a.bottlenecks.find((b) => b.rootCause).utilization * 100)}% utilization (warn 75%, danger 88%) and every department before it in the chain is LOW.`] : []), '', '## 4) Predicted next 2-4 hours', ...(snapshot.departments.filter((d) => d.gap2h > 0).map((d) => `- ${d.department}: short by ${d.gap2h} beds in 2h`).concat(['- Forecasts based on 4 weeks of same-hour history.'])), '', '## 5) Recommended actions');
+      lines.push('## 3) Root cause and cascade', a.rootCause ? `${a.rootCause} is the most severe bottleneck in the flow chain.${a.cascade.length ? ` Downstream impact: ${a.cascade.join(', ')}.` : ''}` : 'No root cause.', ...(format === 'explain' && a.rootCause ? [`Why: ${a.rootCause} is at ${Math.round(a.bottlenecks.find((b) => b.rootCause).utilization * 100)}% utilization (warn 75%, danger 88%) and no department before it in the chain is more severe.`] : []), '', '## 4) Predicted next 2-4 hours', ...(snapshot.departments.filter((d) => d.gap2h > 0).map((d) => `- ${d.department}: short by ${d.gap2h} beds in 2h`).concat(['- Forecasts based on 4 weeks of same-hour history.'])), '', '## 5) Recommended actions');
     }
     lines.push(...snapshot.topActions.map((x, i) => (format === 'explain' ? `${i + 1}. ${x.action}
    - Because: ${x.why || 'department numbers above'}

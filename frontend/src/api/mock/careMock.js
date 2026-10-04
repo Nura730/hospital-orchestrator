@@ -1272,7 +1272,7 @@ export function onCaseCompleted(caseId) {
   const x = S.cases.find((cs) => cs.id === caseId);
   if (!x || !x.patientId) return { ok: true };
   const p = S.patients.find((pp) => pp.id === x.patientId);
-  const where = p?.bedId ? `recovering in ${p.bedId}` : 'in recovery';
+  const where = p?.bedId ? `recovering in ${p.bedId}` : p?.status === 'waiting' ? 'waiting for a recovery bed' : 'in recovery';
   const o = x.otRequestId ? (c.otRequests || []).find((r) => r.id === x.otRequestId) : null;
   if (o) {
     o.status = 'completed';

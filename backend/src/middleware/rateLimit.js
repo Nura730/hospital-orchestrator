@@ -4,6 +4,8 @@ const env = require('../config/env');
 const authLimiter = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,
   max: env.AUTH_RATE_LIMIT_MAX,
+  // Only failed logins count, so staff signing in on several devices are not locked out
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
@@ -12,7 +14,7 @@ const authLimiter = rateLimit({
       data: null,
       error: {
         code: 'RATE_LIMIT_EXCEEDED',
-        message: 'Too many authentication attempts. Please try again after 15 minutes.',
+        message: `Too many failed sign-in attempts. Please try again in ${Math.ceil(env.RATE_LIMIT_WINDOW_MS / 60000)} minutes.`,
       },
       meta: {
         retryAfterMs: env.RATE_LIMIT_WINDOW_MS,

@@ -64,7 +64,7 @@ function methodology() {
     thresholds: { warnPct: warn, dangerPct: danger, source: flowConfig.thresholdSource },
     severityRule: `HIGH if utilization > ${danger}% or predicted 2h bed gap > 0; MEDIUM if utilization > ${warn}%; otherwise LOW`,
     dependencyChain: 'Emergency → Radiology → General Ward → HDU → ICU → OT',
-    rootCauseRule: 'The first department in the chain with MEDIUM or HIGH severity is the root cause; every later MEDIUM/HIGH department is cascade',
+    rootCauseRule: 'The root cause is the earliest department in the chain at the worst severity present (HIGH outranks MEDIUM); the cascade is the unbroken run of MEDIUM/HIGH departments right after it',
     forecastMethod: 'Arrivals per hour = weighted average of the same hour and weekday over the last 4 weeks (weights 4,3,2,1, most recent first); 80% band = ±1.28 × standard deviation',
     bedDemandMethod: 'Demand = beds occupied now + forecast arrivals × admission rate − discharges expected in the window (weighted by release confidence); gap = demand − capacity',
     admissionRule: 'Base by acuity 1:95% 2:80% 3:60% 4:30% 5:10%; +10% ICU need, +5% isolation, +15% night arrival (22:00-06:00); cap 99%',
@@ -345,7 +345,7 @@ function templateAdmin(s, handover, explain = false) {
     lines.push('## 5) First actions for the incoming shift');
   } else {
     lines.push('## 3) Root cause and cascade');
-    lines.push(root ? `${root} is the first department in the flow chain (Emergency → Radiology → General Ward → HDU → ICU → OT) above threshold.${cascade.length ? ` Downstream impact: ${cascade.join(', ')}.` : ' No downstream cascade detected.'}` : 'No root cause: all departments are within thresholds.');
+    lines.push(root ? `${root} is the most severe bottleneck in the flow chain (Emergency → Radiology → General Ward → HDU → ICU → OT).${cascade.length ? ` Downstream impact: ${cascade.join(', ')}.` : ' No downstream cascade detected.'}` : 'No root cause: all departments are within thresholds.');
     if (explain && root) {
       const r = depts.find((d) => d.department === root);
       const cascadeWhy = cascade
@@ -354,7 +354,7 @@ function templateAdmin(s, handover, explain = false) {
           return d ? `${c}: ${d.severityReason}.` : '';
         })
         .join(' ');
-      lines.push(`Why: ${root} has ${r ? r.severityReason : 'crossed a threshold'}, and every department before it in the chain is LOW. ${cascadeWhy}`.trim());
+      lines.push(`Why: ${root} has ${r ? r.severityReason : 'crossed a threshold'}, and no department before it in the chain is more severe. ${cascadeWhy}`.trim());
     }
     lines.push('');
     lines.push('## 4) Predicted next 2-4 hours');

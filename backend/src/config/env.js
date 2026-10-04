@@ -15,7 +15,7 @@ const envSchema = z.object({
   CORS_ORIGINS: z.string().default('http://localhost:5173'),
   SOCKET_ORIGINS: z.string().default('http://localhost:5173'),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000), // 15 mins
-  RATE_LIMIT_MAX: z.coerce.number().default(100),
+  RATE_LIMIT_MAX: z.coerce.number().default(2000),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().default(10),
   SIMULATOR: z.preprocess((val) => val === true || val === 'true', z.boolean().default(true)),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),

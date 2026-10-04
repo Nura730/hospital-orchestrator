@@ -5,6 +5,7 @@
  * in the standard MediOrchestra envelope: { ok: true, data: ..., error: null }.
  */
 
+import { DEFAULT_USERS } from '../../utils/roles.js';
 import { MOCK_LATENCY_MIN_MS, MOCK_LATENCY_MAX_MS } from '../../utils/constants.js';
 
 import {
@@ -86,7 +87,7 @@ import {
   mockGetAuditLogs,
 } from './audit.js';
 
-import { hospitalState, resetHospitalState } from './seed.js';
+import { resetHospitalState } from './seed.js';
 
 /**
  * Simulates network delay between min and max ms.
@@ -124,6 +125,11 @@ export const mockApi = {
   login: async (credentials) => {
     await delay();
     const { email, password, role = 'admin' } = credentials;
+    // Same demo accounts as the login page; any other email or password is rejected
+    const account = Object.values(DEFAULT_USERS).find((u) => u.role === role && !u.localOnly);
+    if (!account || String(email || '').trim().toLowerCase() !== account.email || password !== account.demoPassword) {
+      return { ok: false, data: null, error: 'Invalid email or password for this role' };
+    }
     return {
       ok: true,
       data: {

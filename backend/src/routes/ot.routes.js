@@ -43,7 +43,7 @@ router.use(authorize('admin', 'ot_manager'));
 router.get('/available-doctors', otAvailabilityController.getAvailableDoctors);
 
 // Cleaning status
-router.get('/rooms/:id/cleaning-done', otAvailabilityController.markCleaningDone);
+router.patch('/rooms/:id/cleaning-done', otAvailabilityController.markCleaningDone);
 
 // OT Stats
 router.get('/stats', otController.getStats);

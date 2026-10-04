@@ -23,14 +23,23 @@ function classifySeverity(utilization, predictedGap) {
   return FLOW_SEVERITY.LOW;
 }
 
+const SEVERITY_RANK = { [FLOW_SEVERITY.LOW]: 0, [FLOW_SEVERITY.MEDIUM]: 1, [FLOW_SEVERITY.HIGH]: 2 };
+
 /**
- * Pure chain walk. First non-LOW department = root cause; every later non-LOW department = cascade.
+ * Pure chain walk.
+ * Root cause = the earliest department in the chain at the worst severity present (a HIGH department
+ * outranks an earlier MEDIUM one). Cascade = the unbroken run of non-LOW departments right after it;
+ * a LOW department breaks the chain, because flow recovers there.
  * @param {{department: string, severity: string}[]} depts in DEPENDENCY_CHAIN order
  */
 function walkChain(depts) {
-  const rootIdx = depts.findIndex((d) => d.severity !== FLOW_SEVERITY.LOW);
+  const worst = Math.max(0, ...depts.map((d) => SEVERITY_RANK[d.severity] || 0));
+  const rootIdx = worst > 0 ? depts.findIndex((d) => (SEVERITY_RANK[d.severity] || 0) === worst) : -1;
   const rootCause = rootIdx >= 0 ? depts[rootIdx].department : null;
-  const cascade = rootIdx >= 0 ? depts.slice(rootIdx + 1).filter((d) => d.severity !== FLOW_SEVERITY.LOW).map((d) => d.department) : [];
+  const cascade = [];
+  for (let i = rootIdx + 1; rootIdx >= 0 && i < depts.length && depts[i].severity !== FLOW_SEVERITY.LOW; i++) {
+    cascade.push(depts[i].department);
+  }
   return { rootCause, cascade, rootIdx };
 }
 
@@ -77,7 +86,8 @@ async function computeDepartment(name, ctx) {
       departmentId: dept ? dept.id : null,
       floor: dept ? dept.floor : null,
       capacity,
-      occupied: ot.in_surgery,
+      occupied: busy,
+      inSurgery: ot.in_surgery,
       cleaning: ot.cleaning,
       reserved: ot.reserved,
       available: ot.available,
@@ -86,7 +96,8 @@ async function computeDepartment(name, ctx) {
       predicted: {
         1: utilization,
         2: capacity > 0 ? round(Math.min(1.5, (busy + (ctx.upcomingOt.n || 0) * 0.5) / capacity)) : 0,
-        4: utilization,
+        // Theatre lists rarely run 4 h ahead of plan; carry the 2 h view forward instead of resetting to now
+        4: capacity > 0 ? round(Math.min(1.5, (busy + (ctx.upcomingOt.n || 0) * 0.5) / capacity)) : 0,
       },
       dischargeReady: 0,
       nursesOnShift: (ctx.staffByDept.get(dept && dept.id) || {}).nurses_on_shift || 0,

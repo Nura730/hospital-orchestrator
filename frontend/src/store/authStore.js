@@ -39,21 +39,8 @@ function loadInitialState() {
     console.error('Failed to parse cached auth state:', err);
   }
 
-  // Real backend: start signed out (a fake mock token would only produce 401s)
-  const env = (typeof import.meta !== 'undefined' && import.meta.env) || {};
-  const isMock = env.VITE_USE_MOCK !== undefined ? env.VITE_USE_MOCK !== 'false' : true;
-  if (!isMock) {
-    return { user: null, token: null, role: null, isAuthenticated: false };
-  }
-
-  // Mock mode: default demo admin for a smooth offline experience
-  const defaultAdmin = DEFAULT_USERS.admin;
-  return {
-    user: defaultAdmin,
-    token: 'mock-jwt-token-admin',
-    role: defaultAdmin.role,
-    isAuthenticated: true,
-  };
+  // No session in this tab: start signed out (also in mock mode) so every role goes through the login page
+  return { user: null, token: null, role: null, isAuthenticated: false };
 }
 
 export const useAuthStore = create((set, get) => ({
